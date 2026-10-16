@@ -794,10 +794,47 @@ export class CricketPhysics {
       power = 0;
     }
 
-    // Check lateral reach alignment
+    // Check lateral reach alignment & edge / late cut detection
     const lateralDiff = Math.abs(this.ball.x - this.batsman.x);
-    if (lateralDiff > 44 && timingQuality !== 'MISS') {
+    const isBallOutsideOff = this.ball.x < this.batsman.x;
+    const isShortBall = this.ball.lengthType === 'short' || this.ball.deliveryType === 'bouncer';
+
+    // 1. TOP EDGE:
+    // On short balls/bouncers, early or mistimed swings catch the top edge/shoulder of the bat!
+    if (isShortBall && timingQuality !== 'MISS' && (timingQuality === 'EARLY' || (timingQuality === 'LATE' && Math.random() < 0.60))) {
       timingQuality = 'EDGE';
+      dynamicShot.shotStyle = 'top_edge';
+      dynamicShot.label = 'Top Edge Flyer';
+      power = 0.50;
+    }
+    // 2. DELICATE LATE CUT:
+    // When playing a ball outside off with late timing (-35ms to -95ms), deliberate or controlled late cut past slips!
+    else if (isBallOutsideOff && timeDeltaMs < -35 && timeDeltaMs >= -95 && timingQuality !== 'MISS') {
+      timingQuality = 'GOOD';
+      dynamicShot.shotStyle = 'late_cut';
+      dynamicShot.aim = 'off';
+      dynamicShot.label = 'Delicate Late Cut';
+      power = 0.70;
+    }
+    // 3. THICK OUTSIDE EDGE:
+    // Reaching outside off stump (lateralDiff > 20) or late push outside off (-60ms to -150ms)
+    else if (isBallOutsideOff && (lateralDiff > 20 || (timeDeltaMs < -60 && timeDeltaMs >= -150)) && timingQuality !== 'MISS') {
+      timingQuality = 'EDGE';
+      dynamicShot.shotStyle = 'outside_edge';
+      dynamicShot.label = 'Thick Outside Edge';
+      power = 0.42;
+    }
+    // 4. INSIDE EDGE:
+    // Ball cutting in towards stumps/pads with late timing or cramped room
+    else if (!isBallOutsideOff && (lateralDiff > 18 || (timeDeltaMs < -50 && timeDeltaMs >= -150)) && timingQuality !== 'MISS') {
+      timingQuality = 'EDGE';
+      dynamicShot.shotStyle = 'inside_edge';
+      dynamicShot.label = 'Inside Edge';
+      power = 0.38;
+    } else if (lateralDiff > 42 && timingQuality !== 'MISS') {
+      timingQuality = 'EDGE';
+      dynamicShot.shotStyle = 'outside_edge';
+      dynamicShot.label = 'Edge';
       power = 0.35;
     }
 
@@ -966,6 +1003,38 @@ export class CricketPhysics {
         altitudeVz = 17.0; // High sailing cut over slips!
         break;
 
+      case 'late_cut':
+        // Delicate late cut: blade opened late, guiding backward past slips to third man!
+        exitAngle = -Math.PI * (0.72 + (Math.random() - 0.5) * 0.10);
+        altitudeVz = 0; // Flat skimming ground stroke
+        exitSpeed = 5.8 + power * 3.6;
+        break;
+
+      case 'top_edge':
+        // Sky-high top edge flyer backwards over keeper towards fine leg / third man!
+        this.ball.edgeType = 'top';
+        exitAngle = Math.PI * (0.84 + (Math.random() - 0.5) * 0.28);
+        altitudeVz = 16.0 + Math.random() * 3.5;
+        exitSpeed = 4.2 + power * 2.8;
+        break;
+
+      case 'outside_edge':
+        // Thick outside edge slicing past slip cordon towards third man!
+        this.ball.edgeType = 'outside';
+        exitAngle = -Math.PI * (0.68 + (Math.random() - 0.5) * 0.16);
+        // 40% catchable slip height vs 60% skimming turf edge to third man for 4!
+        altitudeVz = Math.random() < 0.40 ? (6.5 + Math.random() * 5.0) : 0;
+        exitSpeed = 5.2 + power * 3.6;
+        break;
+
+      case 'inside_edge':
+        // Inside edge squirts backward past leg stump to fine leg!
+        this.ball.edgeType = 'inside';
+        exitAngle = Math.PI * (0.72 + (Math.random() - 0.5) * 0.14);
+        altitudeVz = 0;
+        exitSpeed = 4.8 + power * 3.2;
+        break;
+
       case 'flick':
         // Supple wrists through mid-on / fine leg
         exitAngle = Math.PI * 0.22 + (Math.random() - 0.5) * 0.12;
@@ -998,9 +1067,9 @@ export class CricketPhysics {
         break;
     }
 
-    // Deflections on early / late / edge
-    if (timingQuality === 'EARLY') exitAngle += 0.35;
-    if (timingQuality === 'LATE' || timingQuality === 'EDGE') exitAngle -= 0.45;
+    // Deflections on early / late
+    if (timingQuality === 'EARLY' && !shotStyle.includes('edge')) exitAngle += 0.30;
+    if (timingQuality === 'LATE' && !shotStyle.includes('edge') && shotStyle !== 'late_cut') exitAngle -= 0.35;
 
     // Determine shot trajectory type: Six vs Four in Gap vs Aerial Four vs Gap Running 1, 2, 3
     const isLoftedSixStyle = (shotStyle === 'step_out' || shotStyle === 'scoop' || (timingQuality === 'PERFECT' && power >= 0.65 && (shotStyle === 'pull' || shotStyle === 'straight_drive' || shotStyle === 'upper_cut')));
@@ -1039,8 +1108,8 @@ export class CricketPhysics {
 
       if (altitudeVz <= 5.5) {
         // Ground stroke: either a Bullet Four in Gap or Single/Double/Triple in Gap
-        if (timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.58)) {
-          // 2. BULLET FOUR IN GAP (Pierces the infield between fielders!)
+        if (shotStyle === 'late_cut' || (shotStyle === 'outside_edge' && altitudeVz === 0) || timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.58)) {
+          // 2. BULLET FOUR IN GAP (Pierces the infield between fielders / steers past slips!)
           this.ball.isFourInGap = true;
           this.ball.isAerialFour = false;
           this.ball.isAirborne = false;
@@ -1048,7 +1117,7 @@ export class CricketPhysics {
           this.ball.vz = 0;
           exitSpeed = 5.6 + (power * 3.4);
           this.screenShake = 3;
-          this.createSparks(this.ball.x, this.ball.y, '#10b981', 20);
+          this.createSparks(this.ball.x, this.ball.y, shotStyle === 'late_cut' ? '#f59e0b' : '#10b981', 20);
           this.ball.distanceMeters = Math.round(70 + power * 12);
         } else {
           // GAP STROKE FOR 1, 2, or 3 RUNS (Clean ground stroke, fielders chase)
@@ -1062,15 +1131,15 @@ export class CricketPhysics {
           this.ball.distanceMeters = Math.round(35 + power * 25);
         }
       } else {
-        // Lofted stroke: either an Aerial Four over infield or Single/Double in Deep Gap
-        if (timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.60)) {
-          // 3. AERIAL FOUR OVER INFIELD (Clears 30-yard ring, bounces into rope!)
+        // Lofted stroke: either an Aerial Four over infield or High Top Edge or Single in Deep Gap
+        if (shotStyle === 'top_edge' || timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.60)) {
+          // 3. AERIAL FOUR OVER INFIELD / HIGH TOP EDGE FLYER
           this.ball.isFourInGap = false;
           this.ball.isAerialFour = true;
           this.ball.isAirborne = true;
-          this.ball.height = 12;
+          this.ball.height = shotStyle === 'top_edge' ? 14 : 12;
           this.ball.vz = altitudeVz;
-          exitSpeed = 4.8 + (power * 2.8);
+          exitSpeed = shotStyle === 'top_edge' ? (4.2 + power * 2.6) : (4.8 + power * 2.8);
           this.screenShake = 3.5;
           this.createSparks(this.ball.x, this.ball.y, '#38bdf8', 22);
           this.ball.distanceMeters = Math.round(74 + power * 14);
@@ -1336,6 +1405,8 @@ export class CricketPhysics {
           runs: isSix ? 6 : 4,
           isRocketSix: isSix,
           fourType: !isSix ? (this.ball.isFourInGap ? 'gap' : this.ball.isAerialFour ? 'air' : 'standard') : undefined,
+          shotStyle: this.batsman.shotStyle,
+          edgeType: this.ball.edgeType,
           distanceMeters: this.ball.distanceMeters || (isSix ? 96 : 68),
           landingX: isSix ? this.ball.x : undefined,
           landingY: isSix ? this.ball.y : undefined,
@@ -1400,7 +1471,19 @@ export class CricketPhysics {
               };
             } else {
               // Safe in crease / grounded bat before throw hit stumps!
-              this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ffffff', 12);
+              this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ffffff', 14);
+
+              // If batsman is not running (holding crease or completed sprint), throw arrived at keeper/bowler!
+              // The delivery concludes cleanly without waiting!
+              if (!this.running.isCallingRun) {
+                this.running.active = false;
+                this.ball.state = 'DEAD';
+                if (this.running.runsCompleted > 0) {
+                  return { event: 'RUNS', runs: this.running.runsCompleted };
+                } else {
+                  return { event: 'DOT' };
+                }
+              }
             }
           }
         }

@@ -43,86 +43,86 @@ export class FielderManager {
     let targetPlacements = [];
 
     if (preset === 'powerplay') {
-      // POWERPLAY: Exactly 6 Fielders Inside 30-Yard Circle, 3 on Boundary (User Specification)
+      // POWERPLAY: Exactly 6 Fielders Inside 30-Yard Circle, 3 on Boundary (Wide Gaps)
       targetPlacements = [
-        // 6 Infielders inside 30-yard circle (clearly visible around pitch)
-        { id: 'point', role: 'Point', x: cx - 105, y: cy + 20, speed: 2.5, zone: 'infield_off' },
-        { id: 'cover', role: 'Cover', x: cx - 115, y: cy - 60, speed: 2.5, zone: 'infield_off' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 75, y: cy - 130, speed: 2.4, zone: 'infield_straight' },
-        { id: 'midon', role: 'Mid-On', x: cx + 75, y: cy - 130, speed: 2.4, zone: 'infield_straight' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 110, y: cy - 50, speed: 2.5, zone: 'infield_leg' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + 105, y: cy + 30, speed: 2.4, zone: 'infield_leg' },
-        // 3 Outfielders on boundary rope
-        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.65, y: cy - br * 0.65, speed: 2.7, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.72, y: cy - br * 0.45, speed: 2.7, zone: 'boundary' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: cx + br * 0.60, y: batsmanY + br * 0.42, speed: 2.7, zone: 'boundary' }
+        // 6 Infielders pushed out to 30-yard ring (leaving 120-210px gaps between fielders)
+        { id: 'midoff', role: 'Mid-Off', x: cx - 105, y: cy - 165, speed: 2.4, zone: 'infield_straight' },
+        { id: 'midon', role: 'Mid-On', x: cx + 105, y: cy - 165, speed: 2.4, zone: 'infield_straight' },
+        { id: 'cover', role: 'Extra Cover', x: cx - 170, y: cy - 65, speed: 2.5, zone: 'infield_off' },
+        { id: 'point', role: 'Backward Point', x: cx - 185, y: cy + 30, speed: 2.5, zone: 'infield_off' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 170, y: cy - 65, speed: 2.5, zone: 'infield_leg' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 185, y: cy + 30, speed: 2.4, zone: 'infield_leg' },
+        // 3 Outfielders deep on boundary rope
+        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.52, y: cy - br * 0.72, speed: 2.7, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.76, y: cy - br * 0.38, speed: 2.7, zone: 'boundary' },
+        { id: 'fineleg', role: 'Deep Fine Leg', x: cx + br * 0.65, y: batsmanY + br * 0.40, speed: 2.7, zone: 'boundary' }
       ];
     } else if (preset === 'death_overs') {
-      // DEATH OVERS: Exactly 4 Fielders Inside 30-Yard Circle, 5 on Boundary (User Specification)
+      // DEATH OVERS: Exactly 4 Fielders Inside 30-Yard Circle, 5 on Boundary (Wide Gaps)
       targetPlacements = [
-        // 4 Infielders inside 30-yard circle
-        { id: 'cover', role: 'Cover', x: cx - 110, y: cy - 30, speed: 2.5, zone: 'infield_off' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 75, y: cy - 130, speed: 2.4, zone: 'infield_straight' },
-        { id: 'midon', role: 'Mid-On', x: cx + 75, y: cy - 130, speed: 2.4, zone: 'infield_straight' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + 110, y: cy + 20, speed: 2.4, zone: 'infield_leg' },
-        // 5 Boundary sweepers protecting boundaries
-        { id: 'deepcover', role: 'Deep Extra Cover', x: cx - br * 0.72, y: cy - br * 0.55, speed: 2.7, zone: 'boundary' },
-        { id: 'longoff', role: 'Long-Off', x: cx - br * 0.58, y: cy - br * 0.68, speed: 2.7, zone: 'boundary' },
-        { id: 'longon', role: 'Long-On', x: cx + br * 0.58, y: cy - br * 0.68, speed: 2.7, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.74, y: cy - br * 0.40, speed: 2.7, zone: 'boundary' },
-        { id: 'deepsqleg', role: 'Deep Square Leg', x: cx + br * 0.70, y: batsmanY + br * 0.32, speed: 2.7, zone: 'boundary' }
+        // 4 Infielders on 30-yard ring
+        { id: 'cover', role: 'Cover', x: cx - 160, y: cy - 50, speed: 2.5, zone: 'infield_off' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 160, speed: 2.4, zone: 'infield_straight' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 160, speed: 2.4, zone: 'infield_straight' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 175, y: cy + 25, speed: 2.4, zone: 'infield_leg' },
+        // 5 Boundary sweepers protecting boundaries near the fence
+        { id: 'deepcover', role: 'Deep Extra Cover', x: cx - br * 0.78, y: cy - br * 0.35, speed: 2.7, zone: 'boundary' },
+        { id: 'longoff', role: 'Long-Off', x: cx - br * 0.50, y: cy - br * 0.72, speed: 2.7, zone: 'boundary' },
+        { id: 'longon', role: 'Long-On', x: cx + br * 0.50, y: cy - br * 0.72, speed: 2.7, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.78, y: cy - br * 0.35, speed: 2.7, zone: 'boundary' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.65, y: batsmanY + br * 0.40, speed: 2.7, zone: 'boundary' }
       ];
     } else if (preset === 'attacking') {
       // Aggressive wicket-taking field: 2 Slips, Gully, Cover, Mid-Off, Mid-On inside; 3 boundary
       targetPlacements = [
-        { id: 'slip1', role: '1st Slip', x: cx - 70, y: batsmanY + 40, speed: 2.5, zone: 'slips' },
-        { id: 'slip2', role: '2nd Slip', x: cx - 90, y: batsmanY + 50, speed: 2.5, zone: 'slips' },
-        { id: 'gully', role: 'Gully', x: cx - 115, y: batsmanY + 15, speed: 2.5, zone: 'gully' },
-        { id: 'cover', role: 'Cover', x: cx - 120, y: cy - 60, speed: 2.5, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 75, y: cy - 130, speed: 2.4, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 75, y: cy - 130, speed: 2.4, zone: 'midon' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.60, y: batsmanY + br * 0.45, speed: 2.7, zone: 'thirdman' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.70, y: cy - br * 0.45, speed: 2.7, zone: 'deep_leg' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: cx + br * 0.62, y: batsmanY + br * 0.35, speed: 2.7, zone: 'fineleg' }
+        { id: 'slip1', role: '1st Slip', x: cx - 42, y: batsmanY + 36, speed: 2.5, zone: 'slips' },
+        { id: 'slip2', role: '2nd Slip', x: cx - 72, y: batsmanY + 44, speed: 2.5, zone: 'slips' },
+        { id: 'gully', role: 'Gully', x: cx - 118, y: batsmanY + 18, speed: 2.5, zone: 'gully' },
+        { id: 'cover', role: 'Cover', x: cx - 165, y: cy - 60, speed: 2.5, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 160, speed: 2.4, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 160, speed: 2.4, zone: 'midon' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.65, y: batsmanY + br * 0.42, speed: 2.7, zone: 'thirdman' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.76, y: cy - br * 0.40, speed: 2.7, zone: 'deep_leg' },
+        { id: 'fineleg', role: 'Deep Fine Leg', x: cx + br * 0.65, y: batsmanY + br * 0.42, speed: 2.7, zone: 'fineleg' }
       ];
     } else if (preset === 'offside_defensive') {
       // Packed off-side boundary ring: 4 inside, 5 on boundary
       targetPlacements = [
-        { id: 'midoff', role: 'Mid-Off', x: cx - 80, y: cy - 125, speed: 2.4, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 80, y: cy - 125, speed: 2.4, zone: 'midon' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + 115, y: cy + 20, speed: 2.4, zone: 'sqleg' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 120, y: cy - 45, speed: 2.4, zone: 'midwicket' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.60, y: batsmanY + br * 0.45, speed: 2.7, zone: 'thirdman' },
-        { id: 'point', role: 'Deep Point', x: cx - br * 0.75, y: batsmanY - 20, speed: 2.7, zone: 'point' },
-        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.72, y: cy - br * 0.30, speed: 2.7, zone: 'cover' },
-        { id: 'longoff', role: 'Long-Off', x: cx - br * 0.58, y: cy - br * 0.68, speed: 2.7, zone: 'midoff' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.70, y: cy - br * 0.45, speed: 2.7, zone: 'deep_leg' }
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 155, speed: 2.4, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 155, speed: 2.4, zone: 'midon' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 170, y: cy - 50, speed: 2.4, zone: 'midwicket' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 180, y: cy + 30, speed: 2.4, zone: 'sqleg' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.65, y: batsmanY + br * 0.42, speed: 2.7, zone: 'thirdman' },
+        { id: 'point', role: 'Deep Point', x: cx - br * 0.82, y: batsmanY - 15, speed: 2.7, zone: 'point' },
+        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.78, y: cy - br * 0.35, speed: 2.7, zone: 'cover' },
+        { id: 'longoff', role: 'Long-Off', x: cx - br * 0.50, y: cy - br * 0.72, speed: 2.7, zone: 'midoff' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.76, y: cy - br * 0.40, speed: 2.7, zone: 'deep_leg' }
       ];
     } else if (preset === 'legside_defensive') {
       // Leg-side trap: 4 inside, 5 on boundary
       targetPlacements = [
-        { id: 'point', role: 'Point', x: cx - 115, y: cy - 15, speed: 2.4, zone: 'point' },
-        { id: 'cover', role: 'Cover', x: cx - 110, y: cy - 60, speed: 2.4, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 80, y: cy - 125, speed: 2.4, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 80, y: cy - 125, speed: 2.4, zone: 'midon' },
-        { id: 'longon', role: 'Long-On', x: cx + br * 0.58, y: cy - br * 0.68, speed: 2.7, zone: 'longon' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.74, y: cy - br * 0.40, speed: 2.7, zone: 'deep_leg' },
-        { id: 'deepsqleg', role: 'Deep Sq Leg', x: cx + br * 0.70, y: batsmanY + br * 0.25, speed: 2.7, zone: 'deep_sqleg' },
-        { id: 'fineleg', role: 'Fine Leg', x: cx + br * 0.58, y: batsmanY + br * 0.45, speed: 2.7, zone: 'fineleg' },
-        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.70, y: cy - br * 0.40, speed: 2.7, zone: 'cover' }
+        { id: 'point', role: 'Point', x: cx - 180, y: cy + 20, speed: 2.4, zone: 'point' },
+        { id: 'cover', role: 'Cover', x: cx - 160, y: cy - 55, speed: 2.4, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 155, speed: 2.4, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 155, speed: 2.4, zone: 'midon' },
+        { id: 'longon', role: 'Long-On', x: cx + br * 0.50, y: cy - br * 0.72, speed: 2.7, zone: 'longon' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.78, y: cy - br * 0.35, speed: 2.7, zone: 'deep_leg' },
+        { id: 'deepsqleg', role: 'Deep Sq Leg', x: cx + br * 0.78, y: batsmanY + br * 0.25, speed: 2.7, zone: 'deep_sqleg' },
+        { id: 'fineleg', role: 'Fine Leg', x: cx + br * 0.65, y: batsmanY + br * 0.42, speed: 2.7, zone: 'fineleg' },
+        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.78, y: cy - br * 0.35, speed: 2.7, zone: 'cover' }
       ];
     } else {
-      // Balanced Standard Cricket Field (Default: 4 inside, 5 on boundary)
+      // Balanced Standard Cricket Field (Default: 4 inside, 5 on boundary with wide gaps)
       targetPlacements = [
-        { id: 'cover', role: 'Cover', x: cx - 115, y: cy - 50, speed: 2.4, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 80, y: cy - 125, speed: 2.4, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 80, y: cy - 125, speed: 2.4, zone: 'midon' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + 110, y: cy + 15, speed: 2.4, zone: 'sqleg' },
-        { id: 'deeppoint', role: 'Deep Point', x: cx - br * 0.68, y: batsmanY - 20, speed: 2.7, zone: 'point' },
-        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.60, y: cy - br * 0.65, speed: 2.7, zone: 'deep_off' },
-        { id: 'longon', role: 'Deep Long-On', x: cx + br * 0.60, y: cy - br * 0.65, speed: 2.7, zone: 'longon' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.72, y: cy - br * 0.42, speed: 2.7, zone: 'deep_leg' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.62, y: batsmanY + br * 0.42, speed: 2.7, zone: 'thirdman' }
+        { id: 'cover', role: 'Cover', x: cx - 160, y: cy - 55, speed: 2.4, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 160, speed: 2.4, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 160, speed: 2.4, zone: 'midon' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 175, y: cy + 25, speed: 2.4, zone: 'sqleg' },
+        { id: 'deeppoint', role: 'Deep Point', x: cx - br * 0.80, y: batsmanY - 15, speed: 2.7, zone: 'point' },
+        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.52, y: cy - br * 0.70, speed: 2.7, zone: 'deep_off' },
+        { id: 'longon', role: 'Deep Long-On', x: cx + br * 0.52, y: cy - br * 0.70, speed: 2.7, zone: 'longon' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.78, y: cy - br * 0.38, speed: 2.7, zone: 'deep_leg' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.65, y: batsmanY + br * 0.42, speed: 2.7, zone: 'thirdman' }
       ];
     }
 
@@ -162,11 +162,17 @@ export class FielderManager {
     }
   }
 
-  update(ball) {
+  update(ball, dt = 1, engine = null) {
     if (this.throwTracer) {
-      this.throwTracer.progress += 0.08;
+      this.throwTracer.progress += 0.055 * dt;
       if (this.throwTracer.progress >= 1.0) {
-        this.throwTracer = null;
+        this.throwTracer.progress = 1.0;
+        this.throwTracer.active = false;
+        if (!this.throwTracer.fadeTimer) this.throwTracer.fadeTimer = 12;
+        this.throwTracer.fadeTimer -= dt;
+        if (this.throwTracer.fadeTimer <= 0) {
+          this.throwTracer = null;
+        }
       }
     }
 
@@ -284,11 +290,19 @@ export class FielderManager {
         f.y += (targetY - f.y) * 0.03;
       }
     });
-  }
 
-  getPrimaryChaser() {
-    if (!this.primaryChaserId) return null;
-    return this.fielders.find(f => f.id === this.primaryChaserId) || null;
+    // Automatic field pickup: if ball has slowed down on turf and fielder reaches it, scoop up & throw immediately!
+    if (ball && ball.state === 'HIT' && !ball.isAirborne && !this.throwTracer) {
+      const primary = this.fielders.find(f => f.id === this.primaryChaserId);
+      if (primary) {
+        const d = Math.hypot(primary.x - ball.x, primary.y - ball.y);
+        if (d < 32 && ballSpeed < 5.0) {
+          ball.vx = 0;
+          ball.vy = 0;
+          this.startThrowTracer(primary.x, primary.y, engine, primary.role);
+        }
+      }
+    }
   }
 
   checkFieldInterception(ball, engine = null) {
@@ -329,11 +343,21 @@ export class FielderManager {
 
     // Pick target stumps based on runner direction and closest threat
     let targetY = stumpsY;
+    let targetEnd = 'keeper';
+
     if (engine?.running?.active) {
-      const isBowlerEnd = engine.running.direction === 1
-        ? engine.running.progress < 0.5
-        : engine.running.progress > 0.5;
-      targetY = isBowlerEnd ? bowlerStumpsY : stumpsY;
+      if (engine.running.isCallingRun) {
+        // Direct hit attempt at running batsman's approaching end!
+        const isBowlerEnd = engine.running.direction === 1
+          ? engine.running.progress < 0.5
+          : engine.running.progress > 0.5;
+        targetY = isBowlerEnd ? bowlerStumpsY : stumpsY;
+        targetEnd = isBowlerEnd ? 'bowler' : 'keeper';
+      } else {
+        // Batsmen not running: return ball directly to Keeper (bottom) or Bowler (top)
+        targetY = fromY > cy ? stumpsY : bowlerStumpsY;
+        targetEnd = fromY > cy ? 'keeper' : 'bowler';
+      }
 
       engine.running.throwActive = true;
       engine.running.throwProgress = 0;
@@ -341,7 +365,7 @@ export class FielderManager {
       engine.running.throwFromY = fromY;
       engine.running.throwTargetX = cx;
       engine.running.throwTargetY = targetY;
-      engine.running.throwTargetEnd = isBowlerEnd ? 'bowler' : 'batsman';
+      engine.running.throwTargetEnd = targetEnd;
       engine.running.fielderRole = fielderRole;
     }
 
@@ -350,16 +374,20 @@ export class FielderManager {
       fromY,
       toX: cx,
       toY: targetY,
-      progress: 0
+      targetEnd,
+      progress: 0,
+      active: true,
+      fielderRole
     };
   }
 
   draw(ctx, jerseyColor = '#ef4444') {
-    // Laser throw tracer from fielder to stumps
+    // Laser throw tracer with 2.5D flight arc from fielder to keeper/bowler/stumps
     if (this.throwTracer) {
       const { fromX, fromY, toX, toY, progress } = this.throwTracer;
       const currentX = fromX + (toX - fromX) * progress;
       const currentY = fromY + (toY - fromY) * progress;
+      const throwArcH = Math.sin(progress * Math.PI) * 16;
 
       ctx.save();
       // Glowing throw trajectory
@@ -372,10 +400,16 @@ export class FielderManager {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Airborne thrown ball
+      // Ball shadow on ground
+      ctx.beginPath();
+      ctx.ellipse(currentX, currentY, 4.5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fill();
+
+      // Thrown ball in flight with arc
       ctx.fillStyle = '#dc2626';
       ctx.beginPath();
-      ctx.arc(currentX, currentY, 4.5, 0, Math.PI * 2);
+      ctx.arc(currentX, currentY - throwArcH, 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.2;

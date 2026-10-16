@@ -227,7 +227,7 @@ export default function CricketGame({
 
       if (engine && fielders && !isPaused) {
         const physicsEvent = engine.update(dt);
-        fielders.update(engine.ball);
+        fielders.update(engine.ball, dt, engine);
 
         // Update Camera Targets based on game action & broadcast angles (Image 2):
         const cam = cameraRef.current;
@@ -320,16 +320,38 @@ export default function CricketGame({
           setTimingMeterProgress(engine.ball.flightProgress || 0);
         }
 
-        // Check fielder interception
+        // Check fielder and keeper interception
         if (engine.ball.state === 'HIT') {
-          const interception = fielders.checkFieldInterception(engine.ball, engine);
-          if (interception) {
-            if (interception.type === 'CATCH') {
-              engine.ball.state = 'DEAD';
-              engine.running.active = false;
-              handleBallOutcome({ event: 'CAUGHT', fielder: interception.fielder });
+          // 1. Check Wicket-Keeper catch for outside edges or top edges behind stumps
+          const kd = Math.hypot(engine.ball.x - engine.keeper.x, engine.ball.y - engine.keeper.y);
+          if (engine.ball.isAirborne && engine.ball.height < 24 && kd < 36 && (engine.ball.edgeType === 'outside' || engine.ball.edgeType === 'top')) {
+            engine.ball.state = 'DEAD';
+            engine.running.active = false;
+            engine.keeper.isStumping = true; // quick glove catch animation
+            setTimeout(() => { if (engineRef.current) engineRef.current.keeper.isStumping = false; }, 800);
+            handleBallOutcome({
+              event: 'CAUGHT',
+              fielder: 'Wicket-Keeper',
+              isEdge: true,
+              edgeType: engine.ball.edgeType,
+              shotStyle: engine.batsman.shotStyle
+            });
+          } else {
+            const interception = fielders.checkFieldInterception(engine.ball, engine);
+            if (interception) {
+              if (interception.type === 'CATCH') {
+                engine.ball.state = 'DEAD';
+                engine.running.active = false;
+                handleBallOutcome({
+                  event: 'CAUGHT',
+                  fielder: interception.fielder,
+                  isEdge: !!engine.ball.edgeType,
+                  edgeType: engine.ball.edgeType,
+                  shotStyle: engine.batsman.shotStyle
+                });
+              }
+              // For 'STOP', fielder throws ball to stumps/keeper; engine.running resolves running/run-outs!
             }
-            // For 'STOP', fielder throws ball to stumps; engine.running resolves running/run-outs!
           }
         }
 
@@ -391,7 +413,28 @@ export default function CricketGame({
       setIsCrowdCheering(true);
       setTimeout(() => setIsCrowdCheering(false), 2800);
       if (hapticsEnabled) haptics.heavy();
-      if (outcome.fourType === 'gap') {
+
+      if (outcome.shotStyle === 'late_cut') {
+        badgeText = 'DELICATE LATE CUT! ⚡';
+        badgeType = 'perfect';
+        commentaryLine = 'EXQUISITE LATE CUT! Opened the face of the bat, steered past slips down to third man for FOUR!';
+        triggerSpecialCelebration('late_cut', 'DELICATE LATE CUT! ⚡', 'STEERED PAST SLIPS TO THIRD MAN', 66);
+      } else if (outcome.edgeType === 'outside' || outcome.shotStyle === 'outside_edge') {
+        badgeText = 'THICK OUTSIDE EDGE! 🔥';
+        badgeType = 'good';
+        commentaryLine = 'THICK EDGE! Slices past the diving slip cordon, races away to third man for FOUR!';
+        triggerSpecialCelebration('four', 'THICK EDGE FOR FOUR! 🔥', 'SLICED PAST SLIPS TO THIRD MAN', 64);
+      } else if (outcome.edgeType === 'top' || outcome.shotStyle === 'top_edge') {
+        badgeText = 'TOP EDGE FLIES OVER KEEPER! 🚀';
+        badgeType = 'good';
+        commentaryLine = 'TOP EDGE! Loops high over the wicket-keeper, one bounce into the boundary cushions for FOUR!';
+        triggerSpecialCelebration('four_air', 'TOP EDGE OVER KEEPER! 🚀', 'LOOPS HIGH BEHIND STUMPS TO THE ROPE', 70);
+      } else if (outcome.edgeType === 'inside' || outcome.shotStyle === 'inside_edge') {
+        badgeText = 'INSIDE EDGE TO FINE LEG! ⚡';
+        badgeType = 'good';
+        commentaryLine = 'INSIDE EDGE! Squirts past the leg stump, races away to fine leg for FOUR!';
+        triggerSpecialCelebration('four_gap', 'INSIDE EDGE FOR FOUR! ⚡', 'PAST LEG STUMP TO FINE LEG ROPE', 60);
+      } else if (outcome.fourType === 'gap') {
         badgeText = 'BULLET FOUR IN GAP! ⚡';
         badgeType = 'perfect';
         commentaryLine = 'Precision in the gap! Pierces the infield ring and races away across the turf for FOUR!';
@@ -443,10 +486,22 @@ export default function CricketGame({
       isWicket = true;
       sound.playWicket();
       if (hapticsEnabled) haptics.wicket();
-      badgeText = `CAUGHT BY ${outcome.fielder.toUpperCase()}! 🧤`;
-      badgeType = 'wicket';
-      commentaryLine = `Mistimed in the air and taken cleanly by ${outcome.fielder}!`;
-      triggerSpecialCelebration('catch', 'CAUGHT OUT! 🧤', `BRILLIANT CATCH BY ${outcome.fielder.toUpperCase()}`);
+      if (outcome.edgeType === 'outside' || outcome.shotStyle === 'outside_edge') {
+        badgeText = `EDGED & TAKEN! 🧤 BY ${outcome.fielder.toUpperCase()}`;
+        badgeType = 'wicket';
+        commentaryLine = `EDGED AND TAKEN! Thick outside edge flies into the cordon, sensational catch by ${outcome.fielder}!`;
+        triggerSpecialCelebration('catch', 'EDGED & TAKEN! 🧤', `BRILLIANT CATCH BY ${outcome.fielder.toUpperCase()}`);
+      } else if (outcome.edgeType === 'top' || outcome.shotStyle === 'top_edge') {
+        badgeText = `TOP EDGE CAUGHT! 🧤 BY ${outcome.fielder.toUpperCase()}`;
+        badgeType = 'wicket';
+        commentaryLine = `TOP EDGE! Sky-high mistimed pull taken cleanly under pressure by ${outcome.fielder}!`;
+        triggerSpecialCelebration('catch', 'TOP EDGE CAUGHT! 🧤', `WELL JUDGED CATCH BY ${outcome.fielder.toUpperCase()}`);
+      } else {
+        badgeText = `CAUGHT BY ${outcome.fielder.toUpperCase()}! 🧤`;
+        badgeType = 'wicket';
+        commentaryLine = `Mistimed in the air and taken cleanly by ${outcome.fielder}!`;
+        triggerSpecialCelebration('catch', 'CAUGHT OUT! 🧤', `BRILLIANT CATCH BY ${outcome.fielder.toUpperCase()}`);
+      }
     } else if (outcome.event === 'RUN_OUT') {
       isWicket = true;
       runsScored = outcome.runs || 0;
@@ -1500,6 +1555,15 @@ export default function CricketGame({
                 </div>
                 <div className="mt-1 text-xs sm:text-sm font-mono font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
                   {celebrationOverlay.distanceMeters || 104}M ROCKET INTO THE STANDS! • NEED {runsRemaining} OFF {ballsRemaining}
+                </div>
+              </div>
+            ) : celebrationOverlay.type === 'late_cut' ? (
+              <div className="text-center flex flex-col items-center">
+                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-rose-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
+                  ⚡ DELICATE LATE CUT!
+                </div>
+                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                  STEERED PAST SLIPS TO THIRD MAN • NEED {runsRemaining} OFF {ballsRemaining}
                 </div>
               </div>
             ) : celebrationOverlay.type === 'four_gap' ? (

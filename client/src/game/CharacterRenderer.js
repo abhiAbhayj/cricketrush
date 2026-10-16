@@ -238,6 +238,21 @@ export const CharacterRenderer = {
         reachX = 2;
         reachY = 0 - swingRatio * 5;
         batAngle = 0.2 - swingRatio * 1.6;
+      } else if (shotStyle === 'late_cut') {
+        // Delicate late cut: blade opened late, guiding backward past slips
+        reachX = 4 + swingRatio * 6;
+        reachY = 2 - swingRatio * 4;
+        batAngle = -0.35 - swingRatio * 1.5;
+      } else if (shotStyle === 'top_edge') {
+        // High top edge: bat swung high, checking through bouncer
+        reachX = 3 + swingRatio * 4;
+        reachY = 2 - swingRatio * 12;
+        batAngle = 0.2 + swingRatio * 1.8;
+      } else if (shotStyle === 'outside_edge' || shotStyle === 'inside_edge') {
+        // Edge deflection: bat held firm on contact line
+        reachX = 4 + swingRatio * 3;
+        reachY = 2 - swingRatio * 7;
+        batAngle = 0.05 - swingRatio * 1.6;
       } else if (shotStyle === 'step_out') {
         // Stepping out down the pitch, massive high loft
         reachX = 2;
