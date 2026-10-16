@@ -140,13 +140,13 @@ export const CharacterRenderer = {
     ctx.fillStyle = skinTone;
     ctx.fillRect(-2.5, -9, 5, 3);
 
-    // Helmet Dome
+    // Helmet Dome (Crisp White Batting Helmet - Image 2)
     ctx.beginPath();
     ctx.arc(0, -11, 8, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e3a8a'; // Royal blue batting helmet
+    ctx.fillStyle = '#ffffff'; // White batting helmet
     ctx.fill();
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Helmet Peak / Visor (Facing Bowler)
@@ -395,29 +395,50 @@ export const CharacterRenderer = {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.fill();
 
-    // Athletic Running Stride (Legs pumping with spikes)
+    // Athletic Running Stride (Red Athletic Trousers with White Stripe - Image 2)
     const stride = Math.sin(runUpProgress * Math.PI * 8) * 5.5;
-    ctx.fillStyle = '#ffffff'; // White trousers
-    ctx.fillRect(-7, 2 - stride, 5, 10);
-    ctx.fillRect(2, 2 + stride, 5, 10);
-    // Spikes
+    // Red athletic trousers
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.roundRect(-7, 2 - stride, 5.5, 10, 2);
+    ctx.roundRect(2, 2 + stride, 5.5, 10, 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Crisp White Athletic Side Stripes (Image 2)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-7, 2 - stride, 1.4, 10);
+    ctx.fillRect(6.1, 2 + stride, 1.4, 10);
+
+    // Black Athletic Shoes with White Soles
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-7, 11 - stride, 5, 3);
-    ctx.fillRect(2, 11 + stride, 5, 3);
+    ctx.fillRect(-7, 11.5 - stride, 5.5, 2.5);
+    ctx.fillRect(2, 11.5 + stride, 5.5, 2.5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-7, 13.5 - stride, 5.5, 1);
+    ctx.fillRect(2, 13.5 + stride, 5.5, 1);
 
     // Athletic Red Jersey Torso
     ctx.fillStyle = '#ef4444';
     ctx.beginPath();
     ctx.roundRect(-9, -8, 18, 12, 3);
     ctx.fill();
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // White collar & chest crest
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-3, -8); ctx.lineTo(0, -5); ctx.lineTo(3, -8);
     ctx.stroke();
 
     // Jersey side athletic panels
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-9, -6, 2.5, 8);
-    ctx.fillRect(6.5, -6, 2.5, 8);
+    ctx.fillRect(-9, -6, 2, 8);
+    ctx.fillRect(7, -6, 2, 8);
 
     // Head, Hair/Cap & Facial Features
     ctx.fillStyle = skinTone;
@@ -731,13 +752,13 @@ export const CharacterRenderer = {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     ctx.fillRect(-7, -4, 14, 3);
 
-    // Royal Blue Batting Helmet & Visor facing running direction
-    ctx.fillStyle = '#1e3a8a';
+    // White Batting Helmet & Visor facing running direction (Image 2)
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(0, -11, 7.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
 
     // Helmet Peak pointing in run direction
@@ -855,13 +876,14 @@ export const CharacterRenderer = {
 
   /**
    * Draw Humanoid Fielder in running, diving slide or athletic leaping catch stance
+   * Exact match to Image 2: red athletic trousers with white vertical stripe, red jersey, dark cap, no text clutter
    */
   drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false) {
     ctx.save();
     ctx.translate(x, y);
 
     if (isCatching) {
-      // 1. LEAPING CATCH POSTURE (Airborne jump, cupped hands grasping ball, celebration)
+      // 1. LEAPING CATCH POSTURE (Airborne jump, cupped hands grasping ball)
       // Detached ground shadow below jumping fielder
       ctx.beginPath();
       ctx.ellipse(0, 16, 8, 3.5, 0, 0, Math.PI * 2);
@@ -871,29 +893,52 @@ export const CharacterRenderer = {
       // Body jumped up
       ctx.translate(0, -9);
 
-      // White Trousers & Bent Leaping Legs
+      // Red Athletic Trousers with Crisp White Side Stripe (Image 2)
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.roundRect(-6, 3, 4.5, 8, 2);
+      ctx.roundRect(1.5, 2, 4.5, 9, 2);
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // White Side Stripes
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-6, 4, 4.5, 7);
-      ctx.fillRect(1.5, 3, 4.5, 8);
-      // Spikes
+      ctx.fillRect(-6, 3, 1.2, 8);
+      ctx.fillRect(4.8, 2, 1.2, 9);
+
+      // Black Athletic Shoes
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(-6, 11, 4.5, 2.5);
       ctx.fillRect(1.5, 11, 4.5, 2.5);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, 13, 4.5, 0.8);
+      ctx.fillRect(1.5, 13, 4.5, 0.8);
 
       // Torso angled up towards ball
       ctx.fillStyle = jerseyColor;
       ctx.beginPath();
       ctx.roundRect(-8, -8, 16, 12, 3);
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // Head tilted up
+      // White collar
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-3, -8); ctx.lineTo(0, -5); ctx.lineTo(3, -8);
+      ctx.stroke();
+
+      // Head tilted up with dark cricket cap
       ctx.beginPath();
       ctx.arc(0, -11, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#0f172a';
       ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
       // Extended arms with cupped hands clutching the red cricket ball!
       ctx.strokeStyle = '#c68656';
@@ -927,12 +972,6 @@ export const CharacterRenderer = {
       ctx.moveTo(-4, -19); ctx.lineTo(-8, -19);
       ctx.moveTo(4, -19); ctx.lineTo(8, -19);
       ctx.stroke();
-
-      // Role & Catch Badge
-      ctx.font = '900 9px "Inter", sans-serif';
-      ctx.fillStyle = '#fef08a';
-      ctx.textAlign = 'center';
-      ctx.fillText(`CATCH! ${role.toUpperCase()}`, 0, -28);
     } else if (isDiving) {
       // 2. DIVING SLIDE POSTURE (Horizontal grass slide with extended arm stop)
       ctx.beginPath();
@@ -942,11 +981,19 @@ export const CharacterRenderer = {
 
       // Diving horizontal body slide
       ctx.rotate(0.3);
+      // Red athletic trousers
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-12, 1, 10, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-12, 1, 10, 1);
+
+      // Red Jersey Torso
       ctx.fillStyle = jerseyColor;
       ctx.beginPath();
-      ctx.roundRect(-12, -4, 22, 9, 3);
+      ctx.roundRect(-6, -4, 16, 9, 3);
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
       // Extended arms cutting off ball
@@ -959,209 +1006,95 @@ export const CharacterRenderer = {
       // Head with Cap
       ctx.beginPath();
       ctx.arc(-8, -6, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#0f172a';
       ctx.fill();
-
-      ctx.font = 'bold 9px "Inter", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.textAlign = 'center';
-      ctx.fillText(role, 0, -12);
     } else {
-      // 3. UPRIGHT ATHLETIC POSTURE (Alert stance / sprinting)
+      // 3. UPRIGHT ATHLETIC POSTURE (Alert stance / sprinting - Exact Image 2 Style)
+      // Ground Shadow
       ctx.beginPath();
-      ctx.ellipse(0, 7, 10, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 14, 11, 4.5, 0, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.fill();
 
-      // Upright athletic torso
-      ctx.fillStyle = jerseyColor;
+      // Red Athletic Trousers with Crisp White Side Stripe (Image 2)
+      ctx.fillStyle = '#dc2626';
       ctx.beginPath();
-      ctx.roundRect(-7, -6, 14, 10, 3);
+      ctx.roundRect(-6.5, 3, 5, 10, 2);
+      ctx.roundRect(1.5, 3, 5, 10, 2);
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
+      ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Head with Cap
-      ctx.beginPath();
-      ctx.arc(0, -8, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#1e293b';
-      ctx.fill();
+      // White Side Stripes
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6.5, 3, 1.4, 10);
+      ctx.fillRect(5.1, 3, 1.4, 10);
 
-      // Cap visor
+      // Black Athletic Shoes with White Soles
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-6.5, 12, 5, 2.5);
+      ctx.fillRect(1.5, 12, 5, 2.5);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6.5, 14, 5, 1);
+      ctx.fillRect(1.5, 14, 5, 1);
+
+      // Red Athletic Jersey Torso
+      ctx.fillStyle = jerseyColor;
+      ctx.beginPath();
+      ctx.roundRect(-8, -7, 16, 11, 3);
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // White collar
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(0, -5, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(-3, -7); ctx.lineTo(0, -4); ctx.lineTo(3, -7);
+      ctx.stroke();
 
-      ctx.font = 'bold 9px "Inter", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.textAlign = 'center';
-      ctx.fillText(role, 0, -15);
-    }
-
-    ctx.restore();
-  },
-
-  /**
-   * Draw ICC Regulation 30-Yard Infield Fielding Circle & White Marker Discs
-   */
-  draw30YardCircle(ctx, cx, cy, rx, ry) {
-    ctx.save();
-    // 30-Yard White Dashed Guideline
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.42)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 8]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 20 White Regulation Circular Marker Discs along the circle
-    const numDiscs = 20;
-    for (let i = 0; i < numDiscs; i++) {
-      const angle = (i / numDiscs) * Math.PI * 2;
-      const dx = cx + Math.cos(angle) * rx;
-      const dy = cy + Math.sin(angle) * ry;
+      // Alert Arms
+      ctx.strokeStyle = jerseyColor;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.moveTo(-6, -4); ctx.lineTo(-9, 1);
+      ctx.moveTo(6, -4); ctx.lineTo(9, 1);
+      ctx.stroke();
+      ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 0.8;
       ctx.stroke();
-    }
-    ctx.restore();
-  },
 
-  /**
-   * Draw Athletic Running Batsman sprinting between wickets with pumping pads and bat slide
-   */
-  drawRunner(ctx, x, y, {
-    isStriker = true,
-    runProgress = 0,
-    runDirection = 1, // 1: running downward, -1: running upward
-    isSliding = false,
-    jerseyColor = '#2563eb'
-  }) {
-    ctx.save();
-    ctx.translate(x, y);
+      // Skin hands
+      ctx.fillStyle = '#c68656';
+      ctx.beginPath();
+      ctx.arc(-9, 2, 2, 0, Math.PI * 2);
+      ctx.arc(9, 2, 2, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Dynamic sprint oscillation based on running progress
-    const strideFreq = runProgress * 28;
-    const legPhase = Math.sin(strideFreq);
-    const armPhase = Math.cos(strideFreq);
-
-    // Ground Shadow
-    ctx.beginPath();
-    ctx.ellipse(0, 6, isSliding ? 14 : 9, isSliding ? 4 : 5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.fill();
-
-    if (isSliding) {
-      // DIVE / BAT SLIDE POSTURE ACROSS CREASE
-      const slideDir = runDirection;
-      ctx.rotate(slideDir > 0 ? 0.35 : -0.35);
-
-      // Trailing legs with white pads
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#94a3b8';
+      // Head & Dark Cricket Cap (Facing pitch center)
+      ctx.beginPath();
+      ctx.arc(0, -11, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(-10, slideDir > 0 ? -16 : 8, 5, 10, 2);
-      ctx.roundRect(-4, slideDir > 0 ? -18 : 10, 5, 10, 2);
-      ctx.fill();
       ctx.stroke();
 
-      // Slid Torso
-      ctx.fillStyle = jerseyColor;
-      ctx.beginPath();
-      ctx.roundRect(-7, -4, 14, 8, 3);
-      ctx.fill();
-
-      // Outstretched Arms & Bat Sliding Over Turf
-      ctx.strokeStyle = '#c68656';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(3, 0);
-      ctx.lineTo(12, slideDir > 0 ? 10 : -10);
-      ctx.stroke();
-
-      // Cricket Bat stretched ahead
-      ctx.save();
-      ctx.translate(12, slideDir > 0 ? 10 : -10);
-      ctx.rotate(slideDir > 0 ? 0.8 : -0.8);
-      ctx.fillStyle = '#d97706';
-      ctx.fillRect(-2, 0, 4, 16);
-      // Bat handle
+      // Cap Visor pointing towards batsman
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-1, -6, 2, 6);
-      ctx.restore();
-
-      // Helmeted Head
-      ctx.fillStyle = '#1e3a8a';
       ctx.beginPath();
-      ctx.arc(0, slideDir > 0 ? 4 : -4, 5, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // SPRINTING ATHLETIC POSTURE
-      const leftPadY = legPhase * 6;
-      const rightPadY = -legPhase * 6;
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 1;
-
-      // Left leg & pad
-      ctx.beginPath();
-      ctx.roundRect(-7, leftPadY - 2, 5.5, 10, 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Right leg & pad
-      ctx.beginPath();
-      ctx.roundRect(2, rightPadY - 2, 5.5, 10, 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Running Torso (forward leaning in run direction)
-      ctx.fillStyle = jerseyColor;
-      ctx.beginPath();
-      ctx.roundRect(-6, -7, 12, 10, 3);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Pumping Arms holding Willow Bat
-      ctx.strokeStyle = '#d49b70';
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.moveTo(-6, -3);
-      ctx.lineTo(-10, armPhase * 5);
-      ctx.moveTo(6, -3);
-      ctx.lineTo(10, -armPhase * 5);
-      ctx.stroke();
-
-      // Bat carried in hand
-      ctx.save();
-      ctx.translate(8, -armPhase * 5);
-      ctx.rotate(runDirection > 0 ? 0.4 : -0.4);
-      ctx.fillStyle = '#d97706';
-      ctx.fillRect(-2, 0, 3.5, 12);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-1, -4, 2, 4);
-      ctx.restore();
-
-      // Helmet
-      ctx.fillStyle = '#1e3a8a';
-      ctx.beginPath();
-      ctx.arc(0, -9, 5, 0, Math.PI * 2);
+      ctx.ellipse(0, -6.5, 4, 2, 0, 0, Math.PI);
       ctx.fill();
 
-      // Helmet visor
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(-2, runDirection > 0 ? -7 : -12, 4, 2);
+      // Focused Eyes
+      ctx.fillStyle = '#c68656';
+      ctx.fillRect(-3, -11, 6, 2.5);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-2, -10.5, 1.5, 1);
+      ctx.fillRect(0.5, -10.5, 1.5, 1);
+      // NOTE: Zero text labels rendered here for maximum visual clarity!
     }
 
     ctx.restore();

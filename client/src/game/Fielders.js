@@ -43,56 +43,56 @@ export class FielderManager {
     let targetPlacements = [];
 
     if (preset === 'attacking') {
-      // Aggressive wicket-taking field: 2 Slips in, Short Leg, Silly Point, Ring Up!
+      // Aggressive wicket-taking field: 2 Slips on off-side, Gully, Ring Up, Deep Mid-Wkt back (Off the pitch!)
       targetPlacements = [
-        { id: 'slip1', role: '1st Slip', x: cx - 28, y: batsmanY + 28, speed: 3.8, zone: 'slips' },
-        { id: 'slip2', role: '2nd Slip', x: cx - 44, y: batsmanY + 34, speed: 3.8, zone: 'slips' },
-        { id: 'gully', role: 'Gully', x: cx - 68, y: batsmanY + 20, speed: 3.9, zone: 'gully' },
-        { id: 'sillypoint', role: 'Silly Point', x: cx - 45, y: batsmanY - 30, speed: 3.6, zone: 'sillypoint' },
-        { id: 'cover', role: 'Short Cover', x: cx - br * 0.36, y: batsmanY - 80, speed: 3.8, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 55, y: cy - 70, speed: 3.5, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 55, y: cy - 70, speed: 3.5, zone: 'midon' },
-        { id: 'shortleg', role: 'Short Leg', x: cx + 38, y: batsmanY - 20, speed: 3.7, zone: 'shortleg' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.65, y: cy - br * 0.45, speed: 4.2, zone: 'deep_leg' }
+        { id: 'slip1', role: '1st Slip', x: cx - 75, y: batsmanY + 40, speed: 3.8, zone: 'slips' },
+        { id: 'slip2', role: '2nd Slip', x: cx - 95, y: batsmanY + 50, speed: 3.8, zone: 'slips' },
+        { id: 'gully', role: 'Gully', x: cx - 125, y: batsmanY + 20, speed: 3.9, zone: 'gully' },
+        { id: 'cover', role: 'Cover', x: cx - 145, y: cy - 60, speed: 3.8, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 95, y: cy - 120, speed: 3.5, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 95, y: cy - 120, speed: 3.5, zone: 'midon' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 135, y: cy - 50, speed: 3.6, zone: 'midwicket' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 145, y: batsmanY + 20, speed: 3.7, zone: 'sqleg' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.70, y: cy - br * 0.45, speed: 4.2, zone: 'deep_leg' }
       ];
     } else if (preset === 'offside_defensive') {
       // Packed off-side boundary ring: Deep Extra Cover back, Deep Point back, Third Man back
       targetPlacements = [
-        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.58, y: batsmanY + br * 0.48, speed: 4.2, zone: 'thirdman' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: cx - br * 0.60, y: batsmanY + br * 0.45, speed: 4.2, zone: 'thirdman' },
         { id: 'point', role: 'Deep Point', x: cx - br * 0.75, y: batsmanY - 20, speed: 4.0, zone: 'point' },
-        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.72, y: cy - br * 0.35, speed: 4.2, zone: 'cover' },
-        { id: 'cover', role: 'Extra Cover', x: cx - br * 0.38, y: batsmanY - 90, speed: 3.7, zone: 'cover' },
-        { id: 'midoff', role: 'Long-Off', x: cx - br * 0.60, y: cy - br * 0.65, speed: 4.1, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 65, y: cy - 75, speed: 3.5, zone: 'midon' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: cx + br * 0.42, y: batsmanY - 75, speed: 3.6, zone: 'midwicket' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + br * 0.50, y: batsmanY + 15, speed: 3.5, zone: 'sqleg' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.65, y: cy - br * 0.48, speed: 4.2, zone: 'deep_leg' }
+        { id: 'deepcover', role: 'Deep Cover', x: cx - br * 0.72, y: cy - 60, speed: 4.2, zone: 'cover' },
+        { id: 'cover', role: 'Extra Cover', x: cx - 150, y: cy - 70, speed: 3.7, zone: 'cover' },
+        { id: 'midoff', role: 'Long-Off', x: cx - br * 0.62, y: cy - br * 0.65, speed: 4.1, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 100, y: cy - 120, speed: 3.5, zone: 'midon' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 150, y: cy - 50, speed: 3.6, zone: 'midwicket' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + 160, y: batsmanY + 20, speed: 3.5, zone: 'sqleg' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.68, y: cy - br * 0.48, speed: 4.2, zone: 'deep_leg' }
       ];
     } else if (preset === 'legside_defensive') {
       // Leg-side trap: Deep Square Leg, Deep Mid-Wicket, Long-On back on rope!
       targetPlacements = [
-        { id: 'slip', role: 'Slip', x: cx - 38, y: batsmanY + 30, speed: 3.5, zone: 'slips' },
-        { id: 'point', role: 'Point', x: cx - br * 0.50, y: batsmanY - 15, speed: 3.6, zone: 'point' },
-        { id: 'cover', role: 'Cover', x: cx - br * 0.42, y: batsmanY - 90, speed: 3.8, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 65, y: cy - 75, speed: 3.4, zone: 'midoff' },
-        { id: 'longon', role: 'Long-On', x: cx + br * 0.55, y: cy - br * 0.65, speed: 4.2, zone: 'longon' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: cx + br * 0.38, y: batsmanY - 75, speed: 3.6, zone: 'midwicket' },
+        { id: 'slip', role: 'Slip', x: cx - 80, y: batsmanY + 45, speed: 3.5, zone: 'slips' },
+        { id: 'point', role: 'Point', x: cx - 150, y: batsmanY - 15, speed: 3.6, zone: 'point' },
+        { id: 'cover', role: 'Cover', x: cx - 140, y: cy - 70, speed: 3.8, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 100, y: cy - 120, speed: 3.4, zone: 'midoff' },
+        { id: 'longon', role: 'Long-On', x: cx + br * 0.58, y: cy - br * 0.65, speed: 4.2, zone: 'longon' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + 130, y: cy - 60, speed: 3.6, zone: 'midwicket' },
         { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.72, y: cy - br * 0.38, speed: 4.3, zone: 'deep_leg' },
-        { id: 'sqleg', role: 'Deep Sq Leg', x: cx + br * 0.70, y: batsmanY + 25, speed: 4.2, zone: 'deep_sqleg' },
-        { id: 'fineleg', role: 'Short Fine Leg', x: cx + 45, y: batsmanY + 38, speed: 3.6, zone: 'fineleg' }
+        { id: 'sqleg', role: 'Deep Sq Leg', x: cx + br * 0.70, y: batsmanY + 30, speed: 4.2, zone: 'deep_sqleg' },
+        { id: 'fineleg', role: 'Fine Leg', x: cx + 100, y: batsmanY + 50, speed: 3.6, zone: 'fineleg' }
       ];
     } else {
-      // Balanced Standard Cricket Field (Default)
+      // Balanced Standard Cricket Field (Default - Matching Image 2)
       targetPlacements = [
-        { id: 'slip', role: 'Slip', x: cx - 38, y: batsmanY + 32, speed: 3.4, zone: 'slips' },
-        { id: 'point', role: 'Point', x: cx - br * 0.52, y: batsmanY - 15, speed: 3.6, zone: 'point' },
-        { id: 'cover', role: 'Cover', x: cx - br * 0.44, y: batsmanY - 95, speed: 3.8, zone: 'cover' },
-        { id: 'midoff', role: 'Mid-Off', x: cx - 65, y: cy - 75, speed: 3.4, zone: 'midoff' },
-        { id: 'midon', role: 'Mid-On', x: cx + 65, y: cy - 75, speed: 3.4, zone: 'midon' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: cx + br * 0.46, y: batsmanY - 80, speed: 3.7, zone: 'midwicket' },
-        { id: 'sqleg', role: 'Square Leg', x: cx + br * 0.52, y: batsmanY + 12, speed: 3.5, zone: 'sqleg' },
-        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.65, y: cy - br * 0.62, speed: 4.2, zone: 'deep_off' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.68, y: cy - br * 0.52, speed: 4.2, zone: 'deep_leg' }
+        { id: 'slip', role: 'Slip', x: cx - 85, y: batsmanY + 45, speed: 3.4, zone: 'slips' },
+        { id: 'point', role: 'Deep Point', x: cx - br * 0.65, y: batsmanY - 20, speed: 3.6, zone: 'point' },
+        { id: 'cover', role: 'Cover', x: cx - br * 0.48, y: cy - 60, speed: 3.8, zone: 'cover' },
+        { id: 'midoff', role: 'Mid-Off', x: cx - 100, y: cy - 130, speed: 3.4, zone: 'midoff' },
+        { id: 'midon', role: 'Mid-On', x: cx + 100, y: cy - 130, speed: 3.4, zone: 'midon' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: cx + br * 0.48, y: cy - 50, speed: 3.7, zone: 'midwicket' },
+        { id: 'sqleg', role: 'Square Leg', x: cx + br * 0.52, y: batsmanY + 15, speed: 3.5, zone: 'sqleg' },
+        { id: 'longoff', role: 'Deep Long-Off', x: cx - br * 0.68, y: cy - br * 0.62, speed: 4.2, zone: 'deep_off' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: cx + br * 0.70, y: cy - br * 0.48, speed: 4.2, zone: 'deep_leg' }
       ];
     }
 

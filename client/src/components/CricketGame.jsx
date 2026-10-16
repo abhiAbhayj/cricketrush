@@ -130,15 +130,15 @@ export default function CricketGame({
   const [footworkNotice, setFootworkNotice] = useState(null);
   const pointerStartRef = useRef({ x: 0, y: 0, time: 0 });
 
-  // Dynamic Multi-Angle Broadcast Camera System
+  // Dynamic Multi-Angle Broadcast Camera System (Centered pitch view matching Image 2)
   const cameraRef = useRef({
     x: 0,
     y: 0,
-    zoom: 1.45,
+    zoom: 1.0,
     targetX: 0,
     targetY: 0,
-    targetZoom: 1.45,
-    mode: 'PITCH_CLOSEUP'
+    targetZoom: 1.0,
+    mode: 'PITCH_CENTER'
   });
 
   // Interactive Running Between Wickets State
@@ -190,13 +190,13 @@ export default function CricketGame({
         fieldersRef.current.resize(width, height, engineRef.current.boundaryRadius);
       }
 
-      // Initialize camera centered on pitch
+      // Initialize camera centered on pitch (matching Image 2)
       cameraRef.current.x = width / 2;
       cameraRef.current.y = height * 0.52;
       cameraRef.current.targetX = width / 2;
       cameraRef.current.targetY = height * 0.52;
-      cameraRef.current.zoom = 1.42;
-      cameraRef.current.targetZoom = 1.42;
+      cameraRef.current.zoom = 1.0;
+      cameraRef.current.targetZoom = 1.0;
     };
 
     updateSize();
@@ -228,19 +228,17 @@ export default function CricketGame({
         const physicsEvent = engine.update(dt);
         fielders.update(engine.ball);
 
-        // Update Camera Targets based on game action & broadcast angles:
+        // Update Camera Targets based on game action & broadcast angles (Image 2):
         const cam = cameraRef.current;
         const cx = engine.cx;
         const cy = engine.cy;
-        const pitchCenterY = (engine.pitchTop + engine.pitchBottom) / 2;
-        const batsmanY = engine.batsmanCreaseY;
 
         if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE') {
-          // Angle 1: PITCH_CLOSEUP - camera zoomed in on pitch & 30-yard circle fielders only!
-          cam.mode = 'PITCH_CLOSEUP';
+          // Clean centered pitch view matching Image 2
+          cam.mode = 'PITCH_CENTER';
           cam.targetX = cx;
-          cam.targetY = batsmanY - 45;
-          cam.targetZoom = 1.42;
+          cam.targetY = cy;
+          cam.targetZoom = 1.0;
         } else if (engine.ball.state === 'HIT') {
           if (engine.ball.isRocketSix) {
             // Angle 4: SIX_SKYCAM - high aerial panoramic tracking soaring six into the stands!
@@ -249,30 +247,24 @@ export default function CricketGame({
             cam.targetY = engine.ball.y;
             cam.targetZoom = 0.92;
           } else if (engine.running?.active && engine.running?.isCallingRun) {
-            // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting and sliding!
+            // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
             cam.mode = 'RUNNING_PITCH';
             cam.targetX = cx;
-            cam.targetY = pitchCenterY;
-            cam.targetZoom = 1.35;
+            cam.targetY = cy;
+            cam.targetZoom = 1.05;
           } else {
-            // Angle 2: BALL_FOLLOW - traveling camera as ball crosses 30-yard ring to deep outfield!
+            // Angle 2: BALL_FOLLOW - traveling camera following ball across grass!
             cam.mode = 'BALL_FOLLOW';
             cam.targetX = engine.ball.x;
             cam.targetY = engine.ball.y;
             const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
-            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 1.10 : 1.35;
+            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.95 : 1.02;
           }
         } else {
           // DEAD / OVER_PAUSE
-          if (engine.running?.runsCompleted > 0) {
-            cam.targetX = cx;
-            cam.targetY = pitchCenterY;
-            cam.targetZoom = 1.35;
-          } else {
-            cam.targetX = cx;
-            cam.targetY = batsmanY - 45;
-            cam.targetZoom = 1.42;
-          }
+          cam.targetX = cx;
+          cam.targetY = cy;
+          cam.targetZoom = 1.0;
         }
 
         // Smooth camera matrix interpolation
@@ -801,14 +793,6 @@ export default function CricketGame({
       sixLanding: engine.sixLanding
     });
 
-    // 2b. Official ICC 30-Yard Infield Fielding Circle & Regulation Marker Discs
-    CharacterRenderer.draw30YardCircle(
-      ctx,
-      cx,
-      engine.cy,
-      engine.innerCircleRadiusX || 140,
-      engine.innerCircleRadiusY || 165
-    );
 
     // 3. Pitch Strip: Sandy beige turf pitch
     const pw = engine.pitchWidth;
@@ -1199,9 +1183,9 @@ export default function CricketGame({
 
               <div className="flex items-center gap-2">
                 <div className="text-xs sm:text-sm font-bold text-white tracking-tight whitespace-nowrap">
-                  Need <span className="text-[#facc15] font-black">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
+                  Need <span className="text-[#ef4444] font-black">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
                 </div>
-                <div className="px-2 py-0.5 rounded-md bg-[#facc15] font-display font-black text-xs text-slate-950 tracking-wider whitespace-nowrap shadow-sm">
+                <div className="px-2 py-0.5 rounded-md bg-[#ef4444] font-display font-black text-xs text-white tracking-wider whitespace-nowrap shadow-sm">
                   RRR {rrr}
                 </div>
               </div>

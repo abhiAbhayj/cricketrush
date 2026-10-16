@@ -21,11 +21,11 @@ export class CricketPhysics {
     const isPortrait = this.height > this.width;
 
     if (isPortrait) {
-      // Authentic portrait cricket field matching reference screenshot:
-      // Pitch in lower-middle half, leaving upper area for bowler run-up and scoreboard
-      this.pitchWidth = Math.min(84, Math.max(68, this.width * 0.22));
-      this.pitchTop = this.height * 0.48;
-      this.pitchBottom = this.height * 0.83;
+      // Authentic portrait cricket field matching reference screenshot (Image 2):
+      // Centered pitch strip with clean grass margins on all sides
+      this.pitchWidth = Math.min(88, Math.max(72, this.width * 0.22));
+      this.pitchTop = this.height * 0.26;
+      this.pitchBottom = this.height * 0.78;
       this.pitchLength = this.pitchBottom - this.pitchTop;
 
       this.bowlerCreaseY = this.pitchTop + 32;
@@ -86,8 +86,8 @@ export class CricketPhysics {
 
     // Bowler at top crease
     this.bowler = {
-      x: this.cx - 16,
-      y: this.pitchTop - 25,
+      x: this.cx - 20,
+      y: this.pitchTop + 10,
       runUpProgress: 0,
       isBowling: false,
       bowlingArmAngle: 0,
@@ -127,14 +127,14 @@ export class CricketPhysics {
 
     // Non-striker Batsman at top crease
     this.nonStriker = {
-      x: this.cx + this.pitchWidth * 0.42,
-      y: this.bowlerCreaseY - 4
+      x: this.cx + this.pitchWidth * 0.44 + 8,
+      y: this.bowlerCreaseY + 6
     };
 
     // Wicket Keeper directly behind bottom stumps
     this.keeper = {
       x: this.cx,
-      y: this.stumpsY + 24,
+      y: this.stumpsY + 20,
       isStumping: false
     };
 
