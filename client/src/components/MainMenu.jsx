@@ -117,7 +117,7 @@ export default function MainMenu({
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/70 whitespace-nowrap mr-1">
                 Formats:
               </span>
-              {[10, 12, 22, 30, 40, 60].map((balls) => (
+              {[6, 12, 16, 18, 20, 24, 30].map((balls) => (
                 <button
                   key={balls}
                   onClick={(e) => {

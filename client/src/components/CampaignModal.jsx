@@ -6,58 +6,58 @@ import { ArrowLeft, Play, Lock, CheckCircle2, Trophy, MapPin, Zap } from 'lucide
 const CAMPAIGN_LEVELS = [
   {
     id: 1,
-    title: 'Melbourne Inaugural',
+    title: 'Melbourne Super Over',
     stadiumKey: 'colosseum',
-    targetRuns: 16,
+    targetRuns: 18,
     ballsAllowed: 6,
     wicketsAllowed: 2,
     bowlerType: 'fast',
     rewardCoins: 200,
-    desc: 'Kick off your campaign under the roaring floodlights of Melbourne.'
+    desc: 'Kick off your campaign with an intense 1-over Super Over under the Melbourne floodlights.'
   },
   {
     id: 2,
-    title: 'Sharjah Blitzkrieg',
+    title: 'Sharjah Death Overs Blast',
     stadiumKey: 'sharjah',
-    targetRuns: 22,
-    ballsAllowed: 6,
+    targetRuns: 34,
+    ballsAllowed: 12,
     wicketsAllowed: 2,
-    bowlerType: 'fast',
-    rewardCoins: 300,
-    desc: 'Short boundaries! Smash huge maximums into the desert night sky.'
+    bowlerType: 'legspin',
+    rewardCoins: 350,
+    desc: '2-over death chase! Read the googlies and launch maximums into the desert night sky.'
   },
   {
     id: 3,
     title: 'Eden Gardens Spin Web',
     stadiumKey: 'eden',
-    targetRuns: 20,
-    ballsAllowed: 6,
-    wicketsAllowed: 1,
-    bowlerType: 'spin',
-    rewardCoins: 400,
-    desc: 'Beware the mystery doosra and sharp turning spinners in front of 80k fans.'
+    targetRuns: 44,
+    ballsAllowed: 18,
+    wicketsAllowed: 3,
+    bowlerType: 'offspin',
+    rewardCoins: 500,
+    desc: 'Need 44 off 18 balls against mystery doosra and carrom balls in front of 80,000 fans.'
   },
   {
     id: 4,
-    title: "Lord's Swing Masterclass",
+    title: "Lord's Powerplay Masterclass",
     stadiumKey: 'lords',
-    targetRuns: 24,
-    ballsAllowed: 6,
-    wicketsAllowed: 2,
+    targetRuns: 48,
+    ballsAllowed: 20,
+    wicketsAllowed: 3,
     bowlerType: 'swing',
-    rewardCoins: 500,
-    desc: 'Tricky overcast English conditions with devastating late in-swing.'
+    rewardCoins: 650,
+    desc: '20-ball powerplay! Punish the swinging Dukes ball into the iconic Lord\'s pavilion.'
   },
   {
     id: 5,
-    title: 'Grand World Final',
+    title: 'Grand World Final Climax',
     stadiumKey: 'colosseum',
-    targetRuns: 30,
-    ballsAllowed: 6,
-    wicketsAllowed: 1,
+    targetRuns: 56,
+    ballsAllowed: 24,
+    wicketsAllowed: 4,
     bowlerType: 'fast',
-    rewardCoins: 1000,
-    desc: 'Ultimate championship climax: 30 runs needed off 6 yorkers!'
+    rewardCoins: 1200,
+    desc: '4 overs, 56 runs to glory! The ultimate championship chase against 150 km/h express pace.'
   }
 ];
 

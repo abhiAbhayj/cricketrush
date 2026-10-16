@@ -54,13 +54,13 @@ export default function CricketGame({
   const fieldersRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  // Match State initialized matching authentic match situation
-  const [teamCode] = useState(matchConfig?.teamCode || 'AHF');
-  const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 104);
-  const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 3);
-  const [targetRuns] = useState(matchConfig?.targetRuns || 72);
-  const [totalBalls] = useState(matchConfig?.ballsAllowed || 33);
-  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 7);
+  // Match State initialized matching authentic situational chase (Image 1 & 2)
+  const [teamCode] = useState(matchConfig?.teamCode || 'JAJ');
+  const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 124);
+  const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
+  const [targetRuns] = useState(matchConfig?.targetRuns || 43);
+  const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
+  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
   const [bowlerType] = useState(matchConfig?.bowlerType || 'fast');
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
 
@@ -71,7 +71,7 @@ export default function CricketGame({
 
   // Batsmen and Bowler details (authentic match initialization from 0)
   const [striker, setStriker] = useState({
-    name: profile?.playerName || 'M. Sarkhel',
+    name: profile?.playerName || matchConfig?.strikerName || 'R. Bhende',
     runs: 0,
     balls: 0,
     fiftiesClaimed: false,
@@ -79,16 +79,16 @@ export default function CricketGame({
   });
 
   const [nonStriker] = useState({
-    name: 'R. Fairhurst',
-    runs: 0,
-    balls: 0
+    name: matchConfig?.nonStrikerName || 'S. Ghatpande',
+    runs: 15,
+    balls: 5
   });
 
   const [bowler, setBowler] = useState({
-    name: 'V. Bhojane',
+    name: matchConfig?.bowlerName || 'E. Kirtland',
     wickets: 0,
-    runsConceded: 0,
-    overs: '0.0'
+    runsConceded: 21,
+    overs: '1.0'
   });
 
   // Current over balls array: starts empty [ ]
@@ -124,6 +124,24 @@ export default function CricketGame({
 
   // Wagon wheel shot tracking for desktop sidebar
   const [wagonWheelShots, setWagonWheelShots] = useState([]);
+  const [showPhaseBanner, setShowPhaseBanner] = useState(true);
+  const [footworkNotice, setFootworkNotice] = useState(null);
+  const pointerStartRef = useRef({ x: 0, y: 0, time: 0 });
+
+  const showFootworkAlert = (text) => {
+    setFootworkNotice(text);
+    setTimeout(() => {
+      setFootworkNotice(prev => (prev === text ? null : prev));
+    }, 1400);
+  };
+
+  // Auto-hide cinematic match phase intro banner
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPhaseBanner(false);
+    }, 3400);
+    return () => clearTimeout(timer);
+  }, []);
 
   const stadium = STADIUMS[stadiumKey] || STADIUMS.colosseum;
 
@@ -531,6 +549,7 @@ export default function CricketGame({
   // Restart match handler (resets score cleanly from 0)
   const handleRestartChase = () => {
     setIsPaused(false);
+    setShowPhaseBanner(true);
     setCurrentRunsScored(0);
     setCurrentBallsFaced(0);
     setCurrentWicketsLost(0);
@@ -559,21 +578,25 @@ export default function CricketGame({
         engineRef.current?.shuffleLeft();
         setBatsmanCreasePosition('left');
         sound.playClick();
+        showFootworkAlert('SHUFFLE OFF ⬅️');
       } else if (e.code === 'ArrowRight') {
         e.preventDefault();
         engineRef.current?.shuffleRight();
         setBatsmanCreasePosition('right');
         sound.playClick();
+        showFootworkAlert('SHUFFLE LEG ➡️');
       } else if (e.code === 'ArrowUp') {
         e.preventDefault();
         engineRef.current?.stepOut();
         setBatsmanCreasePosition('step_out');
         sound.playClick();
+        showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
       } else if (e.code === 'ArrowDown') {
         e.preventDefault();
         engineRef.current?.resetCrease();
         setBatsmanCreasePosition('center');
         sound.playClick();
+        showFootworkAlert('CREASE STANCE ⬇️');
       } else if (e.code === 'Escape' || e.code === 'KeyP') {
         setIsPaused(prev => !prev);
       }
@@ -785,14 +808,33 @@ export default function CricketGame({
 
       // Trajectory Flight & Rocket Comet Tail Tracer Line
       if (b.trail && b.trail.length > 2) {
-        ctx.beginPath();
-        ctx.moveTo(b.trail[0].x, b.trail[0].y);
-        for (let i = 1; i < b.trail.length; i++) {
-          ctx.lineTo(b.trail[i].x, b.trail[i].y);
+        if (b.state === 'BOWLED') {
+          // Virtual-Eye Delivery Flight Tracer (Broadcast Ball Tracking)
+          ctx.save();
+          for (let i = 1; i < b.trail.length; i++) {
+            const p1 = b.trail[i - 1];
+            const p2 = b.trail[i];
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            // Pre-bounce: neon cyan; Post-bounce: vibrant amber showing seam/spin deviation!
+            ctx.strokeStyle = p2.hasBounced ? 'rgba(250, 204, 21, 0.95)' : 'rgba(56, 189, 248, 0.9)';
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = p2.hasBounced ? '#eab308' : '#0284c7';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(b.trail[0].x, b.trail[0].y);
+          for (let i = 1; i < b.trail.length; i++) {
+            ctx.lineTo(b.trail[i].x, b.trail[i].y);
+          }
+          ctx.strokeStyle = b.isRocketSix ? 'rgba(245, 158, 11, 0.95)' : b.state === 'HIT' ? 'rgba(234, 179, 8, 0.75)' : 'rgba(255, 255, 255, 0.6)';
+          ctx.lineWidth = b.isRocketSix ? 4.0 : 2.5;
+          ctx.stroke();
         }
-        ctx.strokeStyle = b.isRocketSix ? 'rgba(245, 158, 11, 0.85)' : b.state === 'HIT' ? 'rgba(234, 179, 8, 0.7)' : 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = b.isRocketSix ? 3.5 : 2;
-        ctx.stroke();
       }
 
       // Scaled airborne cricket ball with rocket altitude
@@ -968,18 +1010,18 @@ export default function CricketGame({
 
               <div className="flex items-center gap-2">
                 <div className="text-xs sm:text-sm font-bold text-white tracking-tight whitespace-nowrap">
-                  Need <span className="text-red-500 font-extrabold">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
+                  Need <span className="text-[#facc15] font-black">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
                 </div>
-                <div className="px-2 py-0.5 rounded-md bg-[#ef4444] font-display font-black text-xs text-white tracking-wider whitespace-nowrap shadow-sm">
+                <div className="px-2 py-0.5 rounded-md bg-[#facc15] font-display font-black text-xs text-slate-950 tracking-wider whitespace-nowrap shadow-sm">
                   RRR {rrr}
                 </div>
               </div>
             </div>
 
-            {/* ROW 2: Striker (Yellow Dot) & Non-Striker details */}
+            {/* ROW 2: Striker (Gold Arrow) & Non-Striker details */}
             <div className="mt-2 pt-1.5 border-t border-[#182337] flex items-center justify-between text-xs text-slate-300">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block shadow-sm shadow-yellow-400/80" />
+                <span className="text-[#facc15] font-black text-xs">▸</span>
                 <span className="font-bold text-white truncate max-w-[120px] sm:max-w-none">{striker.name}</span>
                 <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono">L</span>
                 <span className="font-extrabold text-white">{striker.runs}</span>
@@ -997,7 +1039,7 @@ export default function CricketGame({
             {/* ROW 3: Bowler Stats, Delivery Variation Badge & Current Over Circles */}
             <div className="mt-1 flex items-center justify-between text-xs gap-1">
               <div className="flex items-center gap-1.5 text-slate-300 truncate">
-                <span className="w-2 h-2 rounded-full border border-red-500 bg-red-500/20 inline-block flex-shrink-0" />
+                <span className="text-red-500 font-bold text-xs">⦿</span>
                 <span className="font-medium text-slate-200 truncate">{bowler.name}</span>
                 <span className="font-bold text-white">{bowler.wickets}-{bowler.runsConceded}</span>
                 <span className="text-slate-400 text-[11px]">({bowler.overs})</span>
@@ -1024,7 +1066,7 @@ export default function CricketGame({
                     <div
                       key={idx}
                       className={`w-5 h-5 rounded-full flex items-center justify-center font-display font-black text-[10px] text-white shadow-sm ${
-                        isSix ? 'bg-[#9333ea] shadow-purple-500/50' : isFour ? 'bg-emerald-600' : isWicket ? 'bg-red-600' : isWide ? 'bg-amber-600' : 'bg-[#334155]'
+                        isSix ? 'bg-[#9333ea]' : isFour ? 'bg-[#16a34a]' : isWicket ? 'bg-red-600' : isWide ? 'bg-amber-600' : 'bg-[#1e293b] text-slate-300'
                       }`}
                     >
                       {ballVal}
@@ -1048,6 +1090,29 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
+        {/* MATCH PHASE CINEMATIC INTRO BANNER (Exact Replica of Image 2)      */}
+        {/* ================================================================== */}
+        {showPhaseBanner && (
+          <div
+            onClick={() => setShowPhaseBanner(false)}
+            className="absolute inset-x-0 top-[40%] -translate-y-1/2 z-40 flex flex-col items-center justify-center py-4 sm:py-5 bg-[#09111e]/90 border-y-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.35)] backdrop-blur-sm pointer-events-auto cursor-pointer animate-fade-in"
+          >
+            <span className="text-[11px] sm:text-xs font-black tracking-[0.35em] uppercase text-cyan-400 mb-1">
+              {matchConfig?.roundTitle || 'ROUND 1'}
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-display font-black tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-cyan-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+              {totalBalls <= 6 ? 'SUPER OVER' : totalBalls <= 18 ? 'DEATH OVERS' : totalBalls <= 24 ? 'POWERPLAY' : 'CHASE MASTER'}
+            </h2>
+            <span className="text-xs sm:text-sm font-mono font-black tracking-widest uppercase text-white mt-1 drop-shadow">
+              NEED {runsRemaining} OFF {ballsRemaining}
+            </span>
+            <span className="text-[9.5px] text-cyan-300/80 tracking-wider mt-1.5 uppercase font-medium">
+              Swipe ↔️ Leg/Off • ⬆️ Charge • Tap anywhere to Swing
+            </span>
+          </div>
+        )}
+
+        {/* ================================================================== */}
         {/* TACTICAL AUTOMATIC FIELD ADJUSTMENT NOTICE                        */}
         {/* ================================================================== */}
         {fieldChangeNotice && (
@@ -1058,15 +1123,70 @@ export default function CricketGame({
           </div>
         )}
 
+        {/* Footwork Gesture Alert */}
+        {footworkNotice && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-35 pointer-events-none animate-fade-in">
+            <div className="px-3.5 py-1 rounded-xl bg-slate-950/90 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wider shadow-2xl">
+              {footworkNotice}
+            </div>
+          </div>
+        )}
+
         {/* ================================================================== */}
-        {/* MAIN GAME CANVAS (Touch anywhere on screen to play shot)          */}
+        {/* MAIN GAME CANVAS (Touch anywhere to Swing, Swipe for Footwork)    */}
         {/* ================================================================== */}
         <canvas
           ref={canvasRef}
           onPointerDown={(e) => {
+            pointerStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              time: performance.now()
+            };
+          }}
+          onPointerUp={(e) => {
+            const start = pointerStartRef.current;
+            const dx = e.clientX - start.x;
+            const dy = e.clientY - start.y;
+            const dist = Math.hypot(dx, dy);
             const rect = canvasRef.current?.getBoundingClientRect();
             const touchX = rect ? (e.clientX - rect.left) : null;
-            handleBatSwing(touchX);
+
+            if (dist < 18) {
+              // Single Tap -> Bat swing!
+              handleBatSwing(touchX);
+            } else {
+              // Swipe gesture -> Dynamic Crease Footwork!
+              if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                  // Swipe Right -> Leg side shuffle
+                  engineRef.current?.shuffleRight();
+                  setBatsmanCreasePosition('right');
+                  sound.playClick();
+                  showFootworkAlert('SHUFFLE LEG ➡️');
+                } else {
+                  // Swipe Left -> Off side shuffle
+                  engineRef.current?.shuffleLeft();
+                  setBatsmanCreasePosition('left');
+                  sound.playClick();
+                  showFootworkAlert('SHUFFLE OFF ⬅️');
+                }
+              } else {
+                if (dy < 0) {
+                  // Swipe Up -> Step out charge (+25% power)
+                  engineRef.current?.stepOut();
+                  setBatsmanCreasePosition('step_out');
+                  sound.playClick();
+                  showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                } else {
+                  // Swipe Down -> Reset crease stance
+                  engineRef.current?.resetCrease();
+                  setBatsmanCreasePosition('center');
+                  sound.playClick();
+                  showFootworkAlert('CREASE STANCE ⬇️');
+                }
+              }
+            }
           }}
           className="w-full h-full cursor-pointer touch-none"
         />
@@ -1169,10 +1289,11 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
-        {/* BOTTOM-LEFT FLOATING HUD (Pause, Sound & Mini-Radar Map)           */}
+        {/* BOTTOM-LEFT FLOATING HUD (Pause, Sound & Circular Mini-Radar Map)  */}
+        {/* Exact Replica of Reference Screenshot (Image 1)                  */}
         {/* ================================================================== */}
         <div className="absolute bottom-4 left-3 z-30 flex flex-col items-start gap-2 pointer-events-auto">
-          {/* Pause Button */}
+          {/* Circular Pause Button */}
           <button
             onClick={() => setIsPaused(true)}
             className="w-10 h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform"
@@ -1181,7 +1302,7 @@ export default function CricketGame({
             <Pause className="w-4 h-4" />
           </button>
 
-          {/* Sound Button */}
+          {/* Circular Sound Button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
             className="w-10 h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform"
@@ -1190,14 +1311,17 @@ export default function CricketGame({
             {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
           </button>
 
-          {/* Mini-Radar Map */}
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#0c1424]/95 border border-[#1e2a3f] p-1.5 shadow-2xl relative flex items-center justify-center">
-            <div className="w-full h-full rounded-full border border-emerald-500/40 relative flex items-center justify-center">
-              <div className="w-[60%] h-[60%] rounded-full border border-emerald-500/20" />
-              <div className="w-2.5 h-6 bg-amber-100/70 rounded-[1px] absolute" />
+          {/* Authentic Circular Ground Radar Mini-Map (Image 1) */}
+          <div className="w-22 h-26 sm:w-26 sm:h-30 rounded-2xl bg-[#08101c]/95 border border-[#1e2a3f] p-1.5 shadow-2xl relative flex items-center justify-center">
+            <div className="w-full h-full rounded-full bg-[#1b3a1a] border border-emerald-500/50 relative flex items-center justify-center overflow-hidden">
+              {/* Inner 30-Yard Circle */}
+              <div className="w-[62%] h-[62%] rounded-full border border-emerald-500/30" />
+              {/* Center Pitch Turf */}
+              <div className="w-2 h-5 bg-[#dfcaa4]/80 rounded-[1px] absolute" />
 
+              {/* 9 Fielders on Radar (Red Dots) */}
               {fieldersRef.current?.fielders.map((f, idx) => {
-                const radarRadius = 34;
+                const radarRadius = 32;
                 const engine = engineRef.current;
                 const rx = engine ? ((f.x - engine.cx) / engine.boundaryRadius) * radarRadius : 0;
                 const ry = engine ? ((f.y - engine.cy) / engine.boundaryRadius) * radarRadius : 0;
@@ -1210,76 +1334,32 @@ export default function CricketGame({
                 );
               })}
 
+              {/* Striker Batsman on Radar (Yellow Dot) */}
+              <div
+                className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-sm shadow-yellow-400 pointer-events-none"
+                style={{
+                  transform: `translate(${
+                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32 : 0
+                  }px, ${
+                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32 : 0
+                  }px)`
+                }}
+              />
+
+              {/* Cricket Ball on Radar (White/Yellow Pulsing Dot) */}
               {engineRef.current?.ball.inPlay && (
                 <div
-                  className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-md shadow-yellow-400 pointer-events-none animate-pulse"
+                  className="w-1.5 h-1.5 rounded-full bg-white absolute shadow-md shadow-white pointer-events-none animate-ping"
                   style={{
                     transform: `translate(${
-                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 34
+                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32
                     }px, ${
-                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 34
+                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32
                     }px)`
                   }}
                 />
               )}
             </div>
-          </div>
-        </div>
-
-        {/* ================================================================== */}
-        {/* BOTTOM ACTION BUTTONS: FOOTWORK CONTROLS + SWING BAT               */}
-        {/* ================================================================== */}
-        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 w-full max-w-xs px-3 pointer-events-auto">
-          {/* Batsman Crease Footwork Controls */}
-          <div className="flex items-center justify-between gap-1 mb-1.5 bg-[#0c1424]/90 p-1 rounded-2xl border border-slate-700/80 shadow-lg backdrop-blur-md">
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.shuffleLeft(); setBatsmanCreasePosition('left'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'left' ? 'bg-amber-500 text-slate-950 font-extrabold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Shuffle Leg Side"
-            >
-              <MoveLeft className="w-3 h-3 text-amber-400" /> Leg
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.resetCrease(); setBatsmanCreasePosition('center'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold transition-all active:scale-95 ${
-                batsmanCreasePosition === 'center' ? 'bg-slate-700 text-white font-extrabold' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Neutral Crease Stance"
-            >
-              Crease
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.shuffleRight(); setBatsmanCreasePosition('right'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'right' ? 'bg-cyan-500 text-slate-950 font-extrabold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Shuffle Off Side"
-            >
-              Off <MoveRight className="w-3 h-3 text-cyan-400" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.stepOut(); setBatsmanCreasePosition('step_out'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-black flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'step_out' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black shadow-sm' : 'text-amber-400 hover:bg-amber-500/20'
-              }`}
-              title="Charge Down Pitch (+25% Power)"
-            >
-              <ArrowUp className="w-3 h-3 text-amber-400" /> Charge
-            </button>
-          </div>
-
-          {/* Main Bat Swing Button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleBatSwing(null); }}
-            disabled={engineRef.current?.batsman.isSwinging}
-            className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-slate-950 font-display font-black text-sm sm:text-base tracking-wider flex items-center justify-center gap-2 shadow-2xl shadow-emerald-500/30 transition-all border border-emerald-300/40"
-          >
-            <Zap className="w-4 h-4 fill-slate-950" /> SWING BAT
-          </button>
-          <div className="text-center mt-1 text-[9.5px] text-slate-400 font-medium">
-            Touch anywhere on screen • Arrows: Crease Footwork • Press <kbd className="px-1.5 py-0.2 rounded bg-slate-800 text-white font-mono font-bold text-[9px]">Spacebar</kbd>
           </div>
         </div>
 

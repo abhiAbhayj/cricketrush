@@ -49,42 +49,73 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleUrlHash);
   }, []);
 
-  // Quick Play Match Launcher with authentic 10, 12, 22, 30, 40, 60 ball chase scenarios
+  // Quick Play Match Launcher with authentic 1, 2, 3 over, 16, 20, 24, 30 ball chase scenarios
   const startQuickPlay = (selectedBalls = null) => {
-    const bowlers = ['fast', 'fastmedium', 'mediumfast', 'legspin', 'offspin'];
-    const chosenBowler = bowlers[Math.floor(Math.random() * bowlers.length)];
-    const ballOptions = [10, 12, 22, 30, 40, 60];
+    // 50/50 balanced rotation between pace and spin bowling
+    const pacers = ['fast', 'fastmedium', 'mediumfast', 'inswing', 'outswing', 'reverse_swing'];
+    const spinners = ['legspin', 'offspin', 'googly', 'doosra', 'leftarm_orthodox'];
+    const isSpin = Math.random() < 0.50;
+    const chosenBowler = isSpin
+      ? spinners[Math.floor(Math.random() * spinners.length)]
+      : pacers[Math.floor(Math.random() * pacers.length)];
+
+    const ballOptions = [6, 12, 16, 18, 20, 24, 30];
     const ballsAllowed = selectedBalls || ballOptions[Math.floor(Math.random() * ballOptions.length)];
 
-    let targetRuns = 25;
+    let targetRuns = 22;
     let wicketsAllowed = 2;
-    if (ballsAllowed === 10) {
-      targetRuns = 26 + Math.floor(Math.random() * 6);
+    let matchPhase = 'DEATH OVERS';
+    let roundTitle = 'ROUND 1';
+
+    if (ballsAllowed === 6) {
+      targetRuns = 19 + Math.floor(Math.random() * 6); // 19 - 24 runs in 1 over
       wicketsAllowed = 2;
+      matchPhase = 'SUPER OVER';
+      roundTitle = 'SUPER OVER FINAL';
     } else if (ballsAllowed === 12) {
-      targetRuns = 32 + Math.floor(Math.random() * 8);
+      targetRuns = 34 + Math.floor(Math.random() * 8); // 34 - 41 runs in 2 overs
       wicketsAllowed = 2;
-    } else if (ballsAllowed === 22) {
-      targetRuns = 52 + Math.floor(Math.random() * 10);
+      matchPhase = 'DEATH OVERS';
+      roundTitle = 'ROUND 1';
+    } else if (ballsAllowed === 16) {
+      targetRuns = 38 + Math.floor(Math.random() * 8); // 38 - 45 runs in 16 balls
       wicketsAllowed = 3;
+      matchPhase = 'DEATH OVERS';
+      roundTitle = 'ROUND 2';
+    } else if (ballsAllowed === 18) {
+      targetRuns = 43; // Exact match to Image 1 & 2 ("Need 43 off 24" or 18 balls)
+      wicketsAllowed = 3;
+      matchPhase = 'DEATH OVERS';
+      roundTitle = 'ROUND 1';
+    } else if (ballsAllowed === 20) {
+      targetRuns = 46 + Math.floor(Math.random() * 10);
+      wicketsAllowed = 3;
+      matchPhase = 'POWERPLAY';
+      roundTitle = 'POWERPLAY SURGE';
+    } else if (ballsAllowed === 24) {
+      targetRuns = 52 + Math.floor(Math.random() * 10);
+      wicketsAllowed = 4;
+      matchPhase = 'MIDDLE OVERS';
+      roundTitle = 'CHASE MASTER';
     } else if (ballsAllowed === 30) {
       targetRuns = 68 + Math.floor(Math.random() * 12);
-      wicketsAllowed = 4;
-    } else if (ballsAllowed === 40) {
-      targetRuns = 90 + Math.floor(Math.random() * 14);
       wicketsAllowed = 5;
-    } else if (ballsAllowed === 60) {
-      targetRuns = 135 + Math.floor(Math.random() * 20);
-      wicketsAllowed = 7;
+      matchPhase = 'CHASE MASTER';
+      roundTitle = 'T5 CHAMPIONSHIP';
     }
 
     startMatch({
-      title: `${ballsAllowed}-Ball Chase Thriller`,
+      title: `${ballsAllowed}-Ball ${matchPhase}`,
       targetRuns,
       ballsAllowed,
       wicketsAllowed,
       bowlerType: chosenBowler,
-      stadiumKey: 'colosseum'
+      stadiumKey: 'colosseum',
+      matchPhase,
+      roundTitle,
+      teamCode: 'JAJ',
+      teamScoreBase: 124,
+      teamWicketsBase: 1
     });
   };
 

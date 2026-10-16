@@ -48,7 +48,7 @@ export default function ChallengeList({ onBack, onPlayChallenge, onCreateNew }) 
 
   const filteredChallenges = challenges.filter(c => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'daily') return [10, 12, 22, 30, 40, 60].includes(Number(c.ballsAllowed));
+    if (activeTab === 'daily') return [6, 10, 12, 16, 18, 20, 22, 24, 30, 40, 60].includes(Number(c.ballsAllowed));
     if (activeTab === 'fast') return c.bowlerType === 'fast' || c.bowlerType === 'fastmedium';
     if (activeTab === 'spin') return c.bowlerType === 'spin' || c.bowlerType === 'legspin' || c.bowlerType === 'offspin';
     if (activeTab === 'swing') return c.bowlerType === 'swing' || c.bowlerType === 'mediumfast';
@@ -87,7 +87,7 @@ export default function ChallengeList({ onBack, onPlayChallenge, onCreateNew }) 
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="e.g. CHASE10, CHASE30, SPIN22..."
+              placeholder="e.g. CHASE6, DEATH18, SPIN6, CHASE12..."
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-white font-mono text-sm tracking-wider uppercase"

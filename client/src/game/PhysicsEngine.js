@@ -18,16 +18,33 @@ export class CricketPhysics {
   initDimensions() {
     this.cx = this.width / 2;
     this.cy = this.height * 0.52;
-    this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
-    this.pitchTop = this.height * 0.25;
-    this.pitchBottom = this.height * 0.78;
-    this.pitchLength = this.pitchBottom - this.pitchTop;
+    const isPortrait = this.height > this.width;
 
-    this.bowlerCreaseY = this.pitchTop + 38;
-    this.batsmanCreaseY = this.pitchBottom - 38;
-    this.stumpsY = this.batsmanCreaseY + 18;
-    this.bowlerStumpsY = this.bowlerCreaseY - 18;
-    this.boundaryRadius = Math.min(this.width * 0.48, this.height * 0.46);
+    if (isPortrait) {
+      // Authentic portrait cricket field matching reference screenshot:
+      // Pitch in lower-middle half, leaving upper area for bowler run-up and scoreboard
+      this.pitchWidth = Math.min(84, Math.max(68, this.width * 0.22));
+      this.pitchTop = this.height * 0.48;
+      this.pitchBottom = this.height * 0.83;
+      this.pitchLength = this.pitchBottom - this.pitchTop;
+
+      this.bowlerCreaseY = this.pitchTop + 32;
+      this.batsmanCreaseY = this.pitchBottom - 34;
+      this.stumpsY = this.batsmanCreaseY + 16;
+      this.bowlerStumpsY = this.bowlerCreaseY - 16;
+      this.boundaryRadius = Math.min(this.width * 0.48, this.height * 0.46);
+    } else {
+      this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
+      this.pitchTop = this.height * 0.26;
+      this.pitchBottom = this.height * 0.78;
+      this.pitchLength = this.pitchBottom - this.pitchTop;
+
+      this.bowlerCreaseY = this.pitchTop + 38;
+      this.batsmanCreaseY = this.pitchBottom - 38;
+      this.stumpsY = this.batsmanCreaseY + 18;
+      this.bowlerStumpsY = this.bowlerCreaseY - 18;
+      this.boundaryRadius = Math.min(this.width * 0.48, this.height * 0.46);
+    }
   }
 
   reset(keepFootwork = true) {
@@ -571,6 +588,14 @@ export class CricketPhysics {
         this.ball.spinLateralV = 0;
     }
 
+    // Strictly enforce real cricket speed regulations requested by user:
+    // Spinners strictly 65 - 110 km/h, Pacers strictly 90 - 160 km/h
+    if (isSpinBowler) {
+      this.ball.speedKmh = Math.max(65, Math.min(110, this.ball.speedKmh));
+    } else {
+      this.ball.speedKmh = Math.max(90, Math.min(160, this.ball.speedKmh));
+    }
+
     return {
       variation: bType,
       label: this.ball.variationLabel || bType,
@@ -930,6 +955,15 @@ export class CricketPhysics {
     if (timingQuality === 'EARLY') exitAngle += 0.35;
     if (timingQuality === 'LATE' || timingQuality === 'EDGE') exitAngle -= 0.45;
 
+    // Calibrated slow speeds: Six hangs majestically in the air, ground balls roll progressively
+    if (timingQuality === 'PERFECT') {
+      exitSpeed = 3.3 + (power * 1.2);
+    } else if (altitudeVz <= 5.5) {
+      exitSpeed = 4.2 + (power * 2.8);
+    } else {
+      exitSpeed = 3.6 + (power * 2.0);
+    }
+
     this.ball.vx = Math.sin(exitAngle) * exitSpeed;
     this.ball.vy = -Math.cos(exitAngle) * exitSpeed;
 
@@ -937,7 +971,7 @@ export class CricketPhysics {
       this.ball.isAirborne = true;
       this.ball.isRocketSix = true; // Launch like a rocket to stadium stands!
       this.ball.height = 18;
-      this.ball.vz = 14.8; // High towering altitude with majestic arc!
+      this.ball.vz = 14.5; // High towering altitude with slow majestic arc!
       this.screenShake = 7;
       this.createSparks(this.ball.x, this.ball.y, '#f59e0b', 36);
       this.createRocketSmoke(this.ball.x, this.ball.y);
@@ -1016,9 +1050,13 @@ export class CricketPhysics {
       this.ball.flightProgress = Math.min(1.0, Math.max(0, currentDistY / totalDistY));
       this.ball.timeUntilArrivalMs = Math.max(0, ((effectiveBatsmanY - this.ball.y) / (this.ball.vy || 10)) * 16.6);
 
-      // Track trajectory trail
-      this.ball.trail.push({ x: this.ball.x, y: this.ball.y - this.ball.height });
-      if (this.ball.trail.length > 25) this.ball.trail.shift();
+      // Track trajectory trail with bounce state for broadcast virtual-eye drawing
+      this.ball.trail.push({
+        x: this.ball.x,
+        y: this.ball.y - this.ball.height,
+        hasBounced: this.ball.hasBounced
+      });
+      if (this.ball.trail.length > 40) this.ball.trail.shift();
 
       // Realistic aerodynamic swing in air before bounce (doubled rate for visible bend)
       if (!this.ball.hasBounced && this.ball.swingCurve !== 0) {
@@ -1137,21 +1175,21 @@ export class CricketPhysics {
 
       if (this.ball.isAirborne) {
         this.ball.height += this.ball.vz * dt;
-        // Slower majestic gravitational drop on towering sixes:
-        const gravity = this.ball.isRocketSix ? 0.32 : 0.50;
+        // Slower majestic gravitational drop on towering sixes (stays aloft 2.4s):
+        const gravity = this.ball.isRocketSix ? 0.20 : 0.44;
         this.ball.vz -= gravity * dt;
         if (this.ball.height <= 0) {
           this.ball.height = 0;
           this.ball.isAirborne = false;
           this.ball.vz = 0;
           this.createGrassSpray(this.ball.x, this.ball.y);
-          this.ball.vx *= 0.80;
-          this.ball.vy *= 0.80;
+          this.ball.vx *= 0.82;
+          this.ball.vy *= 0.82;
         }
       } else {
         // Flat ground stroke: realistic progressive grass resistance gives time for fielder sprint & slide!
-        this.ball.vx *= 0.958;
-        this.ball.vy *= 0.958;
+        this.ball.vx *= 0.978;
+        this.ball.vy *= 0.978;
         if (Math.random() < 0.40 && Math.hypot(this.ball.vx, this.ball.vy) > 1.2) {
           this.createGrassSpray(this.ball.x, this.ball.y);
         }
