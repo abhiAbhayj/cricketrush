@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cricket Rush</string>
+    <string name="title_activity_main">Cricket Rush</string>
+    <string name="package_name">com.cricketrush.game</string>
+    <string name="custom_url_scheme">com.cricketrush.game</string>
+</resources>

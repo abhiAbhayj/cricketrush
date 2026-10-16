@@ -1,0 +1,17 @@
+{
+  "name": "cricketrush-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cricket Rush - Standalone 2D Arcade Cricket Game for Web & Android",
+  "scripts": {
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build:client": "npm --prefix client run build",
+    "android:init": "cd client && npx cap add android",
+    "android:sync": "npm --prefix client run build && cd client && npx cap sync",
+    "android:open": "cd client && npx cap open android"
+  },
+  "keywords": ["cricket", "arcade", "game", "phaser", "canvas", "react", "capacitor", "android"],
+  "author": "Cricket Rush Team",
+  "license": "MIT"
+}

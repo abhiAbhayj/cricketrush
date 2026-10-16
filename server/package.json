@@ -1,0 +1,16 @@
+{
+  "name": "cricketrush-server",
+  "version": "1.0.0",
+  "description": "Cricket Rush standalone backend server",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "node -e \"console.log('Server is pure Node.js - ready to run with npm start or npm run dev')\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
