@@ -32,7 +32,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      this.boundaryRadius = Math.min(this.width * 0.48, this.height * 0.46);
+      // Expansive Big Stadium with 30-yard regulation circle
+      this.boundaryRadius = Math.max(480, Math.min(680, Math.max(this.width, this.height) * 0.72));
+      this.innerCircleRadiusX = Math.max(130, this.pitchWidth * 1.8);
+      this.innerCircleRadiusY = Math.max(160, this.pitchLength * 0.55);
     } else {
       this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
       this.pitchTop = this.height * 0.26;
@@ -43,7 +46,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 38;
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
-      this.boundaryRadius = Math.min(this.width * 0.48, this.height * 0.46);
+      // Expansive Big Stadium with 30-yard regulation circle
+      this.boundaryRadius = Math.max(500, Math.min(720, Math.max(this.width, this.height) * 0.75));
+      this.innerCircleRadiusX = Math.max(150, this.pitchWidth * 1.8);
+      this.innerCircleRadiusY = Math.max(175, this.pitchLength * 0.55);
     }
   }
 
@@ -135,6 +141,48 @@ export class CricketPhysics {
     this.stumpsHit = false;
     this.stumpPieces = [];
     this.particles = [];
+
+    // Running Between Wickets State Machine (Interactive 1, 2, 3 Runs & Direct Hit Run Outs)
+    this.running = {
+      active: false,
+      runsCompleted: 0,
+      isCallingRun: false,
+      isHolding: false,
+      progress: 0, // 0 to 1 between creases
+      direction: 1, // 1: striker to bowler crease, non-striker to batsman crease; -1: returning
+      strikerX: this.cx - 16,
+      strikerY: this.batsmanCreaseY,
+      nonStrikerX: this.cx + 20,
+      nonStrikerY: this.bowlerCreaseY,
+      isSliding: false,
+      throwActive: false,
+      throwProgress: 0,
+      throwFromX: 0,
+      throwFromY: 0,
+      throwTargetX: 0,
+      throwTargetY: 0,
+      throwTargetEnd: 'batsman',
+      fielderRole: '',
+      dangerLevel: 0
+    };
+  }
+
+  commandRun() {
+    if (!this.running || !this.running.active) return false;
+    if (this.running.runsCompleted >= 3) return false;
+    if (!this.running.isCallingRun) {
+      this.running.isCallingRun = true;
+      this.running.isHolding = false;
+      return true;
+    }
+    return false;
+  }
+
+  commandHold() {
+    if (!this.running || !this.running.active) return false;
+    this.running.isHolding = true;
+    this.running.isCallingRun = false;
+    return true;
   }
 
   // ==========================================================================
@@ -975,20 +1023,39 @@ export class CricketPhysics {
       this.createSparks(this.ball.x, this.ball.y, '#f59e0b', 36);
       this.createRocketSmoke(this.ball.x, this.ball.y);
       this.ball.distanceMeters = Math.round(98 + power * 24 + Math.random() * 14);
-    } else if (timingQuality === 'GOOD') {
-      this.ball.isAirborne = altitudeVz > 5.5;
-      this.ball.isRocketFour = altitudeVz <= 5.5; // Blistering flat ground rocket 4
-      this.ball.height = this.ball.isAirborne ? 12 : 0;
-      this.ball.vz = altitudeVz;
-      this.screenShake = 3;
-      this.createSparks(this.ball.x, this.ball.y, '#ffffff', 20);
-      this.ball.distanceMeters = Math.round(68 + power * 16);
+      this.running.active = false;
     } else {
-      this.ball.isAirborne = true;
-      this.ball.height = 7;
-      this.ball.vz = 3.5;
-      this.createSparks(this.ball.x, this.ball.y, '#94a3b8', 12);
-      this.ball.distanceMeters = Math.round(35 + Math.random() * 20);
+      // Ground or looping stroke: activate interactive Running Between Wickets!
+      this.running.active = true;
+      this.running.runsCompleted = 0;
+      this.running.isCallingRun = false;
+      this.running.isHolding = false;
+      this.running.progress = 0;
+      this.running.direction = 1;
+      this.running.strikerX = this.cx - 16;
+      this.running.strikerY = this.batsmanCreaseY;
+      this.running.nonStrikerX = this.cx + 20;
+      this.running.nonStrikerY = this.bowlerCreaseY;
+      this.running.isSliding = false;
+      this.running.throwActive = false;
+      this.running.throwProgress = 0;
+      this.running.dangerLevel = 0;
+
+      if (timingQuality === 'GOOD') {
+        this.ball.isAirborne = altitudeVz > 5.5;
+        this.ball.isRocketFour = altitudeVz <= 5.5; // Blistering flat ground rocket 4
+        this.ball.height = this.ball.isAirborne ? 12 : 0;
+        this.ball.vz = altitudeVz;
+        this.screenShake = 3;
+        this.createSparks(this.ball.x, this.ball.y, '#ffffff', 20);
+        this.ball.distanceMeters = Math.round(68 + power * 16);
+      } else {
+        this.ball.isAirborne = true;
+        this.ball.height = 7;
+        this.ball.vz = 3.5;
+        this.createSparks(this.ball.x, this.ball.y, '#94a3b8', 12);
+        this.ball.distanceMeters = Math.round(35 + Math.random() * 20);
+      }
     }
   }
 
@@ -1223,6 +1290,7 @@ export class CricketPhysics {
         }
       } else if (distFromCenter >= this.boundaryRadius) {
         this.ball.state = 'DEAD';
+        this.running.active = false;
         const isSix = this.ball.isAirborne && this.ball.height > 6;
         if (isSix) {
           this.screenShake = 7;
@@ -1241,12 +1309,80 @@ export class CricketPhysics {
         };
       }
 
-      if (!this.ball.isAirborne && currentSpeed < 0.3) {
-        this.ball.state = 'DEAD';
-        let runs = 1;
-        if (this.ball.traveled > this.boundaryRadius * 0.7) runs = 3;
-        else if (this.ball.traveled > this.boundaryRadius * 0.4) runs = 2;
-        return { event: 'RUNS', runs };
+      // Running Between Wickets Progression (1, 2, 3 Runs, sliding bats & Direct Hit Run Outs)
+      if (this.running && this.running.active) {
+        const pitchSpan = this.batsmanCreaseY - this.bowlerCreaseY;
+
+        // When batsmen are sprinting between wickets:
+        if (this.running.isCallingRun) {
+          // Sprint pace: ~1.1s for a single 22-yard pitch run
+          this.running.progress += 0.016 * dt;
+          this.running.isSliding = this.running.progress >= 0.82 && this.running.progress < 1.0;
+
+          if (this.running.direction === 1) {
+            // Striker runs from batsman crease to bowler crease (left side track)
+            this.running.strikerY = this.batsmanCreaseY - this.running.progress * pitchSpan;
+            // Non-striker runs from bowler crease to batsman crease (right side track)
+            this.running.nonStrikerY = this.bowlerCreaseY + this.running.progress * pitchSpan;
+          } else {
+            // Striker returns from bowler crease to batsman crease
+            this.running.strikerY = this.bowlerCreaseY + this.running.progress * pitchSpan;
+            // Non-striker returns from batsman crease to bowler crease
+            this.running.nonStrikerY = this.batsmanCreaseY - this.running.progress * pitchSpan;
+          }
+
+          if (this.running.progress >= 1.0) {
+            this.running.runsCompleted += 1;
+            this.running.progress = 0;
+            this.running.direction = -this.running.direction;
+            this.running.isSliding = false;
+            this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
+
+            if (this.running.runsCompleted >= 3) {
+              this.running.active = false;
+              this.ball.state = 'DEAD';
+              return { event: 'RUNS', runs: 3 };
+            }
+          }
+        }
+
+        // Fielder laser throw arrival & Run-Out detection
+        if (this.running.throwActive) {
+          this.running.throwProgress += 0.045 * dt;
+          this.running.dangerLevel = Math.min(1.0, this.running.throwProgress);
+
+          if (this.running.throwProgress >= 1.0) {
+            this.running.throwActive = false;
+            // If batsman is running and has not reached popping crease safe zone (0.10 < progress < 0.82)
+            if (this.running.isCallingRun && this.running.progress > 0.10 && this.running.progress < 0.82) {
+              this.stumpsHit = true;
+              this.running.active = false;
+              this.ball.state = 'DEAD';
+              this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ef4444', 32);
+              return {
+                event: 'RUN_OUT',
+                runs: this.running.runsCompleted,
+                fielder: this.running.fielderRole || 'Fielder'
+              };
+            } else {
+              // Safe in crease / grounded bat before throw hit stumps!
+              this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ffffff', 12);
+            }
+          }
+        }
+
+        // When ball has come to a stop or fielder gathered it:
+        if (!this.ball.isAirborne && currentSpeed < 0.28) {
+          if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive)) {
+            this.running.active = false;
+            this.ball.state = 'DEAD';
+            if (this.running.runsCompleted > 0) {
+              return { event: 'RUNS', runs: this.running.runsCompleted };
+            } else {
+              return { event: 'DOT' };
+            }
+          }
+        }
       }
     }
 

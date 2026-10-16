@@ -130,6 +130,21 @@ export default function CricketGame({
   const [footworkNotice, setFootworkNotice] = useState(null);
   const pointerStartRef = useRef({ x: 0, y: 0, time: 0 });
 
+  // Dynamic Multi-Angle Broadcast Camera System
+  const cameraRef = useRef({
+    x: 0,
+    y: 0,
+    zoom: 1.45,
+    targetX: 0,
+    targetY: 0,
+    targetZoom: 1.45,
+    mode: 'PITCH_CLOSEUP'
+  });
+
+  // Interactive Running Between Wickets State
+  const [runningState, setRunningState] = useState(null);
+  const prevRunningRef = useRef({ active: false, runs: 0, isCalling: false, throw: false, isSliding: false });
+
   const showFootworkAlert = (text) => {
     setFootworkNotice(text);
     setTimeout(() => {
@@ -174,6 +189,14 @@ export default function CricketGame({
         engineRef.current.resize(width, height);
         fieldersRef.current.resize(width, height, engineRef.current.boundaryRadius);
       }
+
+      // Initialize camera centered on pitch
+      cameraRef.current.x = width / 2;
+      cameraRef.current.y = height * 0.52;
+      cameraRef.current.targetX = width / 2;
+      cameraRef.current.targetY = height * 0.52;
+      cameraRef.current.zoom = 1.42;
+      cameraRef.current.targetZoom = 1.42;
     };
 
     updateSize();
@@ -205,6 +228,88 @@ export default function CricketGame({
         const physicsEvent = engine.update(dt);
         fielders.update(engine.ball);
 
+        // Update Camera Targets based on game action & broadcast angles:
+        const cam = cameraRef.current;
+        const cx = engine.cx;
+        const cy = engine.cy;
+        const pitchCenterY = (engine.pitchTop + engine.pitchBottom) / 2;
+        const batsmanY = engine.batsmanCreaseY;
+
+        if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE') {
+          // Angle 1: PITCH_CLOSEUP - camera zoomed in on pitch & 30-yard circle fielders only!
+          cam.mode = 'PITCH_CLOSEUP';
+          cam.targetX = cx;
+          cam.targetY = batsmanY - 45;
+          cam.targetZoom = 1.42;
+        } else if (engine.ball.state === 'HIT') {
+          if (engine.ball.isRocketSix) {
+            // Angle 4: SIX_SKYCAM - high aerial panoramic tracking soaring six into the stands!
+            cam.mode = 'SIX_SKYCAM';
+            cam.targetX = engine.ball.x;
+            cam.targetY = engine.ball.y;
+            cam.targetZoom = 0.92;
+          } else if (engine.running?.active && engine.running?.isCallingRun) {
+            // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting and sliding!
+            cam.mode = 'RUNNING_PITCH';
+            cam.targetX = cx;
+            cam.targetY = pitchCenterY;
+            cam.targetZoom = 1.35;
+          } else {
+            // Angle 2: BALL_FOLLOW - traveling camera as ball crosses 30-yard ring to deep outfield!
+            cam.mode = 'BALL_FOLLOW';
+            cam.targetX = engine.ball.x;
+            cam.targetY = engine.ball.y;
+            const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
+            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 1.10 : 1.35;
+          }
+        } else {
+          // DEAD / OVER_PAUSE
+          if (engine.running?.runsCompleted > 0) {
+            cam.targetX = cx;
+            cam.targetY = pitchCenterY;
+            cam.targetZoom = 1.35;
+          } else {
+            cam.targetX = cx;
+            cam.targetY = batsmanY - 45;
+            cam.targetZoom = 1.42;
+          }
+        }
+
+        // Smooth camera matrix interpolation
+        cam.x += (cam.targetX - cam.x) * 0.08 * dt;
+        cam.y += (cam.targetY - cam.y) * 0.08 * dt;
+        cam.zoom += (cam.targetZoom - cam.zoom) * 0.08 * dt;
+
+        // Sync Running State to React (debounced to avoid unnecessary re-renders)
+        const r = engine.running;
+        if (r && r.active) {
+          if (!prevRunningRef.current.active ||
+              prevRunningRef.current.runs !== r.runsCompleted ||
+              prevRunningRef.current.isCalling !== r.isCallingRun ||
+              prevRunningRef.current.throw !== r.throwActive ||
+              prevRunningRef.current.isSliding !== r.isSliding) {
+            prevRunningRef.current = {
+              active: true,
+              runs: r.runsCompleted,
+              isCalling: r.isCallingRun,
+              throw: r.throwActive,
+              isSliding: r.isSliding
+            };
+            setRunningState({
+              active: true,
+              runsCompleted: r.runsCompleted,
+              isCallingRun: r.isCallingRun,
+              isHolding: r.isHolding,
+              isSliding: r.isSliding,
+              throwActive: r.throwActive,
+              dangerLevel: r.dangerLevel
+            });
+          }
+        } else if (prevRunningRef.current.active) {
+          prevRunningRef.current = { active: false, runs: 0, isCalling: false, throw: false, isSliding: false };
+          setRunningState(null);
+        }
+
         // Update Timing Meter while ball is in flight
         if (engine.ball.state === 'BOWLED') {
           setTimingMeterProgress(engine.ball.flightProgress || 0);
@@ -212,17 +317,14 @@ export default function CricketGame({
 
         // Check fielder interception
         if (engine.ball.state === 'HIT') {
-          const interception = fielders.checkFieldInterception(engine.ball);
+          const interception = fielders.checkFieldInterception(engine.ball, engine);
           if (interception) {
             if (interception.type === 'CATCH') {
               engine.ball.state = 'DEAD';
+              engine.running.active = false;
               handleBallOutcome({ event: 'CAUGHT', fielder: interception.fielder });
-            } else if (interception.type === 'STOP') {
-              engine.ball.state = 'DEAD';
-              let runs = 1;
-              if (engine.ball.traveled > engine.boundaryRadius * 0.62) runs = 2;
-              handleBallOutcome({ event: 'RUNS', runs, fielder: interception.fielder });
             }
+            // For 'STOP', fielder throws ball to stumps; engine.running resolves running/run-outs!
           }
         }
 
@@ -328,6 +430,15 @@ export default function CricketGame({
       badgeType = 'wicket';
       commentaryLine = `Mistimed in the air and taken cleanly by ${outcome.fielder}!`;
       triggerSpecialCelebration('catch', 'CAUGHT OUT! 🧤', `BRILLIANT CATCH BY ${outcome.fielder.toUpperCase()}`);
+    } else if (outcome.event === 'RUN_OUT') {
+      isWicket = true;
+      runsScored = outcome.runs || 0;
+      sound.playWicket();
+      if (hapticsEnabled) haptics.wicket();
+      badgeText = 'DIRECT HIT! RUN OUT! 🎯';
+      badgeType = 'wicket';
+      commentaryLine = `WHAT A THROW! Direct hit at the stumps from ${outcome.fielder || 'deep'} — batsman falls short of the crease!`;
+      triggerSpecialCelebration('bowled', 'RUN OUT! 🎯', `DIRECT HIT BY ${outcome.fielder ? outcome.fielder.toUpperCase() : 'FIELDER'}`);
     } else if (outcome.event === 'DOT') {
       sound.playKeeperGlove();
       badgeText = 'DOT BALL •';
@@ -578,9 +689,34 @@ export default function CricketGame({
   // Pure Spacebar listener for laptop, Arrow keys for crease footwork, & Escape/P for pause
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const engine = engineRef.current;
       if (e.code === 'Space') {
         e.preventDefault();
-        handleBatSwing(null);
+        // If ball is in play and running between wickets is active, Spacebar commands RUN!
+        if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+          const called = engine.commandRun();
+          if (called) {
+            sound.playRunning();
+            if (hapticsEnabled) haptics.light();
+          }
+        } else {
+          handleBatSwing(null);
+        }
+      } else if (e.code === 'KeyR') {
+        e.preventDefault();
+        if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+          const called = engine.commandRun();
+          if (called) {
+            sound.playRunning();
+            if (hapticsEnabled) haptics.light();
+          }
+        }
+      } else if (e.code === 'KeyS') {
+        e.preventDefault();
+        if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+          engine.commandHold();
+          sound.playClick();
+        }
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
         engineRef.current?.shuffleLeft();
@@ -628,22 +764,34 @@ export default function CricketGame({
   const drawScene = (ctx, engine, fielders, currentStadium, userProfile) => {
     const { width, height } = engine;
     const cx = engine.cx;
+    const cy = engine.cy;
+    const cam = cameraRef.current;
 
     ctx.save();
+    ctx.clearRect(0, 0, width, height);
+
+    // Dynamic Multi-Angle Broadcast Camera Matrix (Pan & Zoom)
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(cam.zoom, cam.zoom);
+    ctx.translate(-cam.x, -cam.y);
+
     if (engine.screenShake > 0) {
       const shakeX = (Math.random() - 0.5) * engine.screenShake * 2;
       const shakeY = (Math.random() - 0.5) * engine.screenShake * 2;
       ctx.translate(shakeX, shakeY);
     }
 
-    ctx.clearRect(0, 0, width, height);
-
-    // 1. Outfield Grass with Vertical Stripes (Exact Match)
+    // 1. Outfield Grass with Vertical Stripes (Expansive coverage for Big Stadium)
+    const outfieldRadius = engine.boundaryRadius + 240;
+    const minGrassX = cx - outfieldRadius;
+    const maxGrassX = cx + outfieldRadius;
+    const minGrassY = cy - outfieldRadius;
+    const grassHeight = outfieldRadius * 2;
     const stripeWidth = Math.max(34, width / 14);
-    const numStripes = Math.ceil(width / stripeWidth) + 1;
+    const numStripes = Math.ceil((maxGrassX - minGrassX) / stripeWidth) + 1;
     for (let i = 0; i < numStripes; i++) {
       ctx.fillStyle = i % 2 === 0 ? '#2e5b27' : '#35682d';
-      ctx.fillRect(i * stripeWidth, 0, stripeWidth, height);
+      ctx.fillRect(minGrassX + i * stripeWidth, minGrassY, stripeWidth, grassHeight);
     }
 
     // 2. Realistic Stadium Crowd Stands & Advertising Boundary with Cheering Spectators & Crowd Catch Reaction
@@ -652,6 +800,15 @@ export default function CricketGame({
       isRocketSix: celebrationOverlay?.type === 'six' || engine.ball.isRocketSix,
       sixLanding: engine.sixLanding
     });
+
+    // 2b. Official ICC 30-Yard Infield Fielding Circle & Regulation Marker Discs
+    CharacterRenderer.draw30YardCircle(
+      ctx,
+      cx,
+      engine.cy,
+      engine.innerCircleRadiusX || 140,
+      engine.innerCircleRadiusY || 165
+    );
 
     // 3. Pitch Strip: Sandy beige turf pitch
     const pw = engine.pitchWidth;
@@ -763,8 +920,49 @@ export default function CricketGame({
       ctx.restore();
     }
 
-    // 6. Realistic Humanoid Non-Striker (Top Crease Right Side)
-    CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y);
+    const jerseyColor = userProfile?.equippedJersey === 'gold' ? '#eab308' : userProfile?.equippedJersey === 'crimson' ? '#dc2626' : userProfile?.equippedJersey === 'emerald' ? '#10b981' : '#2563eb';
+
+    // 6 & 8. Batsmen: Either sprinting between wickets or standard stance
+    if (engine.running?.active && (engine.running.isCallingRun || engine.running.runsCompleted > 0)) {
+      // Dynamic Running Batsmen Sprinting Between Wickets!
+      // Striker Runner
+      CharacterRenderer.drawRunner(ctx, engine.running.strikerX, engine.running.strikerY, {
+        isStriker: true,
+        runProgress: engine.running.progress,
+        runDirection: engine.running.direction,
+        isSliding: engine.running.isSliding,
+        jerseyColor
+      });
+
+      // Non-Striker Runner
+      CharacterRenderer.drawRunner(ctx, engine.running.nonStrikerX, engine.running.nonStrikerY, {
+        isStriker: false,
+        runProgress: engine.running.progress,
+        runDirection: -engine.running.direction,
+        isSliding: engine.running.isSliding,
+        jerseyColor
+      });
+    } else {
+      // 6. Realistic Humanoid Non-Striker (Top Crease Right Side)
+      CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y);
+
+      // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Helmet, Facial Texture & Living Footwork)
+      CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
+        isSwinging: engine.batsman.isSwinging,
+        swingProgress: engine.batsman.swingProgress,
+        swingType: engine.batsman.swingType,
+        shotStyle: engine.batsman.shotStyle || selectedShot,
+        isSteppingOut: engine.batsman.isSteppingOut,
+        stepOutOffset: engine.batsman.stepOutOffset,
+        triggerTap: engine.batsman.triggerTap || 0,
+        weightShiftX: engine.batsman.weightShiftX || 0,
+        footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
+        batSkin: userProfile?.equippedBat,
+        jerseyColor,
+        faceStyle: 'beard',
+        skinTone: '#d49b70'
+      });
+    }
 
     // 7. Realistic Humanoid Bowler (Top Crease with Run-Up & Distinct Bowling Action)
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
@@ -774,23 +972,6 @@ export default function CricketGame({
       actionType: engine.bowler.actionType || 'high_arm',
       faceStyle: engine.bowler.faceStyle || 'headband',
       skinTone: engine.bowler.skinTone || '#c68656'
-    });
-
-    // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Helmet, Facial Texture & Living Footwork)
-    CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
-      isSwinging: engine.batsman.isSwinging,
-      swingProgress: engine.batsman.swingProgress,
-      swingType: engine.batsman.swingType,
-      shotStyle: engine.batsman.shotStyle || selectedShot,
-      isSteppingOut: engine.batsman.isSteppingOut,
-      stepOutOffset: engine.batsman.stepOutOffset,
-      triggerTap: engine.batsman.triggerTap || 0,
-      weightShiftX: engine.batsman.weightShiftX || 0,
-      footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
-      batSkin: userProfile?.equippedBat,
-      jerseyColor: userProfile?.equippedJersey === 'gold' ? '#eab308' : userProfile?.equippedJersey === 'crimson' ? '#dc2626' : userProfile?.equippedJersey === 'emerald' ? '#10b981' : '#2563eb',
-      faceStyle: 'beard',
-      skinTone: '#d49b70'
     });
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
@@ -1164,8 +1345,22 @@ export default function CricketGame({
             const touchX = rect ? (e.clientX - rect.left) : null;
 
             if (dist < 18) {
-              // Single Tap -> Bat swing!
-              handleBatSwing(touchX);
+              const engine = engineRef.current;
+              // If ball has already been hit and running between wickets is active:
+              // Mobile & Tablet screen tap triggers RUN!
+              if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+                const called = engine.commandRun();
+                if (called) {
+                  sound.playRunning();
+                  if (hapticsEnabled) haptics.light();
+                }
+              } else {
+                // Otherwise: tap swings bat with world-accurate coordinates!
+                const cam = cameraRef.current;
+                const canvasW = canvasRef.current?.clientWidth || 400;
+                const worldX = cam ? cam.x + ((touchX || 0) - canvasW / 2) / cam.zoom : touchX;
+                handleBatSwing(worldX);
+              }
             } else {
               // Swipe gesture -> Dynamic Crease Footwork!
               if (Math.abs(dx) > Math.abs(dy)) {
@@ -1260,44 +1455,120 @@ export default function CricketGame({
         )}
 
         {/* ================================================================== */}
-        {/* VISUAL BATSMAN TIMING METER (Shows Dynamic Shot + ms Delta!)       */}
+        {/* INTERACTIVE RUNNING BETWEEN WICKETS HUD (LAPTOP & MOBILE CONTROLS)  */}
         {/* ================================================================== */}
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-60 sm:w-68">
-          <div className="bg-[#0c1424]/90 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md">
-            <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
-              <span className="text-amber-400">Early</span>
-              <span className="text-emerald-400 font-extrabold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-emerald-400" /> SWEET SPOT
-              </span>
-              <span className="text-red-400">Late</span>
-            </div>
-            {/* Timing Track */}
-            <div className="relative w-full h-3 rounded-full bg-slate-900 border border-slate-800 overflow-hidden flex">
-              {/* Early Zone */}
-              <div className="w-[35%] h-full bg-amber-500/30 border-r border-amber-500/40" />
-              {/* Perfect Zone */}
-              <div className="w-[30%] h-full bg-emerald-500/60 shadow-inner" />
-              {/* Late Zone */}
-              <div className="w-[35%] h-full bg-red-500/30 border-l border-red-500/40" />
-              {/* Sweeping Needle Indicator */}
-              <div
-                className="absolute top-0 bottom-0 w-2.5 bg-white rounded-full shadow-md shadow-white transition-all duration-75"
-                style={{
-                  left: `calc(${timingMeterProgress * 100}% - 5px)`
-                }}
-              />
-            </div>
-            {/* Shot Name & Digital Readout */}
-            <div className="flex justify-between items-center mt-1 text-[10px] font-mono font-bold">
-              <span className="text-emerald-300 uppercase">{lastShotPlayed}</span>
-              {timingDeltaRecord !== null && (
-                <span className={Math.abs(timingDeltaRecord) <= 38 ? 'text-emerald-400' : 'text-amber-400'}>
-                  {timingDeltaRecord > 0 ? `+${timingDeltaRecord}ms` : `${timingDeltaRecord}ms`}
+        {runningState?.active && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 pointer-events-auto animate-fade-in w-11/12 max-w-sm sm:max-w-md">
+            <div className="w-full bg-[#0a1220]/95 border-2 border-emerald-400/80 rounded-2xl p-3 shadow-[0_0_30px_rgba(16,185,129,0.35)] backdrop-blur-md flex flex-col items-center">
+              <div className="flex items-center justify-between w-full mb-1 text-xs font-mono font-bold">
+                <span className="text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  RUNS: {runningState.runsCompleted} / 3
                 </span>
-              )}
+                <span className="text-slate-300">
+                  {runningState.throwActive ? (
+                    <span className="text-amber-400 flex items-center gap-1 animate-pulse font-bold">
+                      🎯 THROW IN FLIGHT ({Math.round(runningState.dangerLevel * 100)}%)
+                    </span>
+                  ) : (
+                    <span className="text-emerald-300">BALL IN PLAY</span>
+                  )}
+                </span>
+              </div>
+
+              {/* Status readout */}
+              <div className="text-center font-display font-black text-sm uppercase tracking-wide my-1">
+                {runningState.isCallingRun ? (
+                  <span className={runningState.isSliding ? 'text-amber-400 animate-pulse' : 'text-emerald-300'}>
+                    {runningState.isSliding ? '⚡ SLIDING BAT INTO CREASE!' : `🏃 SPRINTING FOR RUN ${runningState.runsCompleted + 1}...`}
+                  </span>
+                ) : (
+                  <span className="text-white">
+                    {runningState.runsCompleted > 0
+                      ? '✅ SAFE IN CREASE • TAP RUN FOR NEXT RUN!'
+                      : 'TAP SCREEN OR "RUN" BUTTON TO SPRINT!'}
+                  </span>
+                )}
+              </div>
+
+              {/* Mobile Prompt */}
+              <div className="text-[10px] text-cyan-300/80 uppercase tracking-widest mt-0.5 font-mono">
+                📱 MOBILE: TAP SCREEN TO RUN • 💻 LAPTOP: SPACEBAR / R
+              </div>
+
+              {/* Action Buttons: RUN and HOLD */}
+              <div className="flex items-center gap-2.5 w-full mt-2">
+                <button
+                  onClick={() => {
+                    const called = engineRef.current?.commandRun();
+                    if (called) {
+                      sound.playRunning();
+                      if (hapticsEnabled) haptics.light();
+                    }
+                  }}
+                  disabled={runningState.runsCompleted >= 3}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-display font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <span>🏃 RUN</span>
+                  <span className="text-[10px] font-mono opacity-80">(Space / R)</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    engineRef.current?.commandHold();
+                    sound.playClick();
+                  }}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-amber-300 font-display font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>✋ HOLD</span>
+                  <span className="text-[10px] font-mono opacity-80">(S)</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ================================================================== */}
+        {/* VISUAL BATSMAN TIMING METER (Shows Dynamic Shot + ms Delta!)       */}
+        {/* ================================================================== */}
+        {!runningState?.active && (
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-60 sm:w-68">
+            <div className="bg-[#0c1424]/90 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md">
+              <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
+                <span className="text-amber-400">Early</span>
+                <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-emerald-400" /> SWEET SPOT
+                </span>
+                <span className="text-red-400">Late</span>
+              </div>
+              {/* Timing Track */}
+              <div className="relative w-full h-3 rounded-full bg-slate-900 border border-slate-800 overflow-hidden flex">
+                {/* Early Zone */}
+                <div className="w-[35%] h-full bg-amber-500/30 border-r border-amber-500/40" />
+                {/* Perfect Zone */}
+                <div className="w-[30%] h-full bg-emerald-500/60 shadow-inner" />
+                {/* Late Zone */}
+                <div className="w-[35%] h-full bg-red-500/30 border-l border-red-500/40" />
+                {/* Sweeping Needle Indicator */}
+                <div
+                  className="absolute top-0 bottom-0 w-2.5 bg-white rounded-full shadow-md shadow-white transition-all duration-75"
+                  style={{
+                    left: `calc(${timingMeterProgress * 100}% - 5px)`
+                  }}
+                />
+              </div>
+              {/* Shot Name & Digital Readout */}
+              <div className="flex justify-between items-center mt-1 text-[10px] font-mono font-bold">
+                <span className="text-emerald-300 uppercase">{lastShotPlayed}</span>
+                {timingDeltaRecord !== null && (
+                  <span className={Math.abs(timingDeltaRecord) <= 38 ? 'text-emerald-400' : 'text-amber-400'}>
+                    {timingDeltaRecord > 0 ? `+${timingDeltaRecord}ms` : `${timingDeltaRecord}ms`}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ================================================================== */}
         {/* BOTTOM-LEFT FLOATING HUD (Pause, Sound & Circular Mini-Radar Map)  */}
@@ -1435,11 +1706,23 @@ export default function CricketGame({
             <span className="text-[11px] text-emerald-400 font-semibold">Touch Screen</span>
           </div>
           <div className="flex items-center justify-between text-slate-300">
+            <span>Run 1, 2, 3 (Laptop):</span>
+            <kbd className="px-2 py-0.5 rounded bg-emerald-800/80 font-mono text-[11px] text-emerald-200">Space / R</kbd>
+          </div>
+          <div className="flex items-center justify-between text-slate-300">
+            <span>Run 1, 2, 3 (Mobile):</span>
+            <span className="text-[11px] text-emerald-400 font-semibold">Tap Screen to Run</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-300">
+            <span>Hold Crease:</span>
+            <kbd className="px-2 py-0.5 rounded bg-slate-800 font-mono text-[11px] text-amber-300">S Key</kbd>
+          </div>
+          <div className="flex items-center justify-between text-slate-300">
             <span>Pause / Menu:</span>
             <kbd className="px-2 py-0.5 rounded bg-slate-800 font-mono text-[11px] text-white">Esc / P</kbd>
           </div>
           <div className="pt-2 text-[10px] text-slate-400 border-t border-slate-800 leading-relaxed">
-            *Batsman dynamically executes the authentic shot (Cover Drive, Pull, Upper Cut, Straight Loft, Scoop Ramp, Flick) according to incoming line, length, and timing!
+            *Dynamic Multi-Angle Broadcast Camera automatically tracks the ball across the 30-yard ring, shows close-up running pitch action with bat slides, and aerial skycam for towering sixes!
           </div>
         </div>
       </div>

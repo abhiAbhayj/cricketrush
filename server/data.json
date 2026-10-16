@@ -229,6 +229,32 @@
       "date": "2026-10-14"
     },
     {
+      "id": "1792160868176",
+      "playerName": "Cricket lover",
+      "score": 34,
+      "ballsFaced": 8,
+      "strikeRate": 425,
+      "sixes": 5,
+      "fours": 0,
+      "mode": "12-Ball DEATH OVERS",
+      "challengeCode": null,
+      "won": true,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160868200",
+      "playerName": "Cricket lover",
+      "score": 34,
+      "ballsFaced": 8,
+      "strikeRate": 425,
+      "sixes": 5,
+      "fours": 0,
+      "mode": "12-Ball DEATH OVERS",
+      "challengeCode": null,
+      "won": true,
+      "date": "2026-10-16"
+    },
+    {
       "id": "3",
       "playerName": "BoomBoom",
       "score": 32,
@@ -346,6 +372,32 @@
       "sixes": 2,
       "fours": 1,
       "mode": "10-Ball Chase Thriller",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160252583",
+      "playerName": "Cricket lover",
+      "score": 18,
+      "ballsFaced": 6,
+      "strikeRate": 300,
+      "sixes": 2,
+      "fours": 1,
+      "mode": "6-Ball SUPER OVER",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160252606",
+      "playerName": "Cricket lover",
+      "score": 18,
+      "ballsFaced": 6,
+      "strikeRate": 300,
+      "sixes": 2,
+      "fours": 1,
+      "mode": "6-Ball SUPER OVER",
       "challengeCode": null,
       "won": false,
       "date": "2026-10-16"
@@ -533,6 +585,32 @@
       "date": "2026-10-16"
     },
     {
+      "id": "1792160263265",
+      "playerName": "Cricket lover",
+      "score": 1,
+      "ballsFaced": 2,
+      "strikeRate": 50,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "6-Ball SUPER OVER",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160263280",
+      "playerName": "Cricket lover",
+      "score": 1,
+      "ballsFaced": 2,
+      "strikeRate": 50,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "6-Ball SUPER OVER",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
       "id": "1792148122368",
       "playerName": "Cricket Fan",
       "score": 0,
@@ -580,6 +658,32 @@
       "sixes": 1,
       "fours": 1,
       "mode": "12-Ball Chase Thriller",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160274361",
+      "playerName": "Cricket lover",
+      "score": 0,
+      "ballsFaced": 2,
+      "strikeRate": 0,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "6-Ball SUPER OVER",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792160274382",
+      "playerName": "Cricket lover",
+      "score": 0,
+      "ballsFaced": 2,
+      "strikeRate": 0,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "6-Ball SUPER OVER",
       "challengeCode": null,
       "won": false,
       "date": "2026-10-16"

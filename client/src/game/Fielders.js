@@ -256,7 +256,7 @@ export class FielderManager {
     });
   }
 
-  checkFieldInterception(ball) {
+  checkFieldInterception(ball, engine = null) {
     if (!ball || ball.state !== 'HIT') return null;
 
     const ballSpeed = Math.hypot(ball.vx || 0, ball.vy || 0);
@@ -269,29 +269,52 @@ export class FielderManager {
         f.isDiving = true;
         f.isCatching = true;
         f.catchTimer = 90;
-        this.startThrowTracer(f.x, f.y);
+        this.startThrowTracer(f.x, f.y, engine, f.role);
         return { type: 'CATCH', fielder: f.role };
       }
 
       // Ground stop detection along the turf
       if (!ball.isAirborne && dist < 26 && ballSpeed < 14) {
         f.isDiving = dist < 22;
-        this.startThrowTracer(f.x, f.y);
+        this.startThrowTracer(f.x, f.y, engine, f.role);
+        // Decelerate stopped ball so it comes to rest
+        ball.vx *= 0.15;
+        ball.vy *= 0.15;
         return { type: 'STOP', fielder: f.role, distanceTraveled: ball.traveled };
       }
     }
     return null;
   }
 
-  startThrowTracer(fromX, fromY) {
+  startThrowTracer(fromX, fromY, engine = null, fielderRole = 'Fielder') {
     const cx = this.width / 2;
     const cy = this.height * 0.52;
-    const stumpsY = cy + this.height * 0.46 * 0.38 + 18;
+    const stumpsY = engine?.stumpsY || (cy + this.height * 0.46 * 0.38 + 18);
+    const bowlerStumpsY = engine?.bowlerStumpsY || (cy - this.height * 0.46 * 0.38 - 18);
+
+    // Pick target stumps based on runner direction and closest threat
+    let targetY = stumpsY;
+    if (engine?.running?.active) {
+      const isBowlerEnd = engine.running.direction === 1
+        ? engine.running.progress < 0.5
+        : engine.running.progress > 0.5;
+      targetY = isBowlerEnd ? bowlerStumpsY : stumpsY;
+
+      engine.running.throwActive = true;
+      engine.running.throwProgress = 0;
+      engine.running.throwFromX = fromX;
+      engine.running.throwFromY = fromY;
+      engine.running.throwTargetX = cx;
+      engine.running.throwTargetY = targetY;
+      engine.running.throwTargetEnd = isBowlerEnd ? 'bowler' : 'batsman';
+      engine.running.fielderRole = fielderRole;
+    }
+
     this.throwTracer = {
       fromX,
       fromY,
       toX: cx,
-      toY: stumpsY,
+      toY: targetY,
       progress: 0
     };
   }
