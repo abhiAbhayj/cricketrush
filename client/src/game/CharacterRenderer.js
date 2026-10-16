@@ -1118,7 +1118,7 @@ export const CharacterRenderer = {
     ctx.stroke();
 
     // Foam Boundary Toblerone Markers (Yellow & Red sponsor blocks)
-    const numMarkers = 28;
+    const numMarkers = 36;
     for (let i = 0; i < numMarkers; i++) {
       const angle = (i / numMarkers) * Math.PI * 2;
       const mx = cx + Math.cos(angle) * (boundaryRadius + 4);
@@ -1133,8 +1133,15 @@ export const CharacterRenderer = {
     }
 
     // 2. Crowd Stands & Tiers along upper corners & outer perimeter
-    // Tiered concrete steps
-    const stepDistances = [boundaryRadius + 14, boundaryRadius + 30, boundaryRadius + 48, boundaryRadius + 68];
+    // Tiered concrete steps for expanded grand stadium
+    const stepDistances = [
+      boundaryRadius + 14,
+      boundaryRadius + 32,
+      boundaryRadius + 52,
+      boundaryRadius + 74,
+      boundaryRadius + 98,
+      boundaryRadius + 124
+    ];
     const colors = ['#2563eb', '#ef4444', '#f59e0b', '#10b981', '#a855f7', '#ffffff', '#0284c7', '#ea580c'];
 
     stepDistances.forEach((dist, stepIdx) => {

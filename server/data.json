@@ -843,6 +843,32 @@
       "challengeCode": null,
       "won": false,
       "date": "2026-10-16"
+    },
+    {
+      "id": "1792164756920",
+      "playerName": "Cricket lover",
+      "score": 0,
+      "ballsFaced": 2,
+      "strikeRate": 0,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "12-Ball DEATH OVERS",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
+    },
+    {
+      "id": "1792164756942",
+      "playerName": "Cricket lover",
+      "score": 0,
+      "ballsFaced": 2,
+      "strikeRate": 0,
+      "sixes": 0,
+      "fours": 0,
+      "mode": "12-Ball DEATH OVERS",
+      "challengeCode": null,
+      "won": false,
+      "date": "2026-10-16"
     }
   ],
   "quests": [

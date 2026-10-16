@@ -185,6 +185,7 @@ export default function CricketGame({
       if (!engineRef.current) {
         engineRef.current = new CricketPhysics(width, height);
         fieldersRef.current = new FielderManager(width, height, engineRef.current.boundaryRadius);
+        fieldersRef.current.applyFieldPreset('powerplay', true);
       } else {
         engineRef.current.resize(width, height);
         fieldersRef.current.resize(width, height, engineRef.current.boundaryRadius);
@@ -241,24 +242,36 @@ export default function CricketGame({
           cam.targetZoom = 1.0;
         } else if (engine.ball.state === 'HIT') {
           if (engine.ball.isRocketSix) {
-            // Angle 4: SIX_SKYCAM - high aerial panoramic tracking soaring six into the stands!
+            // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands
             cam.mode = 'SIX_SKYCAM';
             cam.targetX = engine.ball.x;
             cam.targetY = engine.ball.y;
-            cam.targetZoom = 0.92;
+            cam.targetZoom = 0.80; // Broad view of the entire stands and crowd
           } else if (engine.running?.active && engine.running?.isCallingRun) {
             // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
             cam.mode = 'RUNNING_PITCH';
             cam.targetX = cx;
             cam.targetY = cy;
-            cam.targetZoom = 1.05;
-          } else {
-            // Angle 2: BALL_FOLLOW - traveling camera following ball across grass!
-            cam.mode = 'BALL_FOLLOW';
+            cam.targetZoom = 1.08;
+          } else if (engine.ball.isAerialFour) {
+            // Angle 5: AERIAL_FOUR - dynamic tracking camera tracking lofted boundary clearing infield
+            cam.mode = 'AERIAL_FOUR';
             cam.targetX = engine.ball.x;
             cam.targetY = engine.ball.y;
+            cam.targetZoom = 0.86;
+          } else {
+            // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder in gap
+            cam.mode = 'BALL_CHASE';
+            const chaser = fielders.getPrimaryChaser();
+            if (chaser) {
+              cam.targetX = engine.ball.x * 0.70 + chaser.x * 0.30;
+              cam.targetY = engine.ball.y * 0.70 + chaser.y * 0.30;
+            } else {
+              cam.targetX = engine.ball.x;
+              cam.targetY = engine.ball.y;
+            }
             const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
-            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.95 : 1.02;
+            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.88 : 0.98;
           }
         } else {
           // DEAD / OVER_PAUSE
@@ -378,10 +391,22 @@ export default function CricketGame({
       setIsCrowdCheering(true);
       setTimeout(() => setIsCrowdCheering(false), 2800);
       if (hapticsEnabled) haptics.heavy();
-      badgeText = 'CRACKING FOUR! TO THE ROPE 🔥';
-      badgeType = 'perfect';
-      commentaryLine = 'Sensational boundary! Bullet stroke rips across the grass turf for FOUR!';
-      triggerSpecialCelebration('four', 'CRACKING FOUR!', 'BULLET TO THE ROPE', 68);
+      if (outcome.fourType === 'gap') {
+        badgeText = 'BULLET FOUR IN GAP! ⚡';
+        badgeType = 'perfect';
+        commentaryLine = 'Precision in the gap! Pierces the infield ring and races away across the turf for FOUR!';
+        triggerSpecialCelebration('four_gap', 'BULLET FOUR IN GAP! ⚡', 'PIERCED INFIELD WITH SURGICAL PRECISION', 64);
+      } else if (outcome.fourType === 'air') {
+        badgeText = 'LOFTED FOUR OVER INFIELD! 🚀';
+        badgeType = 'perfect';
+        commentaryLine = 'Lofted beautifully over the 30-yard ring, one bounce and into the boundary cushions for FOUR!';
+        triggerSpecialCelebration('four_air', 'LOFTED FOUR OVER INFIELD! 🚀', 'CLEARED 30-YARD CIRCLE WITH EASE', 72);
+      } else {
+        badgeText = 'CRACKING FOUR! TO THE ROPE 🔥';
+        badgeType = 'perfect';
+        commentaryLine = 'Sensational boundary! Bullet stroke rips across the grass turf for FOUR!';
+        triggerSpecialCelebration('four', 'CRACKING FOUR!', 'BULLET TO THE ROPE', 68);
+      }
     } else if (outcome.event === 'RUNS') {
       runsScored = outcome.runs;
       sound.playCoin();
@@ -604,6 +629,31 @@ export default function CricketGame({
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
     setGameState('BOWLING');
+
+    // Over-by-Over Automatic Field Regulations & Transitions
+    if (fieldersRef.current) {
+      const overIndex = Math.floor(currentBallsFaced / 6);
+      const isStartOfOver = (currentBallsFaced % 6 === 0);
+      const totalOvers = Math.ceil(totalBalls / 6);
+      const isDeathOvers = (totalOvers <= 2 && overIndex >= 1) || (overIndex >= 2) || (totalBalls - currentBallsFaced <= 12);
+
+      if (isStartOfOver) {
+        if (overIndex === 0) {
+          fieldersRef.current.applyFieldPreset('powerplay');
+          setFieldChangeNotice('POWERPLAY: EXACTLY 6 FIELDERS INSIDE 30-YD CIRCLE 🛡️');
+          setTimeout(() => setFieldChangeNotice(null), 3200);
+        } else if (isDeathOvers) {
+          fieldersRef.current.applyFieldPreset('death_overs');
+          setFieldChangeNotice('DEATH OVERS: 4 INSIDE 30-YD CIRCLE, 5 ON BOUNDARY 🛡️');
+          setTimeout(() => setFieldChangeNotice(null), 3200);
+        } else {
+          fieldersRef.current.applyFieldPreset('balanced');
+          setFieldChangeNotice('MIDDLE OVERS: BALANCED FIELD SPREAD 🛡️');
+          setTimeout(() => setFieldChangeNotice(null), 3200);
+        }
+      }
+    }
+
     const engine = engineRef.current;
     if (engine) {
       const deliveryInfo = engine.startDelivery({
@@ -999,14 +1049,36 @@ export default function CricketGame({
           }
           ctx.restore();
         } else {
+          ctx.save();
           ctx.beginPath();
           ctx.moveTo(b.trail[0].x, b.trail[0].y);
           for (let i = 1; i < b.trail.length; i++) {
             ctx.lineTo(b.trail[i].x, b.trail[i].y);
           }
-          ctx.strokeStyle = b.isRocketSix ? 'rgba(245, 158, 11, 0.95)' : b.state === 'HIT' ? 'rgba(234, 179, 8, 0.75)' : 'rgba(255, 255, 255, 0.6)';
-          ctx.lineWidth = b.isRocketSix ? 4.0 : 2.5;
+          if (b.isRocketSix) {
+            // Fiery Meteor Comet Tail for sixes
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.95)';
+            ctx.lineWidth = 4.5;
+            ctx.shadowColor = '#f59e0b';
+            ctx.shadowBlur = 14;
+          } else if (b.isFourInGap) {
+            // Emerald speed streak for bullet four in gap
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.95)';
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 10;
+          } else if (b.isAerialFour) {
+            // Cyan/teal loft arc for aerial four over infield
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.95)';
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 10;
+          } else {
+            ctx.strokeStyle = b.state === 'HIT' ? 'rgba(234, 179, 8, 0.75)' : 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 2.5;
+          }
           ctx.stroke();
+          ctx.restore();
         }
       }
 
@@ -1014,12 +1086,26 @@ export default function CricketGame({
       const visualY = b.y - h;
       const visualRadius = b.radius + (h * (b.isRocketSix ? 0.22 : 0.14));
 
-      // Fiery rocket aura for towering sixes
+      // Fiery rocket aura for towering sixes & speed aura for gap/aerial boundaries
       if (b.isRocketSix) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(b.x, visualY, visualRadius + 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.arc(b.x, visualY, visualRadius + 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+        ctx.fill();
+        ctx.restore();
+      } else if (b.isFourInGap) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(b.x, visualY, visualRadius + 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
+        ctx.fill();
+        ctx.restore();
+      } else if (b.isAerialFour) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(b.x, visualY, visualRadius + 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
         ctx.fill();
         ctx.restore();
       }
@@ -1414,6 +1500,24 @@ export default function CricketGame({
                 </div>
                 <div className="mt-1 text-xs sm:text-sm font-mono font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
                   {celebrationOverlay.distanceMeters || 104}M ROCKET INTO THE STANDS! • NEED {runsRemaining} OFF {ballsRemaining}
+                </div>
+              </div>
+            ) : celebrationOverlay.type === 'four_gap' ? (
+              <div className="text-center flex flex-col items-center">
+                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-400 to-green-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
+                  ⚡ BULLET FOUR IN GAP!
+                </div>
+                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-emerald-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                  SURGICAL GAP PIERCING TO THE ROPE! • NEED {runsRemaining} OFF {ballsRemaining}
+                </div>
+              </div>
+            ) : celebrationOverlay.type === 'four_air' ? (
+              <div className="text-center flex flex-col items-center">
+                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
+                  🚀 LOFTED FOUR OVER INFIELD!
+                </div>
+                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-cyan-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                  CLEARED 30-YARD CIRCLE WITH EASE! • NEED {runsRemaining} OFF {ballsRemaining}
                 </div>
               </div>
             ) : celebrationOverlay.type === 'four' ? (

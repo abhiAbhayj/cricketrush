@@ -32,10 +32,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      // Expansive Big Stadium with 30-yard regulation circle
-      this.boundaryRadius = Math.max(480, Math.min(680, Math.max(this.width, this.height) * 0.72));
-      this.innerCircleRadiusX = Math.max(130, this.pitchWidth * 1.8);
-      this.innerCircleRadiusY = Math.max(160, this.pitchLength * 0.55);
+      // Expansive Big Stadium with 30-yard regulation circle (Bigger Stadium)
+      this.boundaryRadius = Math.max(620, Math.min(880, Math.max(this.width, this.height) * 0.95));
+      this.innerCircleRadiusX = 140;
+      this.innerCircleRadiusY = 165;
     } else {
       this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
       this.pitchTop = this.height * 0.26;
@@ -47,9 +47,9 @@ export class CricketPhysics {
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
       // Expansive Big Stadium with 30-yard regulation circle
-      this.boundaryRadius = Math.max(500, Math.min(720, Math.max(this.width, this.height) * 0.75));
-      this.innerCircleRadiusX = Math.max(150, this.pitchWidth * 1.8);
-      this.innerCircleRadiusY = Math.max(175, this.pitchLength * 0.55);
+      this.boundaryRadius = Math.max(660, Math.min(940, Math.max(this.width, this.height) * 0.98));
+      this.innerCircleRadiusX = 155;
+      this.innerCircleRadiusY = 180;
     }
   }
 
@@ -1002,30 +1002,26 @@ export class CricketPhysics {
     if (timingQuality === 'EARLY') exitAngle += 0.35;
     if (timingQuality === 'LATE' || timingQuality === 'EDGE') exitAngle -= 0.45;
 
-    // Calibrated slow speeds: Six hangs majestically in the air, ground balls roll progressively
-    if (timingQuality === 'PERFECT') {
-      exitSpeed = 3.3 + (power * 1.2);
-    } else if (altitudeVz <= 5.5) {
-      exitSpeed = 4.2 + (power * 2.8);
-    } else {
-      exitSpeed = 3.6 + (power * 2.0);
-    }
+    // Determine shot trajectory type: Six vs Four in Gap vs Aerial Four vs Gap Running 1, 2, 3
+    const isLoftedSixStyle = (shotStyle === 'step_out' || shotStyle === 'scoop' || (timingQuality === 'PERFECT' && power >= 0.65 && (shotStyle === 'pull' || shotStyle === 'straight_drive' || shotStyle === 'upper_cut')));
 
-    this.ball.vx = Math.sin(exitAngle) * exitSpeed;
-    this.ball.vy = -Math.cos(exitAngle) * exitSpeed;
-
-    if (timingQuality === 'PERFECT') {
+    if (isLoftedSixStyle) {
+      // 1. TOWERING MAXIMUM SIX ROCKET (Soars high above stadium stands!)
       this.ball.isAirborne = true;
-      this.ball.isRocketSix = true; // Launch like a rocket to stadium stands!
+      this.ball.isRocketSix = true;
+      this.ball.isFourInGap = false;
+      this.ball.isAerialFour = false;
       this.ball.height = 18;
-      this.ball.vz = 14.5; // High towering altitude with slow majestic arc!
+      this.ball.vz = 15.5; // High towering altitude with slow majestic arc!
+      exitSpeed = 4.2 + (power * 1.8);
       this.screenShake = 7;
       this.createSparks(this.ball.x, this.ball.y, '#f59e0b', 36);
       this.createRocketSmoke(this.ball.x, this.ball.y);
-      this.ball.distanceMeters = Math.round(98 + power * 24 + Math.random() * 14);
+      this.ball.distanceMeters = Math.round(98 + power * 26 + Math.random() * 14);
       this.running.active = false;
     } else {
-      // Ground or looping stroke: activate interactive Running Between Wickets!
+      this.ball.isRocketSix = false;
+      // Activate interactive Running Between Wickets for all ground & gap strokes!
       this.running.active = true;
       this.running.runsCompleted = 0;
       this.running.isCallingRun = false;
@@ -1041,22 +1037,59 @@ export class CricketPhysics {
       this.running.throwProgress = 0;
       this.running.dangerLevel = 0;
 
-      if (timingQuality === 'GOOD') {
-        this.ball.isAirborne = altitudeVz > 5.5;
-        this.ball.isRocketFour = altitudeVz <= 5.5; // Blistering flat ground rocket 4
-        this.ball.height = this.ball.isAirborne ? 12 : 0;
-        this.ball.vz = altitudeVz;
-        this.screenShake = 3;
-        this.createSparks(this.ball.x, this.ball.y, '#ffffff', 20);
-        this.ball.distanceMeters = Math.round(68 + power * 16);
+      if (altitudeVz <= 5.5) {
+        // Ground stroke: either a Bullet Four in Gap or Single/Double/Triple in Gap
+        if (timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.58)) {
+          // 2. BULLET FOUR IN GAP (Pierces the infield between fielders!)
+          this.ball.isFourInGap = true;
+          this.ball.isAerialFour = false;
+          this.ball.isAirborne = false;
+          this.ball.height = 0;
+          this.ball.vz = 0;
+          exitSpeed = 5.6 + (power * 3.4);
+          this.screenShake = 3;
+          this.createSparks(this.ball.x, this.ball.y, '#10b981', 20);
+          this.ball.distanceMeters = Math.round(70 + power * 12);
+        } else {
+          // GAP STROKE FOR 1, 2, or 3 RUNS (Clean ground stroke, fielders chase)
+          this.ball.isFourInGap = false;
+          this.ball.isAerialFour = false;
+          this.ball.isAirborne = false;
+          this.ball.height = 0;
+          this.ball.vz = 0;
+          exitSpeed = 3.6 + (power * 2.2);
+          this.createSparks(this.ball.x, this.ball.y, '#ffffff', 10);
+          this.ball.distanceMeters = Math.round(35 + power * 25);
+        }
       } else {
-        this.ball.isAirborne = true;
-        this.ball.height = 7;
-        this.ball.vz = 3.5;
-        this.createSparks(this.ball.x, this.ball.y, '#94a3b8', 12);
-        this.ball.distanceMeters = Math.round(35 + Math.random() * 20);
+        // Lofted stroke: either an Aerial Four over infield or Single/Double in Deep Gap
+        if (timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.60)) {
+          // 3. AERIAL FOUR OVER INFIELD (Clears 30-yard ring, bounces into rope!)
+          this.ball.isFourInGap = false;
+          this.ball.isAerialFour = true;
+          this.ball.isAirborne = true;
+          this.ball.height = 12;
+          this.ball.vz = altitudeVz;
+          exitSpeed = 4.8 + (power * 2.8);
+          this.screenShake = 3.5;
+          this.createSparks(this.ball.x, this.ball.y, '#38bdf8', 22);
+          this.ball.distanceMeters = Math.round(74 + power * 14);
+        } else {
+          // Lofted in vacant outfield for 1, 2, or 3 runs
+          this.ball.isFourInGap = false;
+          this.ball.isAerialFour = false;
+          this.ball.isAirborne = true;
+          this.ball.height = 8;
+          this.ball.vz = altitudeVz * 0.7;
+          exitSpeed = 3.5 + (power * 2.0);
+          this.createSparks(this.ball.x, this.ball.y, '#94a3b8', 12);
+          this.ball.distanceMeters = Math.round(38 + power * 22);
+        }
       }
     }
+
+    this.ball.vx = Math.sin(exitAngle) * exitSpeed;
+    this.ball.vy = -Math.cos(exitAngle) * exitSpeed;
   }
 
   update(dt = 1) {
@@ -1302,6 +1335,7 @@ export class CricketPhysics {
           event: isSix ? 'SIX' : 'FOUR',
           runs: isSix ? 6 : 4,
           isRocketSix: isSix,
+          fourType: !isSix ? (this.ball.isFourInGap ? 'gap' : this.ball.isAerialFour ? 'air' : 'standard') : undefined,
           distanceMeters: this.ball.distanceMeters || (isSix ? 96 : 68),
           landingX: isSix ? this.ball.x : undefined,
           landingY: isSix ? this.ball.y : undefined,
