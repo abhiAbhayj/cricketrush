@@ -104,12 +104,18 @@ export default function App() {
       roundTitle = 'T5 CHAMPIONSHIP';
     }
 
+    const isLeftArm = chosenBowler.includes('leftarm') || Math.random() < 0.28;
+    const bowlingArm = isLeftArm ? 'left' : 'right';
+    const bowlingAngle = Math.random() < 0.35 ? 'around' : 'over';
+
     startMatch({
       title: `${ballsAllowed}-Ball ${matchPhase}`,
       targetRuns,
       ballsAllowed,
       wicketsAllowed,
       bowlerType: chosenBowler,
+      bowlingArm,
+      bowlingAngle,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
@@ -174,6 +180,8 @@ export default function App() {
             ballsAllowed: c.ballsAllowed,
             wicketsAllowed: c.wicketsAllowed,
             bowlerType: c.bowlerType,
+            bowlingArm: c.bowlingArm || (c.bowlerType?.includes('leftarm') ? 'left' : 'right'),
+            bowlingAngle: c.bowlingAngle || 'over',
             stadiumKey: c.stadiumKey || 'colosseum',
             code: c.code
           })}
@@ -191,6 +199,8 @@ export default function App() {
             ballsAllowed: c.ballsAllowed,
             wicketsAllowed: c.wicketsAllowed,
             bowlerType: c.bowlerType,
+            bowlingArm: c.bowlingArm || (c.bowlerType?.includes('leftarm') ? 'left' : 'right'),
+            bowlingAngle: c.bowlingAngle || 'over',
             stadiumKey: c.stadiumKey || 'colosseum',
             code: c.code
           })}
@@ -207,6 +217,8 @@ export default function App() {
             ballsAllowed: lvl.ballsAllowed,
             wicketsAllowed: lvl.wicketsAllowed,
             bowlerType: lvl.bowlerType,
+            bowlingArm: lvl.bowlingArm || (lvl.bowlerType?.includes('leftarm') ? 'left' : 'right'),
+            bowlingAngle: lvl.bowlingAngle || 'over',
             stadiumKey: lvl.stadiumKey,
             campaignLevelId: lvl.campaignLevelId
           })}

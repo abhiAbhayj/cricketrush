@@ -91,7 +91,30 @@ export default function NetPractice({ onBack, profile, settings }) {
   const [deliveryLength, setDeliveryLength] = useState('good');
   const [deliveryLine, setDeliveryLine] = useState('auto');
   const [speedKmh, setSpeedKmh] = useState(78);
+  const [bowlingArm, setBowlingArm] = useState('right'); // 'right' or 'left'
+  const [bowlingAngle, setBowlingAngle] = useState('over'); // 'over' or 'around' the wicket
   const [autoBowl, setAutoBowl] = useState(true);
+
+  // Persistent reference for auto-bowling so it always reads the exact latest user configuration
+  const configRef = useRef({
+    bowlerStyle: 'legbreak',
+    deliveryLength: 'good',
+    deliveryLine: 'auto',
+    speedKmh: 78,
+    bowlingArm: 'right',
+    bowlingAngle: 'over'
+  });
+
+  useEffect(() => {
+    configRef.current = {
+      bowlerStyle,
+      deliveryLength,
+      deliveryLine,
+      speedKmh,
+      bowlingArm,
+      bowlingAngle
+    };
+  }, [bowlerStyle, deliveryLength, deliveryLine, speedKmh, bowlingArm, bowlingAngle]);
 
   // Batting Shot & Footwork
   const [selectedShot, setSelectedShot] = useState('cover_drive');
@@ -246,21 +269,38 @@ export default function NetPractice({ onBack, profile, settings }) {
     }
   }, [autoBowl]);
 
-  const triggerDelivery = () => {
+  const triggerDelivery = (overrideConfig = null) => {
     setFeedback(null);
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
 
+    const cfg = overrideConfig || configRef.current;
     const engine = engineRef.current;
     if (engine) {
       engine.startDelivery({
-        bowlerType: bowlerStyle,
-        length: deliveryLength,
-        line: deliveryLine,
-        speedKmh: speedKmh
+        bowlerType: cfg.bowlerStyle,
+        length: cfg.deliveryLength,
+        line: cfg.deliveryLine,
+        speedKmh: cfg.speedKmh,
+        bowlingArm: cfg.bowlingArm,
+        bowlingAngle: cfg.bowlingAngle
       }, 1.0);
       sound.playBowlerRelease();
     }
+  };
+
+  const updateDeliveryConfig = (patch) => {
+    sound.playClick();
+    if (patch.bowlerStyle !== undefined) setBowlerStyle(patch.bowlerStyle);
+    if (patch.deliveryLength !== undefined) setDeliveryLength(patch.deliveryLength);
+    if (patch.deliveryLine !== undefined) setDeliveryLine(patch.deliveryLine);
+    if (patch.speedKmh !== undefined) setSpeedKmh(patch.speedKmh);
+    if (patch.bowlingArm !== undefined) setBowlingArm(patch.bowlingArm);
+    if (patch.bowlingAngle !== undefined) setBowlingAngle(patch.bowlingAngle);
+
+    const updated = { ...configRef.current, ...patch };
+    configRef.current = updated;
+    triggerDelivery(updated);
   };
 
   // Bat Swing Action in Nets with Dynamic Shot Detection
@@ -683,6 +723,69 @@ export default function NetPractice({ onBack, profile, settings }) {
           </button>
         </div>
 
+        {/* Bowling Hand & Approach Angle Selectors (Right/Left Arm & Over/Around the Wicket) */}
+        <div className="grid grid-cols-2 gap-2 p-2 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Bowling Hand
+            </label>
+            <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+              <button
+                type="button"
+                onClick={() => updateDeliveryConfig({ bowlingArm: 'right' })}
+                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                  bowlingArm === 'right'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ✋ Right
+              </button>
+              <button
+                type="button"
+                onClick={() => updateDeliveryConfig({ bowlingArm: 'left' })}
+                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                  bowlingArm === 'left'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🤚 Left
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Approach
+            </label>
+            <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+              <button
+                type="button"
+                onClick={() => updateDeliveryConfig({ bowlingAngle: 'over' })}
+                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                  bowlingAngle === 'over'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🔄 Over
+              </button>
+              <button
+                type="button"
+                onClick={() => updateDeliveryConfig({ bowlingAngle: 'around' })}
+                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                  bowlingAngle === 'around'
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ↪️ Around
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* 1. Bowler Variations Grid */}
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -692,7 +795,7 @@ export default function NetPractice({ onBack, profile, settings }) {
             {currentCategoryList.map(style => (
               <button
                 key={style.id}
-                onClick={() => { setBowlerStyle(style.id); sound.playClick(); }}
+                onClick={() => updateDeliveryConfig({ bowlerStyle: style.id, speedKmh: style.defaultSpeed })}
                 className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all ${
                   bowlerStyle === style.id
                     ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-sm'
@@ -717,7 +820,7 @@ export default function NetPractice({ onBack, profile, settings }) {
             {LENGTHS.map(len => (
               <button
                 key={len.id}
-                onClick={() => { setDeliveryLength(len.id); sound.playClick(); }}
+                onClick={() => updateDeliveryConfig({ deliveryLength: len.id })}
                 className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all ${
                   deliveryLength === len.id
                     ? 'bg-amber-500/20 border-amber-500 text-amber-300'
@@ -739,7 +842,7 @@ export default function NetPractice({ onBack, profile, settings }) {
             {LINES.map(line => (
               <button
                 key={line.id}
-                onClick={() => { setDeliveryLine(line.id); sound.playClick(); }}
+                onClick={() => updateDeliveryConfig({ deliveryLine: line.id })}
                 className={`py-1.5 px-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
                   deliveryLine === line.id
                     ? 'bg-blue-500/20 border-blue-500 text-blue-300'
@@ -768,7 +871,7 @@ export default function NetPractice({ onBack, profile, settings }) {
             max={currentStyleObj.max}
             step="1"
             value={speedKmh}
-            onChange={(e) => setSpeedKmh(Number(e.target.value))}
+            onChange={(e) => updateDeliveryConfig({ speedKmh: Number(e.target.value) })}
             className="w-full accent-emerald-500 cursor-pointer"
           />
         </div>
@@ -802,12 +905,15 @@ export default function NetPractice({ onBack, profile, settings }) {
         <div className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between max-w-md mx-auto pointer-events-none">
           <div className="px-3.5 py-1.5 rounded-xl bg-[#0c1322]/90 border border-slate-800 text-xs flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlingAngle === 'around' ? 'Around' : 'Over'}
+            </span>
             <span className="font-bold text-white uppercase">{bowlerStyle.replace('_', ' ')}</span>
             <span className="text-amber-400 font-mono">({speedKmh} km/h)</span>
           </div>
 
           <div className="px-3 py-1.5 rounded-xl bg-[#0c1322]/90 border border-slate-800 text-xs font-bold text-slate-300">
-            Zone: <span className="text-emerald-400 capitalize">{deliveryLength}</span>
+            Zone: <span className="text-emerald-400 capitalize">{deliveryLength}</span> • <span className="text-cyan-400 capitalize">{deliveryLine}</span>
           </div>
         </div>
 

@@ -80,12 +80,13 @@ export class CricketPhysics {
 
     // Bowler at top crease
     this.bowler = {
-      x: this.cx - 14,
+      x: this.cx - 16,
       y: this.pitchTop - 25,
       runUpProgress: 0,
       isBowling: false,
       bowlingArmAngle: 0,
       armSide: 'right',
+      bowlingAngle: 'over', // 'over' or 'around' the wicket
       actionType: 'high_arm', // 'high_arm', 'slingshot', 'fast_swing', 'wrist_spin', 'finger_spin', 'unorthodox'
       faceStyle: 'classic',
       skinTone: '#c68656'
@@ -276,6 +277,7 @@ export class CricketPhysics {
 
   /**
    * Start a delivery with authentic real-world cricket speeds, tight stump lines & dynamic variation selection.
+   * Strictly respects length, line, speed, bowling arm (right/left) and bowling angle (over/around).
    */
   startDelivery(deliveryConfig = 'fast', difficulty = 1.0) {
     this.reset();
@@ -287,6 +289,8 @@ export class CricketPhysics {
     const rawBowlerType = config.bowlerType || 'fast';
     const chosenLength = config.length || 'auto';
     const chosenLine = config.line || 'auto';
+    const chosenArm = config.bowlingArm || (rawBowlerType.includes('leftarm') ? 'left' : 'right');
+    const chosenAngle = config.bowlingAngle || 'over';
 
     // Intelligently resolve dynamic variation from bowler archetype if not explicitly passed
     const resolvedVariation = this.resolveBowlerVariation(rawBowlerType);
@@ -297,11 +301,25 @@ export class CricketPhysics {
     this.ball.deliveryType = bType;
     this.ball.lengthType = chosenLength;
     this.ball.lineType = chosenLine;
+    this.ball.bowlingArm = chosenArm;
+    this.ball.bowlingAngle = chosenAngle;
+
+    this.bowler.armSide = chosenArm;
+    this.bowler.bowlingAngle = chosenAngle;
     this.bowler.isBowling = true;
     this.bowler.runUpProgress = 0;
     this.ball.state = 'RUN_UP';
 
-    // 1. Determine Pitch Bounce Spot (Length)
+    // 1. Authentic Crease Positioning based on Arm & Over/Around the wicket
+    // Right-Arm Over: runs up on off-side (cx - 16) | Right-Arm Around: leg-side (cx + 18)
+    // Left-Arm Over:  runs up on leg-side (cx + 16) | Left-Arm Around:  off-side (cx - 18)
+    if (chosenArm === 'left') {
+      this.bowler.x = (chosenAngle === 'over') ? (this.cx + 16) : (this.cx - 18);
+    } else {
+      this.bowler.x = (chosenAngle === 'over') ? (this.cx - 16) : (this.cx + 18);
+    }
+
+    // 2. Determine Pitch Bounce Spot (Length) - STRICTLY RESPECTS USER FILTER
     const isSpinBowler = bType.includes('spin') || bType.includes('break') || bType === 'googly' || bType === 'doosra' || bType === 'flipper' || bType === 'carrom' || bType === 'drifter' || bType === 'arm_ball' || rawBowlerType.includes('spin');
 
     let finalLength = chosenLength;
@@ -311,13 +329,13 @@ export class CricketPhysics {
       } else if (bType === 'yorker') {
         finalLength = 'yorker';
       } else if (isSpinBowler) {
-        // Authentic Spin Length Repertoire: 30% Flighted Slot, 30% Good, 20% Flatter Short, 10% Flipper/Yorker, 10% Full Toss
+        // Authentic Spin Length Repertoire
         const spinPool = [
           { l: 'slot', w: 30 },
-          { l: 'good', w: 30 },
-          { l: 'short', w: 20 },
-          { l: 'yorker', w: 10 },
-          { l: 'fulltoss', w: 10 }
+          { l: 'good', w: 35 },
+          { l: 'short', w: 18 },
+          { l: 'yorker', w: 9 },
+          { l: 'fulltoss', w: 8 }
         ];
         const r = Math.random() * 100;
         let acc = 0;
@@ -326,13 +344,13 @@ export class CricketPhysics {
           if (r <= acc) { finalLength = item.l; break; }
         }
       } else {
-        // Authentic Pace Length Repertoire: 25% Short/Bouncer, 25% Good, 25% In The Slot, 15% Yorker, 10% Dipping Full Toss
+        // Authentic Pace Length Repertoire
         const pacePool = [
-          { l: 'short', w: 25 },
-          { l: 'good', w: 25 },
-          { l: 'slot', w: 25 },
-          { l: 'yorker', w: 15 },
-          { l: 'fulltoss', w: 10 }
+          { l: 'short', w: 22 },
+          { l: 'good', w: 34 },
+          { l: 'slot', w: 24 },
+          { l: 'yorker', w: 12 },
+          { l: 'fulltoss', w: 8 }
         ];
         const r = Math.random() * 100;
         let acc = 0;
@@ -343,17 +361,17 @@ export class CricketPhysics {
       }
     }
 
-    let bounceRel = 0.61;
+    let bounceRel = 0.58;
     let isFullToss = false;
 
-    if (finalLength === 'short' || bType === 'bouncer') {
-      bounceRel = 0.35 + Math.random() * 0.08; // Short / Bouncer (35% to 43% down pitch)
+    if (finalLength === 'short' || (chosenLength === 'auto' && bType === 'bouncer')) {
+      bounceRel = 0.38 + (Math.random() - 0.5) * 0.04; // Short / Bouncer (36% to 40% down pitch)
     } else if (finalLength === 'good') {
-      bounceRel = 0.58 + Math.random() * 0.08; // Good Length (58% to 66% down pitch)
+      bounceRel = 0.58 + (Math.random() - 0.5) * 0.04; // Good Length (56% to 60% down pitch)
     } else if (finalLength === 'slot') {
-      bounceRel = 0.72 + Math.random() * 0.09; // In the Slot half-volley (72% to 81%)
-    } else if (finalLength === 'yorker' || bType === 'yorker') {
-      bounceRel = 0.89 + Math.random() * 0.05; // Yorker at toes (89% to 94%)
+      bounceRel = 0.74 + (Math.random() - 0.5) * 0.04; // In the Slot half-volley (72% to 76%)
+    } else if (finalLength === 'yorker' || (chosenLength === 'auto' && bType === 'yorker')) {
+      bounceRel = 0.91 + (Math.random() - 0.5) * 0.02; // Yorker at toes (90% to 92%)
     } else if (finalLength === 'fulltoss') {
       isFullToss = true;
       bounceRel = 1.25; // Full toss does not pitch
@@ -362,222 +380,199 @@ export class CricketPhysics {
     this.ball.isFullToss = isFullToss;
     this.ball.bounceSpotY = this.pitchTop + (this.pitchLength * bounceRel);
 
-    // 2. Determine Line & Genuine Wide Ball Dispersion (Realistic Line Bowling)
+    // 3. Determine Line - STRICTLY RESPECTS USER FILTER & PREVENTS WIDE SPRAY
     let lineOffset = 0;
     let finalLine = chosenLine;
     if (finalLine === 'auto') {
       const lineRoll = Math.random();
-      if (lineRoll < 0.07) {
-        // 7% chance stray wide outside off (wide guideline is at cx - 24)
-        lineOffset = -25 - Math.random() * 5;
-      } else if (lineRoll < 0.13) {
-        // 6% chance stray wide down leg (wide guideline is at cx + 15)
-        lineOffset = +16 + Math.random() * 5;
+      if (lineRoll < 0.04) {
+        // Stray wide outside off (guideline is at cx - 24)
+        lineOffset = -25 - Math.random() * 2;
+      } else if (lineRoll < 0.08) {
+        // Stray wide down leg (guideline is at cx + 15)
+        lineOffset = +16 + Math.random() * 2;
       } else {
-        // 87% on corridor / off-middle-leg stumps
-        lineOffset = (Math.random() - 0.5) * 18;
+        // 92% right on the stumps / 4th stump corridor
+        lineOffset = (Math.random() - 0.5) * 12;
       }
     } else if (finalLine === 'outside_off') {
-      lineOffset = -18 - (Math.random() * 9); // Outside off / guideline test
+      lineOffset = -14 + (Math.random() - 0.5) * 3; // Tight 4th stump channel (testing outside edge, NOT wide)
     } else if (finalLine === 'stumps') {
-      lineOffset = (Math.random() - 0.5) * 8; // Directly on stumps
+      lineOffset = (Math.random() - 0.5) * 3; // Directly hitting off / middle / leg stumps!
     } else if (finalLine === 'leg') {
-      lineOffset = +12 + (Math.random() * 6); // On the pads / leg stump
+      lineOffset = +9 + (Math.random() - 0.5) * 3; // On the pads / leg stump line (NOT wide)
     }
 
     this.ball.bounceSpotX = this.cx + lineOffset;
 
-    // 3. Determine Bowler Arm, Action & Real Cricket Speed Calibration:
-    const isLeftArm = bType.includes('leftarm') || rawBowlerType.includes('leftarm');
-    this.bowler.armSide = isLeftArm ? 'left' : 'right';
-    this.bowler.x = isLeftArm ? this.cx + 14 : this.cx - 14;
-
+    // 4. Physical Dynamics, Authentic Speeds & Ball Movement (WITHOUT overwriting bounce spots!)
     switch (bType) {
       // ======================================================================
-      // PACE VARIATIONS (105 - 155 km/h)
+      // PACE VARIATIONS (90 - 160 km/h)
       // ======================================================================
       case 'fast':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(145 + Math.random() * 8 * difficulty);
-        this.ball.swingCurve = (Math.random() - 0.5) * 0.3;
+        this.ball.speedKmh = config.speedKmh || Math.floor(145 + Math.random() * 7 * difficulty);
+        this.ball.swingCurve = (Math.random() - 0.5) * 0.2;
         this.ball.spinLateralV = 0;
         break;
 
       case 'inswing':
       case 'fastmedium':
         this.bowler.actionType = 'fast_swing';
-        this.ball.speedKmh = config.speedKmh || Math.floor(135 + Math.random() * 8);
-        this.ball.swingCurve = +1.15; // Visibly hoops in from outside off to middle/leg
-        this.ball.bounceSpotX = this.cx - 10;
-        this.ball.spinLateralV = +0.5;
+        this.ball.speedKmh = config.speedKmh || Math.floor(135 + Math.random() * 6);
+        this.ball.swingCurve = +0.85; // Visibly hoops in towards stumps
+        this.ball.spinLateralV = +0.35; // Cuts slightly in off pitch
         break;
 
       case 'outswing':
       case 'mediumfast':
       case 'swing':
         this.bowler.actionType = 'fast_swing';
-        this.ball.speedKmh = config.speedKmh || Math.floor(132 + Math.random() * 8);
-        this.ball.swingCurve = -1.15; // Visibly shapes away towards 4th stump / slip
-        this.ball.bounceSpotX = this.cx + 4;
-        this.ball.spinLateralV = -0.5;
+        this.ball.speedKmh = config.speedKmh || Math.floor(134 + Math.random() * 6);
+        this.ball.swingCurve = -0.85; // Visibly shapes away to 4th stump / slip
+        this.ball.spinLateralV = -0.35; // Cuts slightly away off pitch
         break;
 
       case 'reverse_swing':
         this.bowler.actionType = 'slingshot';
-        this.ball.speedKmh = config.speedKmh || Math.floor(142 + Math.random() * 8);
+        this.ball.speedKmh = config.speedKmh || Math.floor(142 + Math.random() * 6);
         this.ball.swingCurve = 0;
-        this.ball.reverseSwingRate = +2.2; // Late vicious tail in final flight!
-        this.ball.bounceSpotX = this.cx - 8;
-        this.ball.spinLateralV = +0.8;
+        this.ball.reverseSwingRate = +1.1; // Late vicious tail in final flight
+        this.ball.spinLateralV = +0.4;
         break;
 
       case 'offcutter':
       case 'medium':
         this.bowler.actionType = 'fast_swing';
-        this.ball.speedKmh = config.speedKmh || Math.floor(115 + Math.random() * 8);
-        this.ball.swingCurve = -0.3;
-        this.ball.spinLateralV = +2.6; // Grips turf and cuts sharply in towards right-hander
-        this.ball.bounceSpotX = this.cx - 8;
+        this.ball.speedKmh = config.speedKmh || Math.floor(115 + Math.random() * 6);
+        this.ball.swingCurve = -0.2;
+        this.ball.spinLateralV = +0.65; // Grips turf and breaks in towards batsman
         break;
 
       case 'legcutter':
         this.bowler.actionType = 'fast_swing';
-        this.ball.speedKmh = config.speedKmh || Math.floor(115 + Math.random() * 8);
-        this.ball.swingCurve = +0.3;
-        this.ball.spinLateralV = -2.6; // Grips turf and cuts away to off after bounce
-        this.ball.bounceSpotX = this.cx + 8;
+        this.ball.speedKmh = config.speedKmh || Math.floor(115 + Math.random() * 6);
+        this.ball.swingCurve = +0.2;
+        this.ball.spinLateralV = -0.65; // Grips turf and breaks away to off
         break;
 
       case 'straight_seam':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(138 + Math.random() * 8);
+        this.ball.speedKmh = config.speedKmh || Math.floor(138 + Math.random() * 6);
         this.ball.swingCurve = 0;
         this.ball.spinLateralV = 0;
         break;
 
       case 'slow_ball':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(106 + Math.random() * 8);
-        this.ball.swingCurve = -0.3;
+        this.ball.speedKmh = config.speedKmh || Math.floor(106 + Math.random() * 6);
+        this.ball.swingCurve = -0.2;
         this.ball.isSlowerBall = true;
-        this.ball.spinLateralV = +0.8;
+        this.ball.spinLateralV = +0.3;
         break;
 
       case 'yorker':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(145 + Math.random() * 7);
+        this.ball.speedKmh = config.speedKmh || Math.floor(145 + Math.random() * 6);
         this.ball.swingCurve = 0;
         this.ball.spinLateralV = 0;
-        this.ball.bounceSpotY = this.pitchTop + (this.pitchLength * 0.93);
-        this.ball.bounceSpotX = this.cx + (Math.random() - 0.5) * 6;
         break;
 
       case 'bouncer':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(146 + Math.random() * 7);
+        this.ball.speedKmh = config.speedKmh || Math.floor(146 + Math.random() * 6);
         this.ball.swingCurve = 0;
         this.ball.spinLateralV = 0;
-        this.ball.bounceSpotY = this.pitchTop + (this.pitchLength * 0.35);
         break;
 
       // ======================================================================
-      // SPIN VARIATIONS (65 - 95 km/h, max 105 km/h) - AUTHENTIC TURN & DRIFT!
+      // SPIN VARIATIONS (65 - 110 km/h) - AUTHENTIC TURN & FLIGHT DRIFT
       // ======================================================================
       case 'legbreak':
       case 'legspin':
       case 'spin':
         this.bowler.actionType = 'wrist_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(75 + Math.random() * 10 * difficulty);
-        this.ball.swingCurve = +0.65; // Drifts leg side in flight
-        this.ball.spinLateralV = -3.8; // Sharp vicious turn across off stump!
-        this.ball.bounceSpotX = this.cx + 8; // Pitches on middle/leg, turns across off
+        this.ball.speedKmh = config.speedKmh || Math.floor(78 + Math.random() * 8 * difficulty);
+        this.ball.swingCurve = +0.4; // Drifts leg side in flight
+        this.ball.spinLateralV = -0.85; // Sharp turn across off stump
         break;
 
       case 'googly':
         this.bowler.actionType = 'wrist_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(77 + Math.random() * 9);
-        this.ball.swingCurve = -0.55; // Deceptive drift away to off
-        this.ball.spinLateralV = +3.8; // Wrist-spin wrong'un rips sharply IN to pads/middle stump!
-        this.ball.bounceSpotX = this.cx - 9;
+        this.ball.speedKmh = config.speedKmh || Math.floor(80 + Math.random() * 7);
+        this.ball.swingCurve = -0.35; // Deceptive drift away
+        this.ball.spinLateralV = +0.85; // Turns sharply IN to pads/middle stump
         break;
 
       case 'topspinner':
         this.bowler.actionType = 'wrist_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(82 + Math.random() * 8);
+        this.ball.speedKmh = config.speedKmh || Math.floor(84 + Math.random() * 6);
         this.ball.swingCurve = 0;
-        this.ball.spinLateralV = 0; // True line, kicks high
-        this.ball.bounceSpotX = this.cx;
+        this.ball.spinLateralV = 0;
         break;
 
       case 'flipper':
         this.bowler.actionType = 'wrist_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(87 + Math.random() * 7);
+        this.ball.speedKmh = config.speedKmh || Math.floor(88 + Math.random() * 6);
         this.ball.swingCurve = 0;
-        this.ball.spinLateralV = +0.5; // Skids low and fast under bat
-        this.ball.bounceSpotX = this.cx + 2;
+        this.ball.spinLateralV = +0.2; // Skids low and fast under bat
         break;
 
       case 'drifter':
         this.bowler.actionType = 'finger_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(72 + Math.random() * 8);
-        this.ball.swingCurve = -1.1; // Heavy aerodynamic float on breeze
-        this.ball.spinLateralV = -1.5;
-        this.ball.bounceSpotX = this.cx + 6;
+        this.ball.speedKmh = config.speedKmh || Math.floor(75 + Math.random() * 6);
+        this.ball.swingCurve = -0.65; // Heavy flight drift
+        this.ball.spinLateralV = -0.4;
         break;
 
       case 'offbreak':
       case 'offspin':
         this.bowler.actionType = 'finger_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(78 + Math.random() * 10 * difficulty);
-        this.ball.swingCurve = -0.65; // Drifts away outside off in flight
-        this.ball.spinLateralV = +4.0; // Rips sharply INWARDS into right-hander's stumps!
-        this.ball.bounceSpotX = this.cx - 10; // Pitch outside off, turn into stumps
+        this.ball.speedKmh = config.speedKmh || Math.floor(80 + Math.random() * 8 * difficulty);
+        this.ball.swingCurve = -0.4; // Drifts away outside off in flight
+        this.ball.spinLateralV = +0.85; // Rips sharply IN into right-hander's stumps
         break;
 
       case 'doosra':
         this.bowler.actionType = 'finger_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(79 + Math.random() * 9);
-        this.ball.swingCurve = -0.3;
-        this.ball.spinLateralV = -3.5; // The 'other one': off-spin action that spins AWAY to off!
-        this.ball.bounceSpotX = this.cx + 5;
+        this.ball.speedKmh = config.speedKmh || Math.floor(82 + Math.random() * 7);
+        this.ball.swingCurve = -0.25;
+        this.ball.spinLateralV = -0.80; // Off-spin action that turns AWAY to off
         break;
 
       case 'carrom':
         this.bowler.actionType = 'unorthodox';
-        this.ball.speedKmh = config.speedKmh || Math.floor(82 + Math.random() * 9);
-        this.ball.swingCurve = -0.2;
-        this.ball.spinLateralV = -0.8; // Middle-finger flick skids straight/subtle away
-        this.ball.bounceSpotX = this.cx - 4;
+        this.ball.speedKmh = config.speedKmh || Math.floor(84 + Math.random() * 7);
+        this.ball.swingCurve = -0.15;
+        this.ball.spinLateralV = -0.45;
         break;
 
       case 'arm_ball':
         this.bowler.actionType = 'finger_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(88 + Math.random() * 7);
-        this.ball.swingCurve = +0.5;
-        this.ball.spinLateralV = 0; // Doesn't turn, slides on with arm angle
-        this.ball.bounceSpotX = this.cx - 6;
+        this.ball.speedKmh = config.speedKmh || Math.floor(88 + Math.random() * 6);
+        this.ball.swingCurve = +0.3;
+        this.ball.spinLateralV = 0; // Slides on with arm angle
         break;
 
       case 'leftarm_orthodox':
         this.bowler.actionType = 'finger_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(76 + Math.random() * 10);
-        this.ball.swingCurve = +0.6;
-        this.ball.spinLateralV = -3.4;
-        this.ball.bounceSpotX = this.cx + 7;
+        this.ball.speedKmh = config.speedKmh || Math.floor(78 + Math.random() * 8);
+        this.ball.swingCurve = +0.4;
+        this.ball.spinLateralV = -0.80;
         break;
 
       case 'leftarm_chinaman':
         this.bowler.actionType = 'wrist_spin';
-        this.ball.speedKmh = config.speedKmh || Math.floor(75 + Math.random() * 10);
-        this.ball.swingCurve = -0.6;
-        this.ball.spinLateralV = +3.6;
-        this.ball.bounceSpotX = this.cx - 8;
+        this.ball.speedKmh = config.speedKmh || Math.floor(76 + Math.random() * 8);
+        this.ball.swingCurve = -0.4;
+        this.ball.spinLateralV = +0.85;
         break;
 
       case 'leftarm_fast':
         this.bowler.actionType = 'high_arm';
-        this.ball.speedKmh = config.speedKmh || Math.floor(138 + Math.random() * 8);
-        this.ball.swingCurve = -0.9;
+        this.ball.speedKmh = config.speedKmh || Math.floor(138 + Math.random() * 7);
+        this.ball.swingCurve = -0.7;
         this.ball.spinLateralV = 0;
         break;
 
@@ -601,14 +596,16 @@ export class CricketPhysics {
       label: this.ball.variationLabel || bType,
       speedKmh: this.ball.speedKmh,
       length: finalLength,
-      line: finalLine
+      line: finalLine,
+      bowlingArm: chosenArm,
+      bowlingAngle: chosenAngle
     };
   }
 
   releaseBall() {
     this.ball.state = 'BOWLED';
     this.ball.inPlay = true;
-    this.ball.x = this.bowler.x;
+    this.ball.x = this.bowler.x + (this.bowler.armSide === 'left' ? -3 : 3);
     this.ball.y = this.bowlerCreaseY;
     this.ball.height = this.ball.isFullToss ? 12 : 13;
     this.ball.trail = [];
@@ -620,11 +617,13 @@ export class CricketPhysics {
     const totalDistanceY = this.batsmanCreaseY - this.bowlerCreaseY;
     this.ball.totalFlightTimeMs = (totalDistanceY / baseSpeed) * 16.6;
 
-    if (this.ball.isFullToss) {
-      this.ball.vx = (this.ball.bounceSpotX - this.bowler.x) / ((this.batsmanCreaseY - this.bowlerCreaseY) / baseSpeed);
-    } else {
-      this.ball.vx = (this.ball.bounceSpotX - this.bowler.x) / ((this.ball.bounceSpotY - this.bowlerCreaseY) / baseSpeed);
-    }
+    // Compensate initial velocity for aerodynamic curve so ball pitches EXACTLY on bounceSpotX
+    const targetY = this.ball.isFullToss ? this.batsmanCreaseY : this.ball.bounceSpotY;
+    const flightSteps = Math.max(1, (targetY - this.bowlerCreaseY) / (baseSpeed || 10));
+    const swingAcc = (this.ball.swingCurve || 0) * 0.08;
+    const swingDrift = 0.5 * swingAcc * Math.pow(flightSteps, 2);
+
+    this.ball.vx = (this.ball.bounceSpotX - this.ball.x - swingDrift) / flightSteps;
   }
 
   /**
@@ -1058,14 +1057,14 @@ export class CricketPhysics {
       });
       if (this.ball.trail.length > 40) this.ball.trail.shift();
 
-      // Realistic aerodynamic swing in air before bounce (doubled rate for visible bend)
+      // Realistic aerodynamic swing in air before bounce (perfectly matching release compensation)
       if (!this.ball.hasBounced && this.ball.swingCurve !== 0) {
-        this.ball.vx += this.ball.swingCurve * 0.16 * dt;
+        this.ball.vx += this.ball.swingCurve * 0.08 * dt;
       }
 
       // Late Reverse Swing in second half of flight
       if (this.ball.reverseSwingRate !== 0 && this.ball.flightProgress > 0.52) {
-        this.ball.vx += this.ball.reverseSwingRate * 0.24 * dt;
+        this.ball.vx += this.ball.reverseSwingRate * 0.12 * dt;
       }
 
       // Slower ball dipper deceleration in mid-air

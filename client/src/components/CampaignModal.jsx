@@ -12,6 +12,8 @@ const CAMPAIGN_LEVELS = [
     ballsAllowed: 6,
     wicketsAllowed: 2,
     bowlerType: 'fast',
+    bowlingArm: 'right',
+    bowlingAngle: 'over',
     rewardCoins: 200,
     desc: 'Kick off your campaign with an intense 1-over Super Over under the Melbourne floodlights.'
   },
@@ -23,6 +25,8 @@ const CAMPAIGN_LEVELS = [
     ballsAllowed: 12,
     wicketsAllowed: 2,
     bowlerType: 'legspin',
+    bowlingArm: 'right',
+    bowlingAngle: 'over',
     rewardCoins: 350,
     desc: '2-over death chase! Read the googlies and launch maximums into the desert night sky.'
   },
@@ -34,6 +38,8 @@ const CAMPAIGN_LEVELS = [
     ballsAllowed: 18,
     wicketsAllowed: 3,
     bowlerType: 'offspin',
+    bowlingArm: 'left',
+    bowlingAngle: 'around',
     rewardCoins: 500,
     desc: 'Need 44 off 18 balls against mystery doosra and carrom balls in front of 80,000 fans.'
   },
@@ -45,6 +51,8 @@ const CAMPAIGN_LEVELS = [
     ballsAllowed: 20,
     wicketsAllowed: 3,
     bowlerType: 'swing',
+    bowlingArm: 'left',
+    bowlingAngle: 'over',
     rewardCoins: 650,
     desc: '20-ball powerplay! Punish the swinging Dukes ball into the iconic Lord\'s pavilion.'
   },
@@ -56,6 +64,8 @@ const CAMPAIGN_LEVELS = [
     ballsAllowed: 24,
     wicketsAllowed: 4,
     bowlerType: 'fast',
+    bowlingArm: 'right',
+    bowlingAngle: 'around',
     rewardCoins: 1200,
     desc: '4 overs, 56 runs to glory! The ultimate championship chase against 150 km/h express pace.'
   }
@@ -142,7 +152,7 @@ export default function CampaignModal({ onBack, onStartLevel, profile }) {
                         Chase {lvl.targetRuns} off {lvl.ballsAllowed} balls
                       </span>
                       <span className="capitalize text-amber-400 font-semibold px-2 py-0.5 bg-slate-900 rounded">
-                        {lvl.bowlerType} Bowler
+                        {lvl.bowlingArm === 'left' ? 'Left-Arm' : 'Right-Arm'} {lvl.bowlerType} ({lvl.bowlingAngle === 'around' ? 'Around' : 'Over'})
                       </span>
                       <span className="text-slate-400">
                         Max {lvl.wicketsAllowed} Wickets

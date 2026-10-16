@@ -201,80 +201,80 @@ export const CharacterRenderer = {
 
     // 5. Realistic Arms, Batting Gloves and Bat Shot Physics
     ctx.save();
-    let batAngle = -0.3;
+    let batAngle = 0.15;
     let reachX = 4;
-    let reachY = -12;
+    let reachY = 2;
 
     if (isSwinging) {
       const swingRatio = Math.sin(swingProgress * Math.PI);
 
       if (shotStyle === 'cover_drive') {
         // High left elbow, bent front knee, flowing drive through extra cover
-        batAngle = -0.5 - (swingRatio * 1.8);
-        reachX = -6 - swingRatio * 6;
-        reachY = -14 - swingRatio * 4;
+        reachX = 4 - swingRatio * 9;
+        reachY = 2 - swingRatio * 13;
+        batAngle = 0.2 - swingRatio * 2.8;
       } else if (shotStyle === 'pull') {
         // Horizontal bat pull stroke across to deep mid-wicket
-        batAngle = -0.1 + (swingRatio * 2.2);
-        reachX = 6 + swingRatio * 8;
-        reachY = -10;
+        reachX = 4 + swingRatio * 5;
+        reachY = 2 - swingRatio * 6;
+        batAngle = 0.1 + swingRatio * 2.6;
       } else if (shotStyle === 'upper_cut') {
         // Leaning back, slicing vertically over slips to third man
-        batAngle = -1.2 + (swingRatio * 1.4);
-        reachX = -4;
-        reachY = -16 - swingRatio * 6;
+        reachX = 4 + swingRatio * 7;
+        reachY = 2 - swingRatio * 10;
+        batAngle = 0.1 - swingRatio * 1.8;
       } else if (shotStyle === 'flick') {
         // Supple wrist flick to mid-on / square leg
-        batAngle = -0.2 + (swingRatio * 1.8);
-        reachX = 4 + swingRatio * 5;
-        reachY = -12;
+        reachX = 4 - swingRatio * 6;
+        reachY = 2 - swingRatio * 11;
+        batAngle = 0.15 + swingRatio * 2.4;
       } else if (shotStyle === 'reverse_sweep') {
         // Hands swapped, rolling blade down to third man
-        batAngle = 1.1 - (swingRatio * 2.0);
-        reachX = -8;
-        reachY = -8;
+        reachX = -4 + swingRatio * 8;
+        reachY = 2 - swingRatio * 6;
+        batAngle = -0.4 - swingRatio * 2.5;
       } else if (shotStyle === 'scoop') {
         // Low squat, ramping ball backwards over wicket keeper
-        batAngle = Math.PI - 0.2 + (swingRatio * 0.8);
-        reachX = 0;
-        reachY = -8;
+        reachX = 2;
+        reachY = 0 - swingRatio * 5;
+        batAngle = 0.2 - swingRatio * 1.6;
       } else if (shotStyle === 'step_out') {
         // Stepping out down the pitch, massive high loft
-        batAngle = -0.3 - (swingRatio * 2.4);
         reachX = 2;
-        reachY = -18 - swingRatio * 4;
+        reachY = 2 - swingRatio * 16;
+        batAngle = 0.15 - swingRatio * 3.4;
       } else {
         // Default straight drive / loft
-        batAngle = -0.3 - (swingRatio * 2.3);
-        reachX = 3;
-        reachY = -16 - swingRatio * 3;
+        reachX = 4 - swingRatio * 3;
+        reachY = 2 - swingRatio * 14;
+        batAngle = 0.15 - swingRatio * 3.3;
       }
     } else {
-      // Dynamic bat tapping on crease turf while waiting for bowler release
-      reachY = -12 + triggerTap * 0.7;
-      batAngle = -0.3 + (triggerTap * 0.04);
+      // Authentic batsman stance: hands at waist, bat blade grounded tapping pitch behind crease
+      reachY = 2 + triggerTap * 0.4;
+      batAngle = 0.15 + (triggerTap * 0.08);
     }
 
     // Arms in Team Jersey
     ctx.strokeStyle = jerseyColor;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3.5;
     ctx.lineCap = 'round';
-    // Back arm
+    // Back arm (from right shoulder)
     ctx.beginPath();
-    ctx.moveTo(-8, -4);
-    ctx.lineTo(reachX - 2, reachY + 4);
+    ctx.moveTo(6, -4);
+    ctx.lineTo(reachX + 2, reachY);
     ctx.stroke();
-    // Front arm with visible elbow articulation
+    // Front arm (from left shoulder with elbow articulation)
     ctx.beginPath();
-    ctx.moveTo(8, -4);
-    ctx.lineTo(reachX + 2, reachY + 4);
+    ctx.moveTo(-6, -4);
+    ctx.lineTo(reachX - 2, reachY - 2);
     ctx.stroke();
 
-    // Batting Gloves with white foam sausage padding & green palms
+    // Batting Gloves with white foam sausage padding & palm grip
     ctx.fillStyle = '#f8fafc';
     ctx.beginPath();
-    ctx.arc(reachX - 1, reachY + 2, 3.8, 0, Math.PI * 2);
-    ctx.arc(reachX + 1, reachY - 1, 3.8, 0, Math.PI * 2);
+    ctx.arc(reachX - 1, reachY - 2, 3.6, 0, Math.PI * 2);
+    ctx.arc(reachX + 1, reachY + 1, 3.6, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 0.8;
@@ -282,12 +282,13 @@ export const CharacterRenderer = {
     // Glove padding ridges
     ctx.strokeStyle = '#94a3b8';
     ctx.beginPath();
-    ctx.moveTo(reachX - 3, reachY + 1); ctx.lineTo(reachX + 1, reachY + 1);
-    ctx.moveTo(reachX - 1, reachY - 2); ctx.lineTo(reachX + 3, reachY - 2);
+    ctx.moveTo(reachX - 3, reachY - 2); ctx.lineTo(reachX + 1, reachY - 2);
+    ctx.moveTo(reachX - 1, reachY + 1); ctx.lineTo(reachX + 3, reachY + 1);
     ctx.stroke();
 
     // ========================================================================
     // Realistic Cricket Bat with Grain Texture, Wood Splice & Profile Spine
+    // Bat Origin is at Hands: Handle extends up to hands, Blade extends down to pitch
     // ========================================================================
     ctx.translate(reachX, reachY);
     ctx.rotate(batAngle);
@@ -320,29 +321,32 @@ export const CharacterRenderer = {
       bladeColor = '#475569'; spineColor = '#334155'; stickerColor = '#a855f7';
     }
 
-    // Cylindrical Cane Handle with Chevron Rubber Grip
+    // Cylindrical Cane Handle with Chevron Rubber Grip (held in gloves, extending UP towards hips)
     ctx.fillStyle = '#f1f5f9';
-    ctx.fillRect(-1.5, -17, 3, 11);
+    ctx.fillRect(-1.5, -10, 3, 10);
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 0.6;
-    for (let gy = -15; gy <= -8; gy += 2) {
+    for (let gy = -9; gy <= -2; gy += 2) {
       ctx.beginPath(); ctx.moveTo(-1.5, gy); ctx.lineTo(1.5, gy); ctx.stroke();
     }
+    // Handle rubber end cap / pommel
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-2, -11, 4, 1.5);
 
     // Traditional Wood V-Splice at Top of Blade
     ctx.fillStyle = '#78350f';
     ctx.beginPath();
-    ctx.moveTo(-2.2, -6); ctx.lineTo(0, -2.5); ctx.lineTo(2.2, -6);
+    ctx.moveTo(-2, 0); ctx.lineTo(0, 3); ctx.lineTo(2, 0);
     ctx.fill();
 
-    // Willow Blade with Contoured Thick Sweet Spot & Toe Guard
+    // Willow Blade with Contoured Sweet Spot extending DOWN to pitch turf
     ctx.fillStyle = bladeColor;
     ctx.beginPath();
-    ctx.moveTo(-3.2, -6);
-    ctx.lineTo(3.2, -6);
+    ctx.moveTo(-3.2, 0.5);
+    ctx.lineTo(3.2, 0.5);
     ctx.lineTo(4.2, 13); // Sweet spot swell
-    ctx.lineTo(3.2, 21);  // Tapered toe
-    ctx.lineTo(-3.2, 21);
+    ctx.lineTo(3.2, 20);  // Tapered toe
+    ctx.lineTo(-3.2, 20);
     ctx.lineTo(-4.2, 13);
     ctx.closePath();
     ctx.fill();
@@ -354,17 +358,17 @@ export const CharacterRenderer = {
     ctx.strokeStyle = spineColor;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(0, -4);
-    ctx.lineTo(0, 19);
+    ctx.moveTo(0, 1.5);
+    ctx.lineTo(0, 18);
     ctx.stroke();
 
     // Bat Manufacturer Brand Sticker
     ctx.fillStyle = stickerColor;
-    ctx.fillRect(-2.5, 0, 5, 4);
+    ctx.fillRect(-2.5, 3.5, 5, 4);
 
-    // Rubber Toe Guard (protects base from moisture & yorker impact)
+    // Rubber Toe Guard (protects base from moisture & yorker impact on turf)
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-3, 20, 6, 2);
+    ctx.fillRect(-3, 19.5, 6, 2);
 
     ctx.restore();
     ctx.restore();

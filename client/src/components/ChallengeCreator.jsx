@@ -10,6 +10,8 @@ export default function ChallengeCreator({ onBack, onPlayChallenge, profile }) {
   const [ballsAllowed, setBallsAllowed] = useState(6);
   const [wicketsAllowed, setWicketsAllowed] = useState(2);
   const [bowlerType, setBowlerType] = useState('fast');
+  const [bowlingArm, setBowlingArm] = useState('right');
+  const [bowlingAngle, setBowlingAngle] = useState('over');
   const [difficulty, setDifficulty] = useState('Hard');
   const [description, setDescription] = useState('');
   const [customCode, setCustomCode] = useState('');
@@ -34,6 +36,8 @@ export default function ChallengeCreator({ onBack, onPlayChallenge, profile }) {
         ballsAllowed: Number(ballsAllowed),
         wicketsAllowed: Number(wicketsAllowed),
         bowlerType,
+        bowlingArm,
+        bowlingAngle,
         difficulty,
         description: description.trim() || `Score ${targetRuns} off ${ballsAllowed} balls to conquer this challenge!`,
         customCode: customCode.trim() || undefined
@@ -261,6 +265,69 @@ export default function ChallengeCreator({ onBack, onPlayChallenge, profile }) {
                     <span className="text-[10px] text-slate-400 mt-1">{b.desc}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Bowling Hand & Approach Angle */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Bowling Hand
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setBowlingArm('right'); sound.playClick(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      bowlingArm === 'right'
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    ✋ Right-Arm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setBowlingArm('left'); sound.playClick(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      bowlingArm === 'left'
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    🤚 Left-Arm
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Approach Angle
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setBowlingAngle('over'); sound.playClick(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      bowlingAngle === 'over'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    🔄 Over Wkt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setBowlingAngle('around'); sound.playClick(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      bowlingAngle === 'around'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                        : 'bg-slate-900 border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    ↪️ Around Wkt
+                  </button>
+                </div>
               </div>
             </div>
 

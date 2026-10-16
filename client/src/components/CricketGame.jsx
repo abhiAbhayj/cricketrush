@@ -62,6 +62,8 @@ export default function CricketGame({
   const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
   const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
   const [bowlerType] = useState(matchConfig?.bowlerType || 'fast');
+  const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || (matchConfig?.bowlerType?.includes('leftarm') ? 'left' : 'right'));
+  const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || 'over');
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
 
   // Dynamic In-Match Live Scoring
@@ -501,11 +503,17 @@ export default function CricketGame({
     setGameState('BOWLING');
     const engine = engineRef.current;
     if (engine) {
-      const deliveryInfo = engine.startDelivery(bowlerType, 1.0);
+      const deliveryInfo = engine.startDelivery({
+        bowlerType,
+        bowlingArm,
+        bowlingAngle
+      }, 1.0);
       sound.playBowlerRelease();
       if (deliveryInfo) {
         setDeliveryVariationNotice(deliveryInfo);
-        const variationLine = `${bowler.name} bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
+        const armLabel = (deliveryInfo.bowlingArm === 'left' ? 'LA' : 'RA');
+        const angleLabel = deliveryInfo.bowlingAngle === 'around' ? 'Around' : 'Over';
+        const variationLine = `${bowler.name} (${armLabel} ${angleLabel}) bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
         setCommentary(variationLine);
       }
     }
@@ -1041,6 +1049,9 @@ export default function CricketGame({
               <div className="flex items-center gap-1.5 text-slate-300 truncate">
                 <span className="text-red-500 font-bold text-xs">⦿</span>
                 <span className="font-medium text-slate-200 truncate">{bowler.name}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlingAngle === 'around' ? 'Around' : 'Over'}
+                </span>
                 <span className="font-bold text-white">{bowler.wickets}-{bowler.runsConceded}</span>
                 <span className="text-slate-400 text-[11px]">({bowler.overs})</span>
                 {deliveryVariationNotice && (
