@@ -15,6 +15,10 @@ export class CricketPhysics {
     this.initDimensions();
   }
 
+  setBatsmanHand(hand = 'right') {
+    this.batsmanHand = hand === 'left' ? 'left' : 'right';
+  }
+
   initDimensions() {
     this.cx = this.width / 2;
     this.cy = this.height * 0.52;
@@ -78,11 +82,16 @@ export class CricketPhysics {
       lengthType: 'good',
       lineType: 'stumps',
       isFullToss: false,
+      isStoppedByFielder: false,
       timeUntilArrivalMs: 0, // For batsman timing meter
       totalFlightTimeMs: 400,
       flightProgress: 0,
       trail: []
     };
+
+    if (!this.batsmanHand) {
+      this.batsmanHand = 'right';
+    }
 
     // Bowler at top crease
     this.bowler = {
@@ -631,12 +640,22 @@ export class CricketPhysics {
         this.ball.spinLateralV = 0;
     }
 
+    if (config.speedKmh) {
+      this.ball.speedKmh = Number(config.speedKmh);
+    }
+
     // Strictly enforce real cricket speed regulations requested by user:
     // Spinners strictly 65 - 110 km/h, Pacers strictly 90 - 160 km/h
     if (isSpinBowler) {
       this.ball.speedKmh = Math.max(65, Math.min(110, this.ball.speedKmh));
     } else {
       this.ball.speedKmh = Math.max(90, Math.min(160, this.ball.speedKmh));
+    }
+
+    // Counter-balance post-bounce seam/spin cut if bowler was commanded to target stumps
+    if (finalLine === 'stumps') {
+      const postBounceDrift = (this.ball.spinLateralV || 0) * 8;
+      this.ball.bounceSpotX = this.cx - postBounceDrift + (Math.random() - 0.5) * 2;
     }
 
     return {
@@ -684,44 +703,72 @@ export class CricketPhysics {
   determineDynamicShot(touchX = null) {
     const ball = this.ball;
     const cx = this.cx;
+    const isLeftHander = (this.batsmanHand === 'left');
 
-    // Optional touch bias if user tapped left or right side of screen
+    // For right-hander: rawLineDist < 0 is outside off, > 0 is leg
+    // For left-hander: rawLineDist > 0 is outside off, < 0 is leg!
+    const rawLineDist = ball.bounceSpotX - cx;
+    const lineDist = isLeftHander ? -rawLineDist : rawLineDist;
+
     let touchSide = null;
     if (touchX !== null) {
-      if (touchX < cx - 30) touchSide = 'off';
-      else if (touchX > cx + 30) touchSide = 'leg';
+      if (touchX < cx - 25) {
+        touchSide = isLeftHander ? 'leg' : 'off';
+      } else if (touchX > cx + 25) {
+        touchSide = isLeftHander ? 'off' : 'leg';
+      }
     }
 
-    const lineDist = ball.bounceSpotX - cx; // < 0 is outside off, > 0 is leg
     const lengthRel = (ball.bounceSpotY - this.pitchTop) / (this.pitchLength || 1);
 
-    // 1. BOUNCER / SHORT LENGTH (lengthRel < 0.48 or bouncer/short)
+    // 1. BOUNCER / SHORT LENGTH
     if (ball.lengthType === 'short' || ball.deliveryType === 'bouncer' || lengthRel < 0.50) {
       if (touchSide === 'off' || (touchSide === null && lineDist < -3)) {
-        return { shotStyle: 'upper_cut', aim: 'off', label: 'Upper Cut' };
+        const isCut = Math.random() < 0.55;
+        return {
+          shotStyle: isCut ? 'square_cut' : 'upper_cut',
+          aim: 'off',
+          label: isCut ? 'Square Cut' : 'Upper Cut'
+        };
       } else {
-        return { shotStyle: 'pull', aim: 'leg', label: 'Pull Shot' };
+        const isHook = Math.random() < 0.45;
+        return {
+          shotStyle: isHook ? 'hook' : 'pull',
+          aim: 'leg',
+          label: isHook ? 'Hook Shot' : 'Swivel Pull'
+        };
       }
     }
 
-    // 2. YORKER AT THE TOES (lengthRel > 0.86 or deliveryType yorker)
+    // 2. YORKER AT THE TOES
     if (ball.lengthType === 'yorker' || ball.deliveryType === 'yorker' || lengthRel > 0.86) {
-      if (touchSide === 'leg' || Math.random() < 0.50) {
+      if (touchSide === 'leg' || (touchSide === null && lineDist > 3)) {
         return { shotStyle: 'scoop', aim: 'straight', label: 'Scoop Ramp' };
+      } else if (touchSide === 'off' || (touchSide === null && lineDist < -4)) {
+        return { shotStyle: 'late_cut', aim: 'off', label: 'Late Cut Steer' };
       } else {
-        return { shotStyle: 'straight_drive', aim: 'straight', label: 'Straight Drive' };
+        const isBlock = Math.random() < 0.40;
+        return {
+          shotStyle: isBlock ? 'defense' : 'straight_drive',
+          aim: 'straight',
+          label: isBlock ? 'Yorker Dig Out' : 'Straight Jam Drive'
+        };
       }
     }
 
-    // 3. IN THE SLOT / FULL DRIVING LENGTH (0.70 <= lengthRel <= 0.86)
+    // 3. IN THE SLOT / FULL DRIVING LENGTH
     if (ball.lengthType === 'slot' || (lengthRel >= 0.70 && lengthRel <= 0.86)) {
-      if (touchSide === 'off' || (touchSide === null && lineDist < -5)) {
+      if (touchSide === 'off' || (touchSide === null && lineDist < -4)) {
         return { shotStyle: 'cover_drive', aim: 'off', label: 'Cover Drive' };
-      } else if (touchSide === 'leg' || (touchSide === null && lineDist > 5)) {
-        return { shotStyle: 'flick', aim: 'leg', label: 'Wrist Flick' };
+      } else if (touchSide === 'leg' || (touchSide === null && lineDist > 4)) {
+        const isSweep = Math.random() < 0.45;
+        return {
+          shotStyle: isSweep ? 'sweep' : 'flick',
+          aim: 'leg',
+          label: isSweep ? 'Kneeling Sweep' : 'Wrist Flick'
+        };
       } else {
-        // Straight in the slot!
-        const isStep = Math.random() < 0.40;
+        const isStep = Math.random() < 0.45;
         if (isStep) {
           this.batsman.isSteppingOut = true;
           this.batsman.stepOutOffset = 30;
@@ -736,7 +783,6 @@ export class CricketPhysics {
 
     // 4. GOOD LENGTH (Corridor of uncertainty)
     if (touchSide === 'off' || (touchSide === null && lineDist < -3)) {
-      // Outside off stump channel
       if (ball.deliveryType === 'legbreak' || ball.deliveryType === 'doosra') {
         const isRev = Math.random() < 0.35;
         return {
@@ -745,11 +791,28 @@ export class CricketPhysics {
           label: isRev ? 'Reverse Sweep' : 'Cover Drive'
         };
       }
-      return { shotStyle: 'cover_drive', aim: 'off', label: 'Cover Drive' };
+      const r = Math.random();
+      if (r < 0.40) {
+        return { shotStyle: 'cover_drive', aim: 'off', label: 'Cover Drive' };
+      } else if (r < 0.72) {
+        return { shotStyle: 'square_cut', aim: 'off', label: 'Square Cut' };
+      } else {
+        return { shotStyle: 'late_cut', aim: 'off', label: 'Delicate Late Cut' };
+      }
     } else if (touchSide === 'leg' || (touchSide === null && lineDist > 3)) {
-      return { shotStyle: 'flick', aim: 'leg', label: 'Flick / On Drive' };
+      const isSweep = Math.random() < 0.40;
+      return {
+        shotStyle: isSweep ? 'sweep' : 'flick',
+        aim: 'leg',
+        label: isSweep ? 'Paddle Sweep' : 'Flick / On Drive'
+      };
     } else {
-      return { shotStyle: 'straight_drive', aim: 'straight', label: 'Straight Drive' };
+      const isDef = Math.random() < 0.32;
+      return {
+        shotStyle: isDef ? 'defense' : 'straight_drive',
+        aim: 'straight',
+        label: isDef ? 'Forward Defense' : 'Straight Drive'
+      };
     }
   }
 
@@ -855,8 +918,8 @@ export class CricketPhysics {
   }
 
   determineAimFromStyle(style) {
-    if (style === 'cover_drive' || style === 'upper_cut' || style === 'reverse_sweep') return 'off';
-    if (style === 'pull' || style === 'flick') return 'leg';
+    if (style === 'cover_drive' || style === 'upper_cut' || style === 'reverse_sweep' || style === 'square_cut' || style === 'late_cut') return 'off';
+    if (style === 'pull' || style === 'flick' || style === 'hook' || style === 'sweep' || style === 'paddle_sweep') return 'leg';
     return 'straight';
   }
 
@@ -991,10 +1054,23 @@ export class CricketPhysics {
         altitudeVz = timingQuality === 'PERFECT' ? 10 : 1.5;
         break;
 
+      case 'square_cut':
+        // Horizontal slash cutting backward of point to off boundary rope
+        exitAngle = -Math.PI * (0.48 + (Math.random() - 0.5) * 0.12);
+        altitudeVz = timingQuality === 'PERFECT' ? 3.5 : 0.5;
+        exitSpeed = 7.4 + power * 3.4;
+        break;
+
       case 'pull':
         // Swats ball to mid-wicket / deep square leg
         exitAngle = Math.PI * 0.35 + (Math.random() - 0.5) * 0.18;
         altitudeVz = timingQuality === 'PERFECT' ? 16 : 4.0;
+        break;
+
+      case 'hook':
+        // Cross-batted hook swatting over deep square leg
+        exitAngle = Math.PI * (0.48 + (Math.random() - 0.5) * 0.16);
+        altitudeVz = timingQuality === 'PERFECT' ? 17.0 : 4.5;
         break;
 
       case 'upper_cut':
@@ -1007,7 +1083,7 @@ export class CricketPhysics {
         // Delicate late cut: blade opened late, guiding backward past slips to third man!
         exitAngle = -Math.PI * (0.72 + (Math.random() - 0.5) * 0.10);
         altitudeVz = 0; // Flat skimming ground stroke
-        exitSpeed = 5.8 + power * 3.6;
+        exitSpeed = 7.0 + power * 3.4;
         break;
 
       case 'top_edge':
@@ -1024,7 +1100,7 @@ export class CricketPhysics {
         exitAngle = -Math.PI * (0.68 + (Math.random() - 0.5) * 0.16);
         // 40% catchable slip height vs 60% skimming turf edge to third man for 4!
         altitudeVz = Math.random() < 0.40 ? (6.5 + Math.random() * 5.0) : 0;
-        exitSpeed = 5.2 + power * 3.6;
+        exitSpeed = 6.4 + power * 3.4;
         break;
 
       case 'inside_edge':
@@ -1032,13 +1108,28 @@ export class CricketPhysics {
         this.ball.edgeType = 'inside';
         exitAngle = Math.PI * (0.72 + (Math.random() - 0.5) * 0.14);
         altitudeVz = 0;
-        exitSpeed = 4.8 + power * 3.2;
+        exitSpeed = 5.2 + power * 3.2;
         break;
 
       case 'flick':
         // Supple wrists through mid-on / fine leg
         exitAngle = Math.PI * 0.22 + (Math.random() - 0.5) * 0.12;
         altitudeVz = 4.0;
+        break;
+
+      case 'sweep':
+      case 'paddle_sweep':
+        // Kneeling sweep shot skimming turf toward fine-leg / square-leg
+        exitAngle = Math.PI * (0.65 + (Math.random() - 0.5) * 0.14);
+        altitudeVz = 0.5;
+        exitSpeed = 6.8 + power * 3.0;
+        break;
+
+      case 'defense':
+        // Soft dead-bat block down the pitch
+        exitAngle = (Math.random() - 0.5) * 0.25;
+        altitudeVz = 0;
+        exitSpeed = 1.6 + power * 1.2;
         break;
 
       case 'reverse_sweep':
@@ -1071,8 +1162,13 @@ export class CricketPhysics {
     if (timingQuality === 'EARLY' && !shotStyle.includes('edge')) exitAngle += 0.30;
     if (timingQuality === 'LATE' && !shotStyle.includes('edge') && shotStyle !== 'late_cut') exitAngle -= 0.35;
 
+    // Invert exit angle across vertical axis for Left-Handed batsman so shots go to authentic off/leg sectors!
+    if (this.batsmanHand === 'left') {
+      exitAngle = -exitAngle;
+    }
+
     // Determine shot trajectory type: Six vs Four in Gap vs Aerial Four vs Gap Running 1, 2, 3
-    const isLoftedSixStyle = (shotStyle === 'step_out' || shotStyle === 'scoop' || (timingQuality === 'PERFECT' && power >= 0.65 && (shotStyle === 'pull' || shotStyle === 'straight_drive' || shotStyle === 'upper_cut')));
+    const isLoftedSixStyle = (shotStyle === 'step_out' || shotStyle === 'scoop' || (timingQuality === 'PERFECT' && power >= 0.65 && (shotStyle === 'pull' || shotStyle === 'straight_drive' || shotStyle === 'upper_cut' || shotStyle === 'hook')));
 
     if (isLoftedSixStyle) {
       // 1. TOWERING MAXIMUM SIX ROCKET (Soars high above stadium stands!)
@@ -1108,17 +1204,17 @@ export class CricketPhysics {
 
       if (altitudeVz <= 5.5) {
         // Ground stroke: either a Bullet Four in Gap or Single/Double/Triple in Gap
-        if (shotStyle === 'late_cut' || (shotStyle === 'outside_edge' && altitudeVz === 0) || timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.58)) {
+        if (shotStyle === 'late_cut' || shotStyle === 'square_cut' || (shotStyle === 'outside_edge' && altitudeVz === 0) || timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.52)) {
           // 2. BULLET FOUR IN GAP (Pierces the infield between fielders / steers past slips!)
           this.ball.isFourInGap = true;
           this.ball.isAerialFour = false;
           this.ball.isAirborne = false;
           this.ball.height = 0;
           this.ball.vz = 0;
-          exitSpeed = 5.6 + (power * 3.4);
+          exitSpeed = 7.6 + (power * 3.4);
           this.screenShake = 3;
           this.createSparks(this.ball.x, this.ball.y, shotStyle === 'late_cut' ? '#f59e0b' : '#10b981', 20);
-          this.ball.distanceMeters = Math.round(70 + power * 12);
+          this.ball.distanceMeters = Math.round(72 + power * 14);
         } else {
           // GAP STROKE FOR 1, 2, or 3 RUNS (Clean ground stroke, fielders chase)
           this.ball.isFourInGap = false;
@@ -1126,7 +1222,7 @@ export class CricketPhysics {
           this.ball.isAirborne = false;
           this.ball.height = 0;
           this.ball.vz = 0;
-          exitSpeed = 3.6 + (power * 2.2);
+          exitSpeed = 4.0 + (power * 2.2);
           this.createSparks(this.ball.x, this.ball.y, '#ffffff', 10);
           this.ball.distanceMeters = Math.round(35 + power * 25);
         }
@@ -1301,8 +1397,8 @@ export class CricketPhysics {
         } else if (this.ball.y > this.batsmanCreaseY + 45) {
           this.ball.state = 'DEAD';
           // Check genuine ICC cricket Wide Ball rule (untouched deliveries straying outside wide lines)
-          const isWideOff = this.ball.x < (this.cx - 24);
-          const isWideLeg = this.ball.x > (this.cx + 15);
+          const isWideOff = this.ball.x < (this.cx - 36);
+          const isWideLeg = this.ball.x > (this.cx + 22);
           if (isWideOff || isWideLeg) {
             return {
               event: 'WIDE',
@@ -1356,8 +1452,9 @@ export class CricketPhysics {
         }
       } else {
         // Flat ground stroke: realistic progressive grass resistance gives time for fielder sprint & slide!
-        this.ball.vx *= 0.978;
-        this.ball.vy *= 0.978;
+        const grassFriction = this.ball.isFourInGap ? 0.991 : 0.982;
+        this.ball.vx *= grassFriction;
+        this.ball.vy *= grassFriction;
         if (Math.random() < 0.40 && Math.hypot(this.ball.vx, this.ball.vy) > 1.2) {
           this.createGrassSpray(this.ball.x, this.ball.y);
         }
@@ -1489,7 +1586,7 @@ export class CricketPhysics {
         }
 
         // When ball has come to a stop or fielder gathered it:
-        if (!this.ball.isAirborne && currentSpeed < 0.28) {
+        if (!this.ball.isAirborne && (currentSpeed < 0.28 || this.ball.isStoppedByFielder)) {
           if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive)) {
             this.running.active = false;
             this.ball.state = 'DEAD';

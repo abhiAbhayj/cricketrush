@@ -5,6 +5,7 @@ import { ArrowLeft, Volume2, VolumeX, Smartphone, User, HelpCircle, Check } from
 
 export default function SettingsModal({ onBack, profile, onProfileUpdate, settings, onSettingsUpdate }) {
   const [playerName, setPlayerName] = useState(profile?.playerName || 'Cricket Fan');
+  const [battingHand, setBattingHand] = useState(profile?.battingHand || (profile?.playerName?.toLowerCase().includes('[l]') ? 'left' : 'right'));
   const [soundEnabled, setSoundEnabled] = useState(settings?.soundEnabled ?? true);
   const [hapticsEnabled, setHapticsEnabled] = useState(settings?.hapticsEnabled ?? true);
   const [saved, setSaved] = useState(false);
@@ -13,7 +14,10 @@ export default function SettingsModal({ onBack, profile, onProfileUpdate, settin
     e.preventDefault();
     sound.playClick();
 
-    const updatedProfile = storageService.updateProfile({ playerName: playerName.trim() || 'Cricket Fan' });
+    const updatedProfile = storageService.updateProfile({
+      playerName: playerName.trim() || 'Cricket Fan',
+      battingHand
+    });
     const updatedSettings = { ...settings, soundEnabled, hapticsEnabled };
     storageService.saveSettings(updatedSettings);
 
@@ -56,6 +60,38 @@ export default function SettingsModal({ onBack, profile, onProfileUpdate, settin
               onChange={(e) => setPlayerName(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
             />
+          </div>
+
+          {/* Batting Stance / Hand (RHB vs LHB) */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <span>🏏</span>
+              Batting Stance / Hand
+            </label>
+            <div className="grid grid-cols-2 gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => { sound.playClick(); setBattingHand('right'); }}
+                className={`py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                  battingHand === 'right'
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>✋ Right (RHB)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { sound.playClick(); setBattingHand('left'); }}
+                className={`py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                  battingHand === 'left'
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🤚 Left (LHB)</span>
+              </button>
+            </div>
           </div>
 
           {/* Sound & Haptics Toggles */}

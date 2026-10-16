@@ -85,6 +85,11 @@ export default function NetPractice({ onBack, profile, settings }) {
   const engineRef = useRef(null);
   const animFrameRef = useRef(null);
 
+  // Left-Handed batsman detection
+  const isLeftHanded = profile?.battingHand === 'left' ||
+    (profile?.playerName || '').toLowerCase().includes('[l]') ||
+    (profile?.playerName || '').toLowerCase().includes('(l)');
+
   // Practice Configurations
   const [bowlingCategory, setBowlingCategory] = useState('spin'); // 'pace' or 'spin'
   const [bowlerStyle, setBowlerStyle] = useState('legbreak');
@@ -161,8 +166,10 @@ export default function NetPractice({ onBack, profile, settings }) {
 
       if (!engineRef.current) {
         engineRef.current = new CricketPhysics(width, height);
+        engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
       } else {
         engineRef.current.resize(width, height);
+        engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
       }
     };
 
@@ -603,6 +610,7 @@ export default function NetPractice({ onBack, profile, settings }) {
       triggerTap: engine.batsman.triggerTap || 0,
       weightShiftX: engine.batsman.weightShiftX || 0,
       footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
+      isLeftHanded,
       batSkin: userProfile?.equippedBat,
       jerseyColor: userProfile?.equippedJersey === 'gold' ? '#eab308' : '#2563eb',
       faceStyle: 'beard',

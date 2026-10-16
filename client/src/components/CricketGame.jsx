@@ -60,11 +60,17 @@ export default function CricketGame({
   const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
   const [targetRuns] = useState(matchConfig?.targetRuns || 43);
   const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
-  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
-  const [bowlerType] = useState(matchConfig?.bowlerType || 'fast');
+  const [bowlerType, setBowlerType] = useState(matchConfig?.bowlerType || 'fast');
   const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || (matchConfig?.bowlerType?.includes('leftarm') ? 'left' : 'right'));
   const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || 'over');
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
+
+  // Intelligent Left-Handed Batsman Detection
+  const isLeftHanded = profile?.battingHand === 'left' ||
+    (profile?.playerName || '').toLowerCase().includes('[l]') ||
+    (profile?.playerName || '').toLowerCase().includes('(l)') ||
+    (matchConfig?.strikerName || '').toLowerCase().includes('[l]') ||
+    (matchConfig?.strikerName || '').toLowerCase().includes('(l)');
 
   // Dynamic In-Match Live Scoring
   const [currentRunsScored, setCurrentRunsScored] = useState(0);
@@ -184,10 +190,12 @@ export default function CricketGame({
 
       if (!engineRef.current) {
         engineRef.current = new CricketPhysics(width, height);
+        engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
         fieldersRef.current = new FielderManager(width, height, engineRef.current.boundaryRadius);
         fieldersRef.current.applyFieldPreset('powerplay', true);
       } else {
         engineRef.current.resize(width, height);
+        engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
         fieldersRef.current.resize(width, height, engineRef.current.boundaryRadius);
       }
 
@@ -693,6 +701,22 @@ export default function CricketGame({
       const isDeathOvers = (totalOvers <= 2 && overIndex >= 1) || (overIndex >= 2) || (totalBalls - currentBallsFaced <= 12);
 
       if (isStartOfOver) {
+        if (overIndex > 0) {
+          // Dynamic Over-by-Over Bowler Rotation: Pacer -> Spinner -> Swing Specialist
+          const bowlerRoster = [
+            { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over' },
+            { name: 'R. Jadeja', type: 'spin', arm: 'left', angle: 'over' },
+            { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'around' },
+            { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around' },
+            { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over' }
+          ];
+          const nextB = bowlerRoster[overIndex % bowlerRoster.length];
+          setBowler(prev => ({ ...prev, name: nextB.name, wickets: 0, overs: `${overIndex}.0` }));
+          setBowlerType(nextB.type);
+          setBowlingArm(nextB.arm);
+          setBowlingAngle(nextB.angle);
+        }
+
         if (overIndex === 0) {
           fieldersRef.current.applyFieldPreset('powerplay');
           setFieldChangeNotice('POWERPLAY: EXACTLY 6 FIELDERS INSIDE 30-YD CIRCLE 🛡️');
@@ -1046,6 +1070,7 @@ export default function CricketGame({
         triggerTap: engine.batsman.triggerTap || 0,
         weightShiftX: engine.batsman.weightShiftX || 0,
         footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
+        isLeftHanded,
         batSkin: userProfile?.equippedBat,
         jerseyColor,
         faceStyle: 'beard',
@@ -1337,14 +1362,14 @@ export default function CricketGame({
               <div className="flex items-center gap-1.5">
                 <span className="text-[#facc15] font-black text-xs">▸</span>
                 <span className="font-bold text-white truncate max-w-[120px] sm:max-w-none">{striker.name}</span>
-                <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono">L</span>
+                <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-300 font-mono font-bold">{isLeftHanded ? 'L' : 'R'}</span>
                 <span className="font-extrabold text-white">{striker.runs}</span>
                 <span className="text-slate-400 text-[11px]">({striker.balls})</span>
               </div>
 
               <div className="flex items-center gap-1.5 text-slate-400">
                 <span className="truncate max-w-[110px] sm:max-w-none text-slate-300">{nonStriker.name}</span>
-                <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono">L</span>
+                <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono font-bold">R</span>
                 <span className="font-bold text-slate-200">{nonStriker.runs}</span>
                 <span className="text-slate-400 text-[11px]">({nonStriker.balls})</span>
               </div>
@@ -1355,9 +1380,30 @@ export default function CricketGame({
               <div className="flex items-center gap-1.5 text-slate-300 truncate">
                 <span className="text-red-500 font-bold text-xs">⦿</span>
                 <span className="font-medium text-slate-200 truncate">{bowler.name}</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlingAngle === 'around' ? 'Around' : 'Over'}
-                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playClick();
+                    setBowlingArm(prev => (prev === 'left' ? 'right' : 'left'));
+                  }}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/25 hover:bg-blue-500/40 text-blue-300 border border-blue-400/40 active:scale-95 transition-all cursor-pointer"
+                  title="Click to toggle Right / Left Arm Bowler"
+                >
+                  {bowlingArm === 'left' ? '🤚 LA' : '✋ RA'}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playClick();
+                    setBowlingAngle(prev => (prev === 'over' ? 'around' : 'over'));
+                  }}
+                  className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/25 hover:bg-amber-500/40 text-amber-300 border border-amber-400/40 active:scale-95 transition-all cursor-pointer"
+                  title="Click to toggle Over / Around the Wicket"
+                >
+                  {bowlingAngle === 'around' ? '↪️ Around' : '🔄 Over'}
+                </button>
                 <span className="font-bold text-white">{bowler.wickets}-{bowler.runsConceded}</span>
                 <span className="text-slate-400 text-[11px]">({bowler.overs})</span>
                 {deliveryVariationNotice && (

@@ -23,6 +23,7 @@ const DEFAULT_PROFILE = {
   highestScore: 0,
   equippedBat: 'willow',
   equippedJersey: 'blue',
+  battingHand: 'right', // 'right' (RHB) or 'left' (LHB)
   unlockedBats: ['willow'],
   unlockedJerseys: ['blue'],
   unlockedStadiums: ['colosseum']

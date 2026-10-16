@@ -165,9 +165,15 @@ export class FielderManager {
   update(ball, dt = 1, engine = null) {
     if (this.throwTracer) {
       this.throwTracer.progress += 0.055 * dt;
+      if (engine?.running?.throwActive) {
+        engine.running.throwProgress = this.throwTracer.progress;
+      }
       if (this.throwTracer.progress >= 1.0) {
         this.throwTracer.progress = 1.0;
         this.throwTracer.active = false;
+        if (engine?.running) {
+          engine.running.throwProgress = 1.0;
+        }
         if (!this.throwTracer.fadeTimer) this.throwTracer.fadeTimer = 12;
         this.throwTracer.fadeTimer -= dt;
         if (this.throwTracer.fadeTimer <= 0) {
@@ -292,11 +298,12 @@ export class FielderManager {
     });
 
     // Automatic field pickup: if ball has slowed down on turf and fielder reaches it, scoop up & throw immediately!
-    if (ball && ball.state === 'HIT' && !ball.isAirborne && !this.throwTracer) {
+    if (ball && ball.state === 'HIT' && !ball.isAirborne && !ball.isStoppedByFielder && !this.throwTracer && !engine?.running?.throwActive) {
       const primary = this.fielders.find(f => f.id === this.primaryChaserId);
       if (primary) {
         const d = Math.hypot(primary.x - ball.x, primary.y - ball.y);
-        if (d < 32 && ballSpeed < 5.0) {
+        if (d < 34 && ballSpeed < 5.0) {
+          ball.isStoppedByFielder = true;
           ball.vx = 0;
           ball.vy = 0;
           this.startThrowTracer(primary.x, primary.y, engine, primary.role);
@@ -306,7 +313,9 @@ export class FielderManager {
   }
 
   checkFieldInterception(ball, engine = null) {
-    if (!ball || ball.state !== 'HIT') return null;
+    if (!ball || ball.state !== 'HIT' || ball.isStoppedByFielder || this.throwTracer?.active || engine?.running?.throwActive) {
+      return null;
+    }
 
     const ballSpeed = Math.hypot(ball.vx || 0, ball.vy || 0);
 
@@ -315,6 +324,9 @@ export class FielderManager {
 
       // Catch detection (Airborne ball at catchable height)
       if (ball.isAirborne && ball.height < 24 && dist < 32) {
+        ball.isStoppedByFielder = true;
+        ball.vx = 0;
+        ball.vy = 0;
         f.isDiving = true;
         f.isCatching = true;
         f.catchTimer = 90;
@@ -324,11 +336,11 @@ export class FielderManager {
 
       // Ground stop detection along the turf (Fielder stops ball cleanly for 1, 2, or 3 runs)
       if (!ball.isAirborne && dist < 24 && ballSpeed < 9.5) {
-        f.isDiving = dist < 20;
-        this.startThrowTracer(f.x, f.y, engine, f.role);
-        // Decelerate stopped ball to 0
+        ball.isStoppedByFielder = true;
         ball.vx = 0;
         ball.vy = 0;
+        f.isDiving = dist < 20;
+        this.startThrowTracer(f.x, f.y, engine, f.role);
         return { type: 'STOP', fielder: f.role, distanceTraveled: ball.traveled };
       }
     }
@@ -336,6 +348,8 @@ export class FielderManager {
   }
 
   startThrowTracer(fromX, fromY, engine = null, fielderRole = 'Fielder') {
+    if (this.throwTracer?.active) return;
+
     const cx = this.width / 2;
     const cy = this.height * 0.52;
     const stumpsY = engine?.stumpsY || (cy + this.height * 0.46 * 0.38 + 18);

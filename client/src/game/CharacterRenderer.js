@@ -8,12 +8,13 @@ export const CharacterRenderer = {
     isSwinging = false,
     swingProgress = 0,
     swingType = 'straight',
-    shotStyle = 'straight_drive', // 'cover_drive', 'straight_drive', 'pull', 'upper_cut', 'flick', 'reverse_sweep', 'scoop', 'step_out'
+    shotStyle = 'straight_drive', // 'cover_drive', 'straight_drive', 'pull', 'upper_cut', 'flick', 'reverse_sweep', 'scoop', 'step_out', 'square_cut', 'hook', 'sweep', 'defense'
     isSteppingOut = false,
     stepOutOffset = 0,
     triggerTap = 0,
     weightShiftX = 0,
     footworkState = 'stance', // 'stance', 'shuffling_left', 'shuffling_right', 'stepping_out'
+    isLeftHanded = false,
     batSkin = 'willow',
     jerseyColor = '#2563eb',
     skinTone = '#d49b70',
@@ -24,6 +25,11 @@ export const CharacterRenderer = {
     const visualX = x + (isSwinging ? 0 : weightShiftX);
     const visualY = y - (isSteppingOut ? stepOutOffset : 0);
     ctx.translate(visualX, visualY);
+
+    // Left-handed batsman authentic horizontal mirroring
+    if (isLeftHanded) {
+      ctx.scale(-1, 1);
+    }
 
     // 1. Dynamic Humanoid Ground Shadow (shrinks/sharpens when jumping/stepping)
     ctx.beginPath();
@@ -213,11 +219,31 @@ export const CharacterRenderer = {
         reachX = 4 - swingRatio * 9;
         reachY = 2 - swingRatio * 13;
         batAngle = 0.2 - swingRatio * 2.8;
+      } else if (shotStyle === 'square_cut') {
+        // Horizontal slash cutting backward of point to off boundary rope
+        reachX = 4 + swingRatio * 9;
+        reachY = 2 - swingRatio * 8;
+        batAngle = -0.45 - swingRatio * 1.8;
       } else if (shotStyle === 'pull') {
         // Horizontal bat pull stroke across to deep mid-wicket
         reachX = 4 + swingRatio * 5;
         reachY = 2 - swingRatio * 6;
         batAngle = 0.1 + swingRatio * 2.6;
+      } else if (shotStyle === 'hook') {
+        // Cross-batted hook shot swatting over deep square leg
+        reachX = 4 + swingRatio * 7;
+        reachY = 2 - swingRatio * 11;
+        batAngle = 0.15 + swingRatio * 3.0;
+      } else if (shotStyle === 'sweep' || shotStyle === 'paddle_sweep') {
+        // Kneeling sweep shot skimming turf toward fine-leg / square-leg
+        reachX = -2 - swingRatio * 7;
+        reachY = 2 - swingRatio * 8;
+        batAngle = 0.35 + swingRatio * 2.2;
+      } else if (shotStyle === 'defense') {
+        // Soft dead-bat block down the pitch
+        reachX = 2 - swingRatio * 2;
+        reachY = 2 - swingRatio * 7;
+        batAngle = 0.05 - swingRatio * 1.2;
       } else if (shotStyle === 'upper_cut') {
         // Leaning back, slicing vertically over slips to third man
         reachX = 4 + swingRatio * 7;
@@ -259,15 +285,16 @@ export const CharacterRenderer = {
         reachY = 2 - swingRatio * 16;
         batAngle = 0.15 - swingRatio * 3.4;
       } else {
-        // Default straight drive / loft
+        // Default straight drive / loft (High along vertical axis)
         reachX = 4 - swingRatio * 3;
         reachY = 2 - swingRatio * 14;
         batAngle = 0.15 - swingRatio * 3.3;
       }
     } else {
       // Authentic batsman stance: hands at waist, bat blade grounded tapping pitch behind crease
+      reachX = 3;
       reachY = 2 + triggerTap * 0.4;
-      batAngle = 0.15 + (triggerTap * 0.08);
+      batAngle = 0.12 + (triggerTap * 0.08);
     }
 
     // Arms in Team Jersey
