@@ -152,8 +152,9 @@ export default function NetPractice({ onBack, profile, settings }) {
     const updateSize = () => {
       const parent = containerRef.current;
       if (!parent) return;
-      const width = parent.clientWidth;
-      const height = parent.clientHeight;
+      const width = parent.clientWidth || window.innerWidth || 400;
+      const height = parent.clientHeight || window.innerHeight || 600;
+      if (width <= 0 || height <= 0) return;
       const dpr = window.devicePixelRatio || 1;
 
       canvas.width = width * dpr;
@@ -174,9 +175,21 @@ export default function NetPractice({ onBack, profile, settings }) {
     };
 
     updateSize();
+
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      ro = new ResizeObserver(() => {
+        updateSize();
+      });
+      ro.observe(containerRef.current);
+    }
+
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, [isLeftHanded]);
 
   // Update speed default when bowler style changes
   useEffect(() => {

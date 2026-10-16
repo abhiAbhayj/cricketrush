@@ -60,6 +60,7 @@ export default function CricketGame({
   const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
   const [targetRuns] = useState(matchConfig?.targetRuns || 43);
   const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
+  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
   const [bowlerType, setBowlerType] = useState(matchConfig?.bowlerType || 'fast');
   const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || (matchConfig?.bowlerType?.includes('leftarm') ? 'left' : 'right'));
   const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || 'over');
@@ -168,7 +169,7 @@ export default function CricketGame({
 
   const stadium = STADIUMS[stadiumKey] || STADIUMS.colosseum;
 
-  // Canvas Resize and Setup
+  // Canvas Resize and Setup with ResizeObserver & Dimensions Safeguard
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -176,8 +177,9 @@ export default function CricketGame({
     const updateSize = () => {
       const parent = containerRef.current;
       if (!parent) return;
-      const width = parent.clientWidth;
-      const height = parent.clientHeight;
+      const width = parent.clientWidth || window.innerWidth || 400;
+      const height = parent.clientHeight || window.innerHeight || 600;
+      if (width <= 0 || height <= 0) return;
       const dpr = window.devicePixelRatio || 1;
 
       canvas.width = width * dpr;
@@ -209,9 +211,21 @@ export default function CricketGame({
     };
 
     updateSize();
+
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      ro = new ResizeObserver(() => {
+        updateSize();
+      });
+      ro.observe(containerRef.current);
+    }
+
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
+  }, [isLeftHanded]);
 
   // Audio state toggle
   useEffect(() => {
@@ -234,141 +248,151 @@ export default function CricketGame({
       const fielders = fieldersRef.current;
 
       if (engine && fielders && !isPaused) {
-        const physicsEvent = engine.update(dt);
-        fielders.update(engine.ball, dt, engine);
+        try {
+          const physicsEvent = engine.update(dt);
+          fielders.update(engine.ball, dt, engine);
 
-        // Update Camera Targets based on game action & broadcast angles (Image 2):
-        const cam = cameraRef.current;
-        const cx = engine.cx;
-        const cy = engine.cy;
+          // Update Camera Targets based on game action & broadcast angles (Image 2):
+          const cam = cameraRef.current;
+          const cx = engine.cx;
+          const cy = engine.cy;
 
-        if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE') {
-          // Clean centered pitch view matching Image 2
-          cam.mode = 'PITCH_CENTER';
-          cam.targetX = cx;
-          cam.targetY = cy;
-          cam.targetZoom = 1.0;
-        } else if (engine.ball.state === 'HIT') {
-          if (engine.ball.isRocketSix) {
-            // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands
-            cam.mode = 'SIX_SKYCAM';
-            cam.targetX = engine.ball.x;
-            cam.targetY = engine.ball.y;
-            cam.targetZoom = 0.80; // Broad view of the entire stands and crowd
-          } else if (engine.running?.active && engine.running?.isCallingRun) {
-            // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
-            cam.mode = 'RUNNING_PITCH';
+          if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE') {
+            // Clean centered pitch view matching Image 2
+            cam.mode = 'PITCH_CENTER';
             cam.targetX = cx;
             cam.targetY = cy;
-            cam.targetZoom = 1.08;
-          } else if (engine.ball.isAerialFour) {
-            // Angle 5: AERIAL_FOUR - dynamic tracking camera tracking lofted boundary clearing infield
-            cam.mode = 'AERIAL_FOUR';
-            cam.targetX = engine.ball.x;
-            cam.targetY = engine.ball.y;
-            cam.targetZoom = 0.86;
-          } else {
-            // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder in gap
-            cam.mode = 'BALL_CHASE';
-            const chaser = fielders.getPrimaryChaser();
-            if (chaser) {
-              cam.targetX = engine.ball.x * 0.70 + chaser.x * 0.30;
-              cam.targetY = engine.ball.y * 0.70 + chaser.y * 0.30;
-            } else {
+            cam.targetZoom = 1.0;
+          } else if (engine.ball.state === 'HIT') {
+            if (engine.ball.isRocketSix) {
+              // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands
+              cam.mode = 'SIX_SKYCAM';
               cam.targetX = engine.ball.x;
               cam.targetY = engine.ball.y;
-            }
-            const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
-            cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.88 : 0.98;
-          }
-        } else {
-          // DEAD / OVER_PAUSE
-          cam.targetX = cx;
-          cam.targetY = cy;
-          cam.targetZoom = 1.0;
-        }
-
-        // Smooth camera matrix interpolation
-        cam.x += (cam.targetX - cam.x) * 0.08 * dt;
-        cam.y += (cam.targetY - cam.y) * 0.08 * dt;
-        cam.zoom += (cam.targetZoom - cam.zoom) * 0.08 * dt;
-
-        // Sync Running State to React (debounced to avoid unnecessary re-renders)
-        const r = engine.running;
-        if (r && r.active) {
-          if (!prevRunningRef.current.active ||
-              prevRunningRef.current.runs !== r.runsCompleted ||
-              prevRunningRef.current.isCalling !== r.isCallingRun ||
-              prevRunningRef.current.throw !== r.throwActive ||
-              prevRunningRef.current.isSliding !== r.isSliding) {
-            prevRunningRef.current = {
-              active: true,
-              runs: r.runsCompleted,
-              isCalling: r.isCallingRun,
-              throw: r.throwActive,
-              isSliding: r.isSliding
-            };
-            setRunningState({
-              active: true,
-              runsCompleted: r.runsCompleted,
-              isCallingRun: r.isCallingRun,
-              isHolding: r.isHolding,
-              isSliding: r.isSliding,
-              throwActive: r.throwActive,
-              dangerLevel: r.dangerLevel
-            });
-          }
-        } else if (prevRunningRef.current.active) {
-          prevRunningRef.current = { active: false, runs: 0, isCalling: false, throw: false, isSliding: false };
-          setRunningState(null);
-        }
-
-        // Update Timing Meter while ball is in flight
-        if (engine.ball.state === 'BOWLED') {
-          setTimingMeterProgress(engine.ball.flightProgress || 0);
-        }
-
-        // Check fielder and keeper interception
-        if (engine.ball.state === 'HIT') {
-          // 1. Check Wicket-Keeper catch for outside edges or top edges behind stumps
-          const kd = Math.hypot(engine.ball.x - engine.keeper.x, engine.ball.y - engine.keeper.y);
-          if (engine.ball.isAirborne && engine.ball.height < 24 && kd < 36 && (engine.ball.edgeType === 'outside' || engine.ball.edgeType === 'top')) {
-            engine.ball.state = 'DEAD';
-            engine.running.active = false;
-            engine.keeper.isStumping = true; // quick glove catch animation
-            setTimeout(() => { if (engineRef.current) engineRef.current.keeper.isStumping = false; }, 800);
-            handleBallOutcome({
-              event: 'CAUGHT',
-              fielder: 'Wicket-Keeper',
-              isEdge: true,
-              edgeType: engine.ball.edgeType,
-              shotStyle: engine.batsman.shotStyle
-            });
-          } else {
-            const interception = fielders.checkFieldInterception(engine.ball, engine);
-            if (interception) {
-              if (interception.type === 'CATCH') {
-                engine.ball.state = 'DEAD';
-                engine.running.active = false;
-                handleBallOutcome({
-                  event: 'CAUGHT',
-                  fielder: interception.fielder,
-                  isEdge: !!engine.ball.edgeType,
-                  edgeType: engine.ball.edgeType,
-                  shotStyle: engine.batsman.shotStyle
-                });
+              cam.targetZoom = 0.80; // Broad view of the entire stands and crowd
+            } else if (engine.running?.active && engine.running?.isCallingRun) {
+              // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
+              cam.mode = 'RUNNING_PITCH';
+              cam.targetX = cx;
+              cam.targetY = cy;
+              cam.targetZoom = 1.08;
+            } else if (engine.ball.isAerialFour) {
+              // Angle 5: AERIAL_FOUR - dynamic tracking camera tracking lofted boundary clearing infield
+              cam.mode = 'AERIAL_FOUR';
+              cam.targetX = engine.ball.x;
+              cam.targetY = engine.ball.y;
+              cam.targetZoom = 0.86;
+            } else {
+              // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder in gap
+              cam.mode = 'BALL_CHASE';
+              const chaser = fielders.getPrimaryChaser();
+              if (chaser) {
+                cam.targetX = engine.ball.x * 0.70 + chaser.x * 0.30;
+                cam.targetY = engine.ball.y * 0.70 + chaser.y * 0.30;
+              } else {
+                cam.targetX = engine.ball.x;
+                cam.targetY = engine.ball.y;
               }
-              // For 'STOP', fielder throws ball to stumps/keeper; engine.running resolves running/run-outs!
+              const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
+              cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.88 : 0.98;
+            }
+          } else {
+            // DEAD / OVER_PAUSE
+            cam.targetX = cx;
+            cam.targetY = cy;
+            cam.targetZoom = 1.0;
+          }
+
+          // Smooth camera matrix interpolation
+          cam.x += (cam.targetX - cam.x) * 0.08 * dt;
+          cam.y += (cam.targetY - cam.y) * 0.08 * dt;
+          cam.zoom += (cam.targetZoom - cam.zoom) * 0.08 * dt;
+
+          // Guards against NaN, negative, or zero camera matrix values
+          if (!Number.isFinite(cam.x)) cam.x = cx || engine.width / 2;
+          if (!Number.isFinite(cam.y)) cam.y = cy || engine.height * 0.52;
+          if (!Number.isFinite(cam.zoom) || cam.zoom <= 0.1 || cam.zoom > 5.0) cam.zoom = 1.0;
+          if (!Number.isFinite(cam.targetZoom) || cam.targetZoom <= 0.1) cam.targetZoom = 1.0;
+
+          // Sync Running State to React (debounced to avoid unnecessary re-renders)
+          const r = engine.running;
+          if (r && r.active) {
+            if (!prevRunningRef.current.active ||
+                prevRunningRef.current.runs !== r.runsCompleted ||
+                prevRunningRef.current.isCalling !== r.isCallingRun ||
+                prevRunningRef.current.throw !== r.throwActive ||
+                prevRunningRef.current.isSliding !== r.isSliding) {
+              prevRunningRef.current = {
+                active: true,
+                runs: r.runsCompleted,
+                isCalling: r.isCallingRun,
+                throw: r.throwActive,
+                isSliding: r.isSliding
+              };
+              setRunningState({
+                active: true,
+                runsCompleted: r.runsCompleted,
+                isCallingRun: r.isCallingRun,
+                isHolding: r.isHolding,
+                isSliding: r.isSliding,
+                throwActive: r.throwActive,
+                dangerLevel: r.dangerLevel
+              });
+            }
+          } else if (prevRunningRef.current.active) {
+            prevRunningRef.current = { active: false, runs: 0, isCalling: false, throw: false, isSliding: false };
+            setRunningState(null);
+          }
+
+          // Update Timing Meter while ball is in flight
+          if (engine.ball.state === 'BOWLED') {
+            setTimingMeterProgress(engine.ball.flightProgress || 0);
+          }
+
+          // Check fielder and keeper interception
+          if (engine.ball.state === 'HIT') {
+            // 1. Check Wicket-Keeper catch for outside edges or top edges behind stumps
+            const kd = Math.hypot(engine.ball.x - engine.keeper.x, engine.ball.y - engine.keeper.y);
+            if (engine.ball.isAirborne && engine.ball.height < 24 && kd < 36 && (engine.ball.edgeType === 'outside' || engine.ball.edgeType === 'top')) {
+              engine.ball.state = 'DEAD';
+              engine.running.active = false;
+              engine.keeper.isStumping = true; // quick glove catch animation
+              setTimeout(() => { if (engineRef.current) engineRef.current.keeper.isStumping = false; }, 800);
+              handleBallOutcome({
+                event: 'CAUGHT',
+                fielder: 'Wicket-Keeper',
+                isEdge: true,
+                edgeType: engine.ball.edgeType,
+                shotStyle: engine.batsman.shotStyle
+              });
+            } else {
+              const interception = fielders.checkFieldInterception(engine.ball, engine);
+              if (interception) {
+                if (interception.type === 'CATCH') {
+                  engine.ball.state = 'DEAD';
+                  engine.running.active = false;
+                  handleBallOutcome({
+                    event: 'CAUGHT',
+                    fielder: interception.fielder,
+                    isEdge: !!engine.ball.edgeType,
+                    edgeType: engine.ball.edgeType,
+                    shotStyle: engine.batsman.shotStyle
+                  });
+                }
+                // For 'STOP', fielder throws ball to stumps/keeper; engine.running resolves running/run-outs!
+              }
             }
           }
-        }
 
-        if (physicsEvent) {
-          handleBallOutcome(physicsEvent);
-        }
+          if (physicsEvent) {
+            handleBallOutcome(physicsEvent);
+          }
 
-        // Draw Scene
-        drawScene(ctx, engine, fielders, stadium, profile);
+          // Draw Scene
+          drawScene(ctx, engine, fielders, stadium, profile);
+        } catch (renderError) {
+          console.error("Critical error in CricketGame render loop:", renderError);
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(loop);
@@ -883,18 +907,24 @@ export default function CricketGame({
   // Canvas Scene Drawing: Humanoid Cricketers, Outfield & Pitch
   // --------------------------------------------------------------------------
   const drawScene = (ctx, engine, fielders, currentStadium, userProfile) => {
-    const { width, height } = engine;
-    const cx = engine.cx;
-    const cy = engine.cy;
+    if (!ctx || !engine) return;
+    const width = engine.width || 400;
+    const height = engine.height || 600;
+    const cx = engine.cx || width / 2;
+    const cy = engine.cy || height * 0.52;
     const cam = cameraRef.current;
 
     ctx.save();
     ctx.clearRect(0, 0, width, height);
 
     // Dynamic Multi-Angle Broadcast Camera Matrix (Pan & Zoom)
+    const safeZoom = (Number.isFinite(cam.zoom) && cam.zoom > 0.1) ? cam.zoom : 1.0;
+    const safeX = Number.isFinite(cam.x) ? cam.x : cx;
+    const safeY = Number.isFinite(cam.y) ? cam.y : cy;
+
     ctx.translate(width / 2, height / 2);
-    ctx.scale(cam.zoom, cam.zoom);
-    ctx.translate(-cam.x, -cam.y);
+    ctx.scale(safeZoom, safeZoom);
+    ctx.translate(-safeX, -safeY);
 
     if (engine.screenShake > 0) {
       const shakeX = (Math.random() - 0.5) * engine.screenShake * 2;

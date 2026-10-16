@@ -174,6 +174,7 @@ export class CricketPhysics {
       fielderRole: '',
       dangerLevel: 0
     };
+    this.sixLanding = null;
   }
 
   commandRun() {
