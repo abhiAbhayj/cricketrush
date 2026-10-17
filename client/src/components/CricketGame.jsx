@@ -1337,7 +1337,7 @@ export default function CricketGame({
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     ctx.fillRect(engine.batsman.x - 10, engine.batsmanCreaseY + 6, 20, 2.5);
 
-    // 4. Stumps & Bails (Authentic 3D Pixel Art Stumps)
+    // 4. Stumps & Bails (3 Crisp White Stumps with 3 Bright RED Bails matching Reference Screenshot)
     const renderWicketSet = (stumpY) => {
       // 3 vertical white wickets with rounded caps & dark 1px outline
       ctx.fillStyle = '#ffffff';
@@ -1600,42 +1600,40 @@ export default function CricketGame({
       const visualRadius = b.radius + (h * (b.isRocketSix ? 0.18 : 0.12));
 
       // 3D Leather Cricket Ball with Radial Light Reflection & Stitched Seam
-      {
-        const ballGrad = ctx.createRadialGradient(
-          b.x - visualRadius * 0.35,
-          visualY - visualRadius * 0.35,
-          visualRadius * 0.15,
-          b.x,
-          visualY,
-          visualRadius
-        );
-        ballGrad.addColorStop(0, '#f87171'); // Highlight light reflection
-        ballGrad.addColorStop(0.35, '#dc2626'); // Rich crimson leather
-        ballGrad.addColorStop(0.85, '#991b1b'); // Deep cherry core
-        ballGrad.addColorStop(1, '#450a0a'); // Shadow rim
+      const ballGrad = ctx.createRadialGradient(
+        b.x - visualRadius * 0.35,
+        visualY - visualRadius * 0.35,
+        visualRadius * 0.15,
+        b.x,
+        visualY,
+        visualRadius
+      );
+      ballGrad.addColorStop(0, '#f87171'); // Highlight light reflection
+      ballGrad.addColorStop(0.35, '#dc2626'); // Rich crimson leather
+      ballGrad.addColorStop(0.85, '#991b1b'); // Deep cherry core
+      ballGrad.addColorStop(1, '#450a0a'); // Shadow rim
 
-        ctx.beginPath();
-        ctx.arc(b.x, visualY, visualRadius, 0, Math.PI * 2);
-        ctx.fillStyle = ballGrad;
-        ctx.fill();
-        ctx.strokeStyle = '#450a0a';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(b.x, visualY, visualRadius, 0, Math.PI * 2);
+      ctx.fillStyle = ballGrad;
+      ctx.fill();
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
 
-        // Authentic Curved Rotating White Stitched Cricket Seam
-        const seamAngle = (b.traveled || 0) * 0.14;
-        ctx.save();
-        ctx.translate(b.x, visualY);
-        ctx.rotate(seamAngle);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, visualRadius * 0.88, visualRadius * 0.30, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.lineWidth = 1.1;
-        ctx.setLineDash([2, 2]); // Stitched thread dashes
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
+      // Authentic Curved Rotating White Stitched Cricket Seam
+      const seamAngle = (b.traveled || 0) * 0.14;
+      ctx.save();
+      ctx.translate(b.x, visualY);
+      ctx.rotate(seamAngle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, visualRadius * 0.88, visualRadius * 0.30, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([2, 2]); // Stitched thread dashes
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
     // 11. Particles (Grass spray, dust & boundary sparks)

@@ -175,8 +175,6 @@ export class CricketPhysics {
       nonStrikerX: isLHB ? this.cx - 20 : this.cx + 20,
       nonStrikerY: this.bowlerCreaseY,
       isSliding: false,
-      idleCreaseTimer: 0,
-      queuedRun: false,
       throwActive: false,
       throwProgress: 0,
       throwFromX: 0,
@@ -193,16 +191,12 @@ export class CricketPhysics {
   commandRun() {
     if (!this.running || !this.running.active) return false;
     if (this.running.runsCompleted >= 6) return false;
-    if (this.running.isCallingRun) {
-      // Seamlessly queue the next run (2nd, 3rd, 4th, 5th, 6th) so batsmen turn and sprint without stopping!
-      this.running.queuedRun = true;
+    if (!this.running.isCallingRun) {
+      this.running.isCallingRun = true;
+      this.running.isHolding = false;
       return true;
     }
-    this.running.isCallingRun = true;
-    this.running.isHolding = false;
-    this.running.queuedRun = false;
-    this.running.idleCreaseTimer = 0;
-    return true;
+    return false;
   }
 
   commandHold() {
@@ -1239,8 +1233,6 @@ export class CricketPhysics {
       this.running.nonStrikerX = this.cx + 20;
       this.running.nonStrikerY = this.bowlerCreaseY;
       this.running.isSliding = false;
-      this.running.idleCreaseTimer = 0;
-      this.running.queuedRun = false;
       this.running.throwActive = false;
       this.running.throwProgress = 0;
       this.running.dangerLevel = 0;
@@ -1551,19 +1543,19 @@ export class CricketPhysics {
 
       // Active Bowler Fielding & Chase towards nearby ball!
       const distBowlerToBall = Math.hypot(this.ball.x - this.bowler.x, this.ball.y - this.bowler.y);
-      if (distBowlerToBall < 260 && this.ball.y < this.batsmanCreaseY - 5 && !this.ball.isStoppedByFielder && !this.running.throwActive) {
+      if (distBowlerToBall < 220 && this.ball.y < this.batsmanCreaseY - 15 && !this.ball.isStoppedByFielder && !this.running.throwActive) {
         const bdx = this.ball.x - this.bowler.x;
         const bdy = this.ball.y - this.bowler.y;
         const bdist = Math.hypot(bdx, bdy);
         if (bdist > 8) {
-          this.bowler.x += (bdx / bdist) * 4.8 * dt;
-          this.bowler.y += (bdy / bdist) * 4.8 * dt;
+          this.bowler.x += (bdx / bdist) * 2.8 * dt;
+          this.bowler.y += (bdy / bdist) * 2.8 * dt;
           this.bowler.isFielding = true;
         }
 
         // Bowler Interception Check:
-        if (bdist < 32) {
-          if (this.ball.isAirborne && this.ball.height < 34) {
+        if (bdist < 26) {
+          if (this.ball.isAirborne && this.ball.height < 24) {
             this.ball.state = 'DEAD';
             this.running.active = false;
             this.bowler.isFielding = false;
@@ -1574,7 +1566,7 @@ export class CricketPhysics {
               fielder: 'Bowler (Caught & Bowled)',
               shotStyle: this.batsman.shotStyle
             };
-          } else if (!this.ball.isAirborne || this.ball.height < 6) {
+          } else if (!this.ball.isAirborne || this.ball.height < 4) {
             this.ball.isStoppedByFielder = true;
             this.ball.vx = 0;
             this.ball.vy = 0;
@@ -1589,7 +1581,7 @@ export class CricketPhysics {
             this.running.fielderRole = 'Bowler';
           }
         }
-      } else if (distBowlerToBall >= 260) {
+      } else if (distBowlerToBall >= 220) {
         // Ball hit deep into the outfield: Bowler tracks back to top stumps to receive throw
         this.bowler.x += (this.cx + 8 - this.bowler.x) * 0.05 * dt;
         this.bowler.y += (this.bowlerStumpsY - this.bowler.y) * 0.05 * dt;
@@ -1643,7 +1635,7 @@ export class CricketPhysics {
         };
       }
 
-      // Running Between Wickets Progression (1, 2, 3, 4, 5, 6 Runs, sliding bats & Direct Hit Run Outs)
+      // Running Between Wickets Progression (1, 2, 3, 4, 5 Runs, sliding bats & Direct Hit Run Outs)
       if (this.running && this.running.active) {
         const pitchSpan = this.batsmanCreaseY - this.bowlerCreaseY;
 
@@ -1670,15 +1662,7 @@ export class CricketPhysics {
             this.running.progress = 0;
             this.running.direction = -this.running.direction;
             this.running.isSliding = false;
-            this.running.idleCreaseTimer = 70; // 1.2s grace window to queue or call next run!
-
-            if (this.running.queuedRun) {
-              this.running.queuedRun = false;
-              this.running.isCallingRun = true;
-              this.running.idleCreaseTimer = 0;
-            } else {
-              this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
-            }
+            this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
 
             if (this.running.runsCompleted >= 6) {
               this.running.active = false;
@@ -1686,8 +1670,6 @@ export class CricketPhysics {
               return { event: 'RUNS', runs: this.running.runsCompleted };
             }
           }
-        } else if (this.running.idleCreaseTimer > 0) {
-          this.running.idleCreaseTimer -= dt;
         }
 
         // Fielder laser throw arrival & Run-Out detection
@@ -1713,7 +1695,8 @@ export class CricketPhysics {
               this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ffffff', 14);
 
               // If batsman is not running (holding crease or completed sprint), throw arrived at keeper/bowler!
-              if (!this.running.isCallingRun && (!this.running.idleCreaseTimer || this.running.idleCreaseTimer <= 0)) {
+              // The delivery concludes cleanly without waiting!
+              if (!this.running.isCallingRun) {
                 this.running.active = false;
                 this.ball.state = 'DEAD';
                 if (this.running.runsCompleted > 0) {
@@ -1728,7 +1711,7 @@ export class CricketPhysics {
 
         // When ball has come to a stop or fielder gathered it:
         if (!this.ball.isAirborne && (currentSpeed < 0.28 || this.ball.isStoppedByFielder)) {
-          if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive && (!this.running.idleCreaseTimer || this.running.idleCreaseTimer <= 0))) {
+          if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive)) {
             this.running.active = false;
             this.ball.state = 'DEAD';
             if (this.running.runsCompleted > 0) {
