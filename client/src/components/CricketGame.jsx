@@ -229,12 +229,24 @@ export default function CricketGame({
       if (!engineRef.current) {
         engineRef.current = new CricketPhysics(width, height);
         engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
-        fieldersRef.current = new FielderManager(width, height, engineRef.current.boundaryRadius);
+        fieldersRef.current = new FielderManager(
+          width,
+          height,
+          engineRef.current.boundaryRadius,
+          engineRef.current.innerCircleRadiusX,
+          engineRef.current.innerCircleRadiusY
+        );
         fieldersRef.current.applyFieldPreset('powerplay', true);
       } else {
         engineRef.current.resize(width, height);
         engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
-        fieldersRef.current.resize(width, height, engineRef.current.boundaryRadius);
+        fieldersRef.current.resize(
+          width,
+          height,
+          engineRef.current.boundaryRadius,
+          engineRef.current.innerCircleRadiusX,
+          engineRef.current.innerCircleRadiusY
+        );
       }
 
       // Initialize camera centered on pitch (matching Image 2)
@@ -298,28 +310,28 @@ export default function CricketGame({
             cam.mode = 'PITCH_CENTER';
             cam.targetX = cx;
             cam.targetY = cy;
-            cam.targetZoom = 1.0;
+            cam.targetZoom = 0.94;
           } else if (engine.ball.state === 'HIT') {
             if (engine.ball.isRocketSix) {
-              // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands
+              // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands on 80m ground
               cam.mode = 'SIX_SKYCAM';
               cam.targetX = engine.ball.x;
               cam.targetY = engine.ball.y;
-              cam.targetZoom = 0.80; // Broad view of the entire stands and crowd
+              cam.targetZoom = 0.65; // Broad expansive view of the 80m ground and cheering stands
             } else if (engine.running?.active && engine.running?.isCallingRun) {
               // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
               cam.mode = 'RUNNING_PITCH';
               cam.targetX = cx;
               cam.targetY = cy;
-              cam.targetZoom = 1.08;
+              cam.targetZoom = 1.05;
             } else if (engine.ball.isAerialFour) {
               // Angle 5: AERIAL_FOUR - dynamic tracking camera tracking lofted boundary clearing infield
               cam.mode = 'AERIAL_FOUR';
               cam.targetX = engine.ball.x;
               cam.targetY = engine.ball.y;
-              cam.targetZoom = 0.86;
+              cam.targetZoom = 0.74;
             } else {
-              // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder in gap
+              // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder across 80m ground
               cam.mode = 'BALL_CHASE';
               const chaser = fielders.getPrimaryChaser();
               if (chaser) {
@@ -330,13 +342,13 @@ export default function CricketGame({
                 cam.targetY = engine.ball.y;
               }
               const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
-              cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 140) ? 0.88 : 0.98;
+              cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 260) ? 0.72 : 0.88;
             }
           } else {
             // DEAD / OVER_PAUSE
             cam.targetX = cx;
             cam.targetY = cy;
-            cam.targetZoom = 1.0;
+            cam.targetZoom = 0.94;
           }
 
           // Smooth camera matrix interpolation
@@ -1011,6 +1023,14 @@ export default function CricketGame({
       sixLanding: engine.sixLanding
     });
 
+    // 2.5 Regulation 30-Yard Inner Circle with Painted Marker Discs on Outfield Turf
+    CharacterRenderer.draw30YardCircle(
+      ctx,
+      cx,
+      cy,
+      engine.innerCircleRadiusX,
+      engine.innerCircleRadiusY
+    );
 
     // 3. Pitch Strip: Sandy beige turf pitch
     const pw = engine.pitchWidth;

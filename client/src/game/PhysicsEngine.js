@@ -36,10 +36,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      // Expansive Big Stadium with 30-yard regulation circle & visible crowd perimeter
-      this.boundaryRadius = Math.max(380, Math.min(540, Math.max(this.width * 0.82, this.height * 0.48)));
-      this.innerCircleRadiusX = Math.min(145, this.boundaryRadius * 0.38);
-      this.innerCircleRadiusY = Math.min(170, this.boundaryRadius * 0.44);
+      // 80-Meter Long Lengthy International Stadium Ground & Expansive 30-Yard Circle
+      this.boundaryRadius = Math.max(720, Math.min(880, Math.max(this.width * 1.35, this.height * 0.90)));
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.36);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.41);
     } else {
       this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
       this.pitchTop = this.height * 0.26;
@@ -50,10 +50,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 38;
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
-      // Expansive Big Stadium with 30-yard regulation circle & visible crowd perimeter
-      this.boundaryRadius = Math.max(420, Math.min(640, Math.max(this.width * 0.52, this.height * 0.72)));
-      this.innerCircleRadiusX = Math.min(160, this.boundaryRadius * 0.36);
-      this.innerCircleRadiusY = Math.min(185, this.boundaryRadius * 0.42);
+      // 80-Meter Long Lengthy International Stadium Ground & Expansive 30-Yard Circle
+      this.boundaryRadius = Math.max(780, Math.min(940, Math.max(this.width * 0.85, this.height * 1.15)));
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.35);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.40);
     }
   }
 
