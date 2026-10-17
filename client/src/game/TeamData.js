@@ -315,6 +315,90 @@ export function getJerseyData(jerseyId) {
 }
 
 // ============================================================================
+// COMPREHENSIVE REGISTRY OF WORLD CRICKET LEFT-HANDED BATSMEN (LHB)
+// Ryan Rickelton, Abhishek Sharma, Travis Head, Quinton de Kock, Pooran, Pant, etc.
+// ============================================================================
+export const LEFT_HANDED_BATSMEN = new Set([
+  'ryan rickelton',
+  'abhishek sharma',
+  'travis head',
+  'quinton de kock',
+  'david miller',
+  'nicholas pooran',
+  'shimron hetmyer',
+  'yashasvi jaiswal',
+  'rishabh pant',
+  'shivam dube',
+  'rinku singh',
+  'tilak varma',
+  'axar patel',
+  'ravindra jadeja',
+  'saim ayub',
+  'fakhar zaman',
+  'devon conway',
+  'rachin ravindra',
+  'mitchell santner',
+  'sunil narine',
+  'venkatesh iyer',
+  'nitish rana',
+  'sai sudharsan',
+  'rahul tewatia',
+  'sam curran',
+  'ben duckett',
+  'ben stokes',
+  'charith asalanka',
+  'kamindu mendis',
+  'bhanuka rajapaksa',
+  'kusal perera',
+  'shakib al hasan',
+  'tamim iqbal',
+  'shikhar dhawan',
+  'suresh raina',
+  'gautam gambhir',
+  'yuvraj singh',
+  'sourav ganguly',
+  'brian lara',
+  'chris gayle',
+  'matthew hayden',
+  'adam gilchrist',
+  'michael hussey',
+  'kumar sangakkara',
+  'sanath jayasuriya',
+  'stephen fleming',
+  'alastair cook',
+  'david warner',
+  'ishan kishan',
+  'devdutt padikkal',
+  'krunal pandya',
+  'abishek porel',
+  'rilee rossouw',
+  'matthew wade',
+  'alex carey',
+  's. kinvara',
+  's. kadam',
+  'p. sanzgiri',
+  'j. bethell',
+  'jacob bethell'
+]);
+
+/**
+ * Accurately determines if any batsman is left-handed based on known international
+ * rosters, manual [L] / (L) tags, or profile preferences.
+ */
+export function isPlayerLeftHanded(name) {
+  if (!name) return false;
+  const raw = String(name).toLowerCase();
+  if (raw.includes('[l]') || raw.includes('(l)')) return true;
+  const clean = raw.replace(/\[l\]|\(l\)/g, '').replace(/[^a-z\s]/g, '').trim();
+  for (const lhb of LEFT_HANDED_BATSMEN) {
+    if (clean === lhb || clean.includes(lhb) || lhb.includes(clean)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// ============================================================================
 // COMPREHENSIVE LATEST T20 TEAMS ROSTER (Countries & IPL)
 // ============================================================================
 export const TEAMS = {

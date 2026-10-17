@@ -17,6 +17,12 @@ export class CricketPhysics {
 
   setBatsmanHand(hand = 'right') {
     this.batsmanHand = hand === 'left' ? 'left' : 'right';
+    if (this.batsman) {
+      this.batsman.x = this.batsmanHand === 'left' ? this.cx - 2 : this.cx + 2;
+    }
+    if (this.nonStriker) {
+      this.nonStriker.x = this.batsmanHand === 'left' ? this.cx + 44 : this.cx - 44;
+    }
   }
 
   initDimensions() {
@@ -115,9 +121,10 @@ export class CricketPhysics {
     const prevStepOut = (keepFootwork && this.batsman) ? this.batsman.isSteppingOut : false;
     const prevStepOffset = (keepFootwork && this.batsman) ? this.batsman.stepOutOffset : 0;
     const prevFootwork = (keepFootwork && this.batsman) ? this.batsman.footworkState : 'stance';
+    const isLHB = this.batsmanHand === 'left';
 
     this.batsman = {
-      x: this.cx + prevCreaseX,
+      x: (isLHB ? this.cx - 2 : this.cx + 2) + prevCreaseX,
       y: this.batsmanCreaseY,
       creaseOffsetX: prevCreaseX, // Left / Right shuffle offset
       isSteppingOut: prevStepOut,
@@ -132,14 +139,15 @@ export class CricketPhysics {
       swingType: 'straight', // 'off', 'straight', 'leg'
       shotStyle: 'straight_drive', // 'cover_drive', 'straight_drive', 'pull', 'upper_cut', 'flick', 'reverse_sweep', 'scoop', 'step_out'
       shotQuality: null,
-      batAngle: -0.3,
+      batAngle: isLHB ? 0.3 : -0.3,
       faceStyle: 'classic',
       skinTone: '#d49b70'
     };
 
-    // Non-striker Batsman at top crease (Left side of stumps matching Reference Screenshot)
+    // Non-striker Batsman at top crease:
+    // Stands on opposite side of striker to keep bowler line-of-sight clear (Image 4 vs 5)
     this.nonStriker = {
-      x: this.cx - 44,
+      x: isLHB ? this.cx + 44 : this.cx - 44,
       y: this.bowlerCreaseY + 6
     };
 
@@ -154,7 +162,7 @@ export class CricketPhysics {
     this.stumpPieces = [];
     this.particles = [];
 
-    // Running Between Wickets State Machine (Interactive 1, 2, 3 Runs & Direct Hit Run Outs)
+    // Running Between Wickets State Machine (Interactive 1, 2, 3, 4, 5 Runs & Direct Hit Run Outs)
     this.running = {
       active: false,
       runsCompleted: 0,
@@ -162,9 +170,9 @@ export class CricketPhysics {
       isHolding: false,
       progress: 0, // 0 to 1 between creases
       direction: 1, // 1: striker to bowler crease, non-striker to batsman crease; -1: returning
-      strikerX: this.cx - 16,
+      strikerX: isLHB ? this.cx + 16 : this.cx - 16,
       strikerY: this.batsmanCreaseY,
-      nonStrikerX: this.cx + 20,
+      nonStrikerX: isLHB ? this.cx - 20 : this.cx + 20,
       nonStrikerY: this.bowlerCreaseY,
       isSliding: false,
       throwActive: false,
@@ -182,7 +190,7 @@ export class CricketPhysics {
 
   commandRun() {
     if (!this.running || !this.running.active) return false;
-    if (this.running.runsCompleted >= 3) return false;
+    if (this.running.runsCompleted >= 6) return false;
     if (!this.running.isCallingRun) {
       this.running.isCallingRun = true;
       this.running.isHolding = false;
@@ -1280,6 +1288,10 @@ export class CricketPhysics {
       }
     }
 
+    if (this.batsmanHand === 'left') {
+      exitAngle = -exitAngle;
+    }
+
     this.ball.vx = Math.sin(exitAngle) * exitSpeed;
     this.ball.vy = -Math.cos(exitAngle) * exitSpeed;
   }
@@ -1529,6 +1541,52 @@ export class CricketPhysics {
       const currentSpeed = Math.hypot(this.ball.vx, this.ball.vy);
       const distFromCenter = Math.hypot(this.ball.x - this.cx, this.ball.y - this.cy);
 
+      // Active Bowler Fielding & Chase towards nearby ball!
+      const distBowlerToBall = Math.hypot(this.ball.x - this.bowler.x, this.ball.y - this.bowler.y);
+      if (distBowlerToBall < 220 && this.ball.y < this.batsmanCreaseY - 15 && !this.ball.isStoppedByFielder && !this.running.throwActive) {
+        const bdx = this.ball.x - this.bowler.x;
+        const bdy = this.ball.y - this.bowler.y;
+        const bdist = Math.hypot(bdx, bdy);
+        if (bdist > 8) {
+          this.bowler.x += (bdx / bdist) * 2.8 * dt;
+          this.bowler.y += (bdy / bdist) * 2.8 * dt;
+          this.bowler.isFielding = true;
+        }
+
+        // Bowler Interception Check:
+        if (bdist < 26) {
+          if (this.ball.isAirborne && this.ball.height < 24) {
+            this.ball.state = 'DEAD';
+            this.running.active = false;
+            this.bowler.isFielding = false;
+            this.screenShake = 6;
+            this.createSparks(this.bowler.x, this.bowler.y, '#ef4444', 25);
+            return {
+              event: 'CAUGHT',
+              fielder: 'Bowler (Caught & Bowled)',
+              shotStyle: this.batsman.shotStyle
+            };
+          } else if (!this.ball.isAirborne || this.ball.height < 4) {
+            this.ball.isStoppedByFielder = true;
+            this.ball.vx = 0;
+            this.ball.vy = 0;
+            this.bowler.isFielding = false;
+            this.running.throwActive = true;
+            this.running.throwProgress = 0;
+            this.running.throwFromX = this.bowler.x;
+            this.running.throwFromY = this.bowler.y;
+            this.running.throwTargetX = this.cx;
+            this.running.throwTargetY = this.batsmanCreaseY;
+            this.running.throwTargetEnd = 'batsman';
+            this.running.fielderRole = 'Bowler';
+          }
+        }
+      } else if (distBowlerToBall >= 220) {
+        // Ball hit deep into the outfield: Bowler tracks back to top stumps to receive throw
+        this.bowler.x += (this.cx + 8 - this.bowler.x) * 0.05 * dt;
+        this.bowler.y += (this.bowlerStumpsY - this.bowler.y) * 0.05 * dt;
+      }
+
       // Rocket SIX sails deep into the stadium stands among the cheering people!
       if (this.ball.isRocketSix) {
         const inStands = distFromCenter >= this.boundaryRadius + 20;
@@ -1577,7 +1635,7 @@ export class CricketPhysics {
         };
       }
 
-      // Running Between Wickets Progression (1, 2, 3 Runs, sliding bats & Direct Hit Run Outs)
+      // Running Between Wickets Progression (1, 2, 3, 4, 5 Runs, sliding bats & Direct Hit Run Outs)
       if (this.running && this.running.active) {
         const pitchSpan = this.batsmanCreaseY - this.bowlerCreaseY;
 
@@ -1606,10 +1664,10 @@ export class CricketPhysics {
             this.running.isSliding = false;
             this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
 
-            if (this.running.runsCompleted >= 3) {
+            if (this.running.runsCompleted >= 6) {
               this.running.active = false;
               this.ball.state = 'DEAD';
-              return { event: 'RUNS', runs: 3 };
+              return { event: 'RUNS', runs: this.running.runsCompleted };
             }
           }
         }

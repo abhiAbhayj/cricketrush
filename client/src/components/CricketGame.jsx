@@ -41,7 +41,7 @@ const SHOT_TYPES = [
   { id: 'scoop', label: 'Scoop Ramp', key: 'D', aim: 'straight', icon: '🎯', desc: 'Ramps over keeper' }
 ];
 
-import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, TEAMS } from '../game/TeamData';
+import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, TEAMS, isPlayerLeftHanded } from '../game/TeamData';
 
 export const WORLD_BOWLERS = GLOBAL_WORLD_BOWLERS;
 export const DEFAULT_BATSMEN_LINEUP = GLOBAL_BATSMEN_LINEUP;
@@ -77,13 +77,6 @@ export default function CricketGame({
   const [bowlerAction, setBowlerAction] = useState(matchConfig?.bowlerAction || initialBowler.action);
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
 
-  // Intelligent Left-Handed Batsman Detection
-  const isLeftHanded = profile?.battingHand === 'left' ||
-    (profile?.playerName || '').toLowerCase().includes('[l]') ||
-    (profile?.playerName || '').toLowerCase().includes('(l)') ||
-    (matchConfig?.strikerName || '').toLowerCase().includes('[l]') ||
-    (matchConfig?.strikerName || '').toLowerCase().includes('(l)');
-
   // Dynamic In-Match Live Scoring
   const [currentRunsScored, setCurrentRunsScored] = useState(0);
   const [currentBallsFaced, setCurrentBallsFaced] = useState(0);
@@ -113,6 +106,15 @@ export default function CricketGame({
     runs: initialNonStrikerRuns,
     balls: initialNonStrikerBalls
   });
+
+  // Intelligent Left-Handed Batsman Detection (Master Roster + Profile + Tag check)
+  const isLeftHanded = isPlayerLeftHanded(striker?.name || initialStrikerName) ||
+    (striker?.name === profile?.playerName && profile?.battingHand === 'left') ||
+    profile?.battingHand === 'left' ||
+    (profile?.playerName || '').toLowerCase().includes('[l]') ||
+    (profile?.playerName || '').toLowerCase().includes('(l)') ||
+    (matchConfig?.strikerName || '').toLowerCase().includes('[l]') ||
+    (matchConfig?.strikerName || '').toLowerCase().includes('(l)');
 
   const [bowler, setBowler] = useState({
     name: matchConfig?.bowlerName || initialBowler.name,
@@ -386,6 +388,13 @@ export default function CricketGame({
       window.removeEventListener('resize', updateSize);
     };
   }, [isLeftHanded]);
+
+  // Synchronize Batsman Batting Hand on Striker Changes
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
+    }
+  }, [isLeftHanded, striker?.name]);
 
   // Audio state toggle
   useEffect(() => {
@@ -1487,7 +1496,7 @@ export default function CricketGame({
       });
     }
 
-    // 7. Realistic Vector Bowler (Top Crease with High-Arm Action, Afro Hair & Follow-Through)
+    // 7. Realistic Vector Bowler (Top Crease with High-Arm Action, Sprint Reach & Fielding)
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
       runUpProgress: engine.bowler.runUpProgress,
       bowlingArmAngle: engine.bowler.bowlingArmAngle,
@@ -1496,7 +1505,9 @@ export default function CricketGame({
       actionType: engine.bowler.actionType || 'high_arm',
       faceStyle: engine.bowler.faceStyle || 'afro',
       skinTone: engine.bowler.skinTone || '#c68656',
-      jerseyColor: fieldingJerseyColor
+      jerseyColor: fieldingJerseyColor,
+      isFielding: engine.bowler.isFielding,
+      hasBall: engine.bowler.hasBall
     });
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
@@ -1777,6 +1788,9 @@ export default function CricketGame({
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#facc15] font-black text-xs">▶</span>
                   <span className="font-bold text-white truncate max-w-[130px] sm:max-w-none">{striker.name}</span>
+                  {isLeftHanded && (
+                    <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-bold text-[9px] border border-amber-400/30" title="Left-Handed Batsman">L</span>
+                  )}
                   {currentWicketsLost > 0 && striker.balls <= 1 && (
                     <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">NEW</span>
                   )}
@@ -1787,6 +1801,9 @@ export default function CricketGame({
                 {/* Non-Striker */}
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <span className="text-slate-300 truncate max-w-[120px] sm:max-w-none">{nonStriker.name}</span>
+                  {isPlayerLeftHanded(nonStriker.name) && (
+                    <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-bold text-[9px] border border-amber-400/30" title="Left-Handed Batsman">L</span>
+                  )}
                   <span className="font-bold text-slate-200">{nonStriker.runs}</span>
                   <span className="text-slate-400 text-[11px]">({nonStriker.balls})</span>
                 </div>
@@ -1946,22 +1963,28 @@ export default function CricketGame({
 
               {/* Striker Token */}
               <div
-                className="absolute w-3.5 h-3.5 rounded-full bg-blue-600 border border-white flex items-center justify-center shadow-sm transition-all duration-75"
+                className={`absolute w-3.5 h-3.5 rounded-full bg-blue-500 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
+                  runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
+                }`}
                 style={{
-                  bottom: `${10 + (runningState?.active && runningState.isCallingRun ? runningState.progress * 75 : 0)}%`,
+                  top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '76%',
                   left: '20%'
                 }}
+                title="Striker"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-white" />
               </div>
 
               {/* Non-Striker Token */}
               <div
-                className="absolute w-3.5 h-3.5 rounded-full bg-blue-600 border border-white flex items-center justify-center shadow-sm transition-all duration-75"
+                className={`absolute w-3.5 h-3.5 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
+                  runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
+                }`}
                 style={{
-                  top: `${10 + (runningState?.active && runningState.isCallingRun ? runningState.progress * 75 : 0)}%`,
+                  top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '76%' : '12%',
                   right: '20%'
                 }}
+                title="Non-Striker"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-white" />
               </div>
