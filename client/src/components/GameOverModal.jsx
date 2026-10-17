@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { storageService } from '../services/storage';
 import { sound } from '../game/SoundEffects';
-import { haptics } from '../services/haptics';
-import { Trophy, RotateCcw, Home, Share2, Coins, Zap, Check, Flame, ChevronRight, Gauge } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 export default function GameOverModal({
   matchResult,
@@ -14,33 +13,25 @@ export default function GameOverModal({
   profile,
   onProfileUpdate
 }) {
-  const [rewards, setRewards] = useState({ coinsEarned: 0, xpEarned: 0 });
   const [copied, setCopied] = useState(false);
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
-  const [campaignUnlockedNext, setCampaignUnlockedNext] = useState(false);
 
   useEffect(() => {
-    // 1. Calculate rewards and update streak & profile
+    // 1. Calculate rewards and update profile
     const resultRewards = storageService.addMatchReward({
       runs: matchResult.runsScored,
       won: matchResult.won,
       sixes: matchResult.sixes,
       fours: matchResult.fours
     });
-    setRewards(resultRewards);
 
-    // 2. Unlock next campaign stage if campaign level was won
     if (matchResult.won && matchConfig?.campaignLevelId) {
       const unlockRes = storageService.unlockCampaignLevel(matchConfig.campaignLevelId);
-      if (unlockRes.unlockedNext) {
-        setCampaignUnlockedNext(true);
-      }
       if (onProfileUpdate) onProfileUpdate(unlockRes.profile);
     } else {
       if (onProfileUpdate) onProfileUpdate(resultRewards.profile);
     }
 
-    // 3. Submit to server leaderboard
+    // 2. Submit to leaderboard
     api.submitScore({
       playerName: profile?.playerName || 'Guest Striker',
       score: matchResult.runsScored,
@@ -51,15 +42,13 @@ export default function GameOverModal({
       mode: matchConfig?.title || 'Quick Play',
       challengeCode: matchConfig?.code || null,
       won: matchResult.won
-    }).then(() => {
-      setScoreSubmitted(true);
     }).catch(() => {});
   }, []);
 
   const handleShareResult = async () => {
     sound.playClick();
     const shareText = matchResult.won
-      ? `🏏 VICTORY! Smashed ${matchResult.runsScored} runs (${matchResult.sixes} sixes) off ${matchResult.ballsFaced} balls in Cricket Rush! Streak: ${profile?.dailyStreak || 2} days. Can you beat my chase?`
+      ? `🏏 VICTORY! Smashed ${matchResult.runsScored} runs (${matchResult.sixes} sixes) off ${matchResult.ballsFaced} balls in Cricket Rush! Can you beat my chase?`
       : `🏏 Scored ${matchResult.runsScored} runs in Cricket Rush. Can you conquer this chase?`;
 
     const shareUrl = window.location.origin;
@@ -85,215 +74,235 @@ export default function GameOverModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Generate or read Over-by-Over Breakdown (matching Image 2)
-  const oversData = matchResult.overByOverHistory || [
-    { overNum: 1, balls: ['4', '6', '4', '1', '6', '1'], runs: 22 },
-    { overNum: 2, balls: ['4', '1', '2', '4', '4', '4'], runs: 19 },
-    { overNum: 3, balls: ['4', '6', 'W', '1', '6', '4'], runs: 21 },
-    { overNum: 4, balls: ['4', '6', '2', '4', '2', '6'], runs: 24 }
-  ];
-
-  const teamCode = matchConfig?.teamCode || 'HYB';
-  const wicketsLeft = Math.max(0, (matchResult.maxWickets || 7) - (matchResult.wicketsLost || 0));
-  const ballsLeft = Math.max(0, (matchResult.totalBalls || 30) - (matchResult.ballsFaced || 0));
-  const totalScore = (matchConfig?.teamScoreBase || 104) + matchResult.runsScored;
-  const totalWickets = (matchConfig?.teamWicketsBase || 3) + matchResult.wicketsLost;
+  const teamCode = matchConfig?.teamCode || 'BEB';
+  const wicketsLeft = Math.max(0, (matchResult.maxWickets || 10) - (matchResult.wicketsLost || 0));
+  const ballsLeft = Math.max(0, (matchResult.totalBalls || 120) - (matchResult.ballsFaced || 0));
+  const totalScore = (matchConfig?.teamScoreBase || 167) + (matchResult.runsScored || 0) - (matchConfig?.initialChaseRuns || 0);
+  const totalWickets = (matchConfig?.teamWicketsBase || 7) + (matchResult.wicketsLost || 0);
   const oversCompleted = (matchResult.ballsFaced / 6).toFixed(1);
 
+  // Batting lineup matching Image 1
+  const battingLineup = [
+    { name: 'S. Anchalia', dismissal: 'out', r: 26, b: 33, fours: 0, sixes: 0 },
+    { name: 'P. Sanzgiri', hand: 'L', dismissal: 'out', r: 20, b: 20, fours: 0, sixes: 0 },
+    { name: 'F. Danby', dismissal: 'out', r: 26, b: 28, fours: 0, sixes: 0 },
+    { name: 'T. Nallamby', dismissal: 'out', r: 23, b: 29, fours: 0, sixes: 0 },
+    { name: 'S. Kinvara', hand: 'L', dismissal: 'lbw b Sarpotdar', r: 27, b: 30, fours: 0, sixes: 0 },
+    { name: 'S. Kadam', hand: 'L', dismissal: 'lbw b Veldkamp', r: 23, b: 28, fours: 0, sixes: 0 },
+    { name: 'A. Sonpurkar', dismissal: 'lbw b Sarpotdar', r: 0, b: 1, fours: 0, sixes: 0 },
+    { name: 'K. Wintersgill', dismissal: '*', r: 0, b: 0, fours: 0, sixes: 0, notOut: true },
+    { name: profile?.playerName ? profile.playerName : 'D. Salunkhe', dismissal: '*', r: matchResult.runsScored || 4, b: matchResult.ballsFaced || 4, fours: matchResult.fours || 1, sixes: matchResult.sixes || 0, notOut: true }
+  ];
+
+  // Bowling stats matching Image 1
+  const bowlersData = [
+    { name: 'N. Sarpotdar', o: 0, r: 2, w: 0, eco: '0.0' },
+    { name: 'T. Veldkamp', o: 4, r: 1, w: 4, eco: '4.0' }
+  ];
+
+  // Recent overs matching Image 1
+  const oversData = matchResult.overByOverHistory?.length
+    ? matchResult.overByOverHistory.slice(-2)
+    : [
+        { overNum: 19, balls: ['•', '•', 'W', 'W'], runs: 0 },
+        { overNum: 20, balls: ['•', 'W', '•', '4', '•', '•'], runs: 4 }
+      ];
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="w-full max-w-sm sm:max-w-md bg-[#0a101b] rounded-3xl p-4 sm:p-5 text-left border border-emerald-500/50 shadow-2xl animate-bounce-subtle my-auto">
-        {/* Top Header Card (Replication of Image 2) */}
-        <div className="p-3.5 rounded-2xl bg-[#0f1728] border border-slate-800 mb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-md bg-[#84cc16] font-display font-black text-xs text-slate-950 uppercase tracking-wider">
-              {teamCode}
-            </span>
-            <span className={`text-2xl font-display font-black tracking-tight ${matchResult.won ? 'text-[#4ade80]' : 'text-red-500'}`}>
-              {matchResult.won ? 'WON' : 'LOST'}
-            </span>
-          </div>
-
-          <div className="text-xs text-slate-300 font-medium">
-            {matchResult.won
-              ? `by ${wicketsLeft} wickets · ${ballsLeft} ball${ballsLeft === 1 ? '' : 's'} left`
-              : `fell short by ${Math.max(1, matchResult.targetRuns - matchResult.runsScored)} runs`}
-          </div>
-
-          <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-slate-800/80">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-display font-black text-white">{totalScore}-{totalWickets}</span>
-              <span className="text-xs font-semibold text-slate-400">{oversCompleted} ov</span>
-            </div>
-            <div className="text-xs font-bold text-slate-400">
-              Target <span className="text-white font-extrabold">{matchResult.targetRuns}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Campaign Unlock Banner */}
-        {campaignUnlockedNext && (
-          <div className="mb-3 p-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span>CAMPAIGN STAGE COMPLETED! Next Stadium Unlocked!</span>
-          </div>
-        )}
-
-        {/* Batsman Mini Scorecard (matching Image 2) */}
-        <div className="p-3 rounded-2xl bg-[#0b1320] border border-slate-800/80 mb-3 text-xs">
-          <div className="grid grid-cols-12 text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-1.5 border-b border-slate-800">
-            <span className="col-span-6">BATSMAN</span>
-            <span className="col-span-2 text-right">R</span>
-            <span className="col-span-2 text-right">B</span>
-            <span className="col-span-2 text-right">SR</span>
-          </div>
-
-          <div className="grid grid-cols-12 py-1 text-slate-200 font-medium border-b border-slate-800/50 items-center">
-            <span className="col-span-6 font-bold text-white truncate flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block" />
-              {profile?.playerName || 'M. Sarkhel'}
-            </span>
-            <span className="col-span-2 text-right font-extrabold text-white">{matchResult.runsScored}</span>
-            <span className="col-span-2 text-right text-slate-400">{matchResult.ballsFaced}</span>
-            <span className="col-span-2 text-right text-emerald-400 font-mono text-[11px]">{matchResult.strikeRate}</span>
-          </div>
-
-          <div className="grid grid-cols-12 py-1 text-slate-300 items-center text-[11px]">
-            <span className="col-span-6 text-slate-400 truncate">R. Fairhurst</span>
-            <span className="col-span-2 text-right font-bold text-slate-300">36</span>
-            <span className="col-span-2 text-right text-slate-400">10</span>
-            <span className="col-span-2 text-right text-slate-400 font-mono text-[11px]">360.0</span>
-          </div>
-        </div>
-
-        {/* OVER BY OVER Breakdown Table (Exact match of Image 2) */}
-        <div className="p-3.5 rounded-2xl bg-[#0b1320] border border-slate-800 mb-3 max-h-52 overflow-y-auto">
-          <div className="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">
-            OVER BY OVER
-          </div>
-
-          <div className="space-y-1.5">
-            {oversData.map((over, oIdx) => (
-              <div key={oIdx} className="flex items-center justify-between text-xs">
-                <span className="w-5 font-mono font-bold text-slate-400 text-[11px]">
-                  {over.overNum || oIdx + 1}
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto select-none">
+      <div className="w-full max-w-4xl bg-[#090e1a] rounded-3xl border-2 border-[#ef4444] p-5 sm:p-7 text-white shadow-[0_0_60px_rgba(0,0,0,0.9)] animate-fade-in my-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ================================================================ */}
+          {/* LEFT COLUMN: Header, Community, Actions & Links (Image 1)        */}
+          {/* ================================================================ */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-1 rounded bg-[#0284c7] font-black italic text-xs text-white uppercase tracking-wider">
+                  {teamCode}
                 </span>
-
-                {/* Over Balls Array */}
-                <div className="flex items-center gap-1 flex-1 px-2 overflow-x-auto">
-                  {over.balls.map((bVal, bIdx) => {
-                    const isSix = bVal === '6';
-                    const isFour = bVal === '4';
-                    const isWicket = bVal === 'W';
-                    const isWide = bVal === 'wd';
-
-                    return (
-                      <div
-                        key={bIdx}
-                        className={`w-5 h-5 rounded-full flex items-center justify-center font-display font-black text-[10px] text-white flex-shrink-0 shadow-sm ${
-                          isSix
-                            ? 'bg-[#9333ea] shadow-purple-500/40'
-                            : isFour
-                            ? 'bg-[#16a34a] shadow-emerald-500/40'
-                            : isWicket
-                            ? 'bg-[#ef4444] shadow-red-500/40'
-                            : isWide
-                            ? 'bg-[#b45309] text-[9px]'
-                            : 'bg-[#334155]'
-                        }`}
-                      >
-                        {bVal}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Total Over Runs */}
-                <span className="font-display font-extrabold text-white text-xs w-6 text-right">
-                  {over.runs}
+                <span className={`text-4xl sm:text-5xl font-display font-black tracking-tight uppercase ${matchResult.won ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
+                  {matchResult.won ? 'WON' : 'LOST'}
                 </span>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Streak Pill & Rewards (Replication of Image 2) */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          {/* Streak pill */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1e293b] border border-slate-700 text-xs font-bold text-white shadow-sm">
-            <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-            <span>{profile?.dailyStreak || 2}-day streak</span>
-          </div>
+              <div className="text-sm text-slate-300 font-medium">
+                {matchResult.won
+                  ? `Won by ${wicketsLeft} wickets · ${ballsLeft} ball${ballsLeft === 1 ? '' : 's'} left`
+                  : `${Math.max(1, matchResult.targetRuns - matchResult.runsScored)} runs short`}
+              </div>
 
-          {/* Coins Earned */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="flex items-center gap-1 font-bold text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
-              <Coins className="w-3.5 h-3.5" /> +{rewards.coinsEarned}
-            </span>
-            <span className="flex items-center gap-1 font-bold text-blue-400 bg-blue-500/10 px-2 py-1 rounded-lg border border-blue-500/20">
-              <Zap className="w-3.5 h-3.5" /> +{rewards.xpEarned}
-            </span>
-          </div>
-        </div>
-
-        {/* Community Card (Matching Image 2) */}
-        <div className="p-2.5 rounded-2xl bg-[#0f1728] border border-slate-800 flex items-center justify-between mb-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm">
-              🏏
+              <div className="flex items-baseline justify-between mt-3 pt-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-black text-white">{totalScore}-{totalWickets}</span>
+                  <span className="text-xs font-semibold text-slate-400">{oversCompleted} ov</span>
+                </div>
+                <div className="text-xs font-bold text-slate-400">
+                  Target <span className="text-white font-extrabold">{matchResult.targetRuns}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold text-white">Cricket Rush</div>
-              <div className="text-[10px] text-slate-400">New chases & leaderboards</div>
+
+            {/* r/CricketRush Community Box (Exact Replication of Image 1) */}
+            <div className="p-3 rounded-2xl bg-[#11192b] border border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-sm">
+                  🏏
+                </div>
+                <div>
+                  <div className="font-bold text-white text-xs">r/CricketRush</div>
+                  <div className="text-[10px] text-slate-400">New chases & leaderboards</div>
+                </div>
+              </div>
+              <button
+                onClick={handleShareResult}
+                className="px-3.5 py-1 rounded-full bg-[#facc15] hover:bg-[#eab308] text-slate-950 font-black text-xs transition-colors cursor-pointer"
+              >
+                + Join
+              </button>
+            </div>
+
+            {/* Action Buttons: Post score (Blue) & Play again (Dark) */}
+            <div className="space-y-2">
+              <button
+                onClick={handleShareResult}
+                className="w-full py-3 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-display font-black text-sm tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer"
+              >
+                {copied ? 'Link Copied!' : 'Post score'}
+              </button>
+              <button
+                onClick={() => { sound.playClick(); onPlayAgain(); }}
+                className="w-full py-3 rounded-2xl bg-[#182235] hover:bg-[#22304a] text-white font-display font-black text-sm tracking-wider flex items-center justify-center gap-2 border border-slate-700/80 active:scale-95 transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Play again
+              </button>
+            </div>
+
+            {/* Footer Links (Image 1) */}
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+              <button
+                onClick={() => { sound.playClick(); onOpenPractice?.(); }}
+                className="hover:text-emerald-400 transition-colors cursor-pointer"
+              >
+                © Practise what got you out
+              </button>
+              <button
+                onClick={() => { sound.playClick(); onBackToMenu(); }}
+                className="hover:text-white transition-colors cursor-pointer"
+              >
+                Back
+              </button>
+              <span className="text-slate-500 hover:text-slate-300 cursor-pointer">Report</span>
             </div>
           </div>
-          <button
-            onClick={handleShareResult}
-            className="px-3 py-1 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300 transition-colors"
-          >
-            + Join
-          </button>
-        </div>
 
-        {/* Action Buttons (Matching Image 2) */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          {/* Post/Share Score Button (Neon Green) */}
-          <button
-            onClick={handleShareResult}
-            className="py-3 px-4 rounded-2xl bg-[#84cc16] hover:bg-[#a3e635] text-slate-950 font-display font-black text-xs sm:text-sm tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-lime-500/25 active:scale-95 transition-transform"
-          >
-            <Share2 className="w-4 h-4" />
-            {copied ? 'Copied Link!' : 'Post score'}
-          </button>
+          {/* ================================================================ */}
+          {/* RIGHT COLUMN: Batting, Bowling & Over-By-Over (Image 1)          */}
+          {/* ================================================================ */}
+          <div className="lg:col-span-7 flex flex-col space-y-3.5">
+            {/* BATTING TABLE */}
+            <div className="bg-[#0b1322] rounded-2xl p-3 border border-slate-800">
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-1.5 border-b border-slate-800/80">
+                <span>BATTING</span>
+                <div className="flex items-center gap-4 text-right pr-2">
+                  <span className="w-6">R</span>
+                  <span className="w-6">B</span>
+                  <span className="w-6">4s</span>
+                  <span className="w-6">6s</span>
+                </div>
+              </div>
 
-          {/* Play Again Button */}
-          <button
-            onClick={() => { sound.playClick(); onPlayAgain(); }}
-            className="py-3 px-4 rounded-2xl bg-[#1e293b] hover:bg-[#334155] border border-slate-700 text-white font-display font-extrabold text-xs sm:text-sm tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Play again
-          </button>
-        </div>
+              <div className="space-y-1.5 mt-2 max-h-48 overflow-y-auto">
+                {battingLineup.map((b, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className={`font-bold truncate ${b.notOut ? 'text-[#facc15]' : 'text-white'}`}>
+                        {b.name}{b.notOut ? '*' : ''}
+                      </span>
+                      {b.hand && <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono font-bold">{b.hand}</span>}
+                      <span className="text-[11px] text-slate-400 truncate">{b.dismissal !== '*' ? b.dismissal : ''}</span>
+                    </div>
 
-        {/* Bottom Utility Navigation Links */}
-        <div className="flex items-center justify-center gap-4 text-xs font-semibold text-slate-400 pt-2 border-t border-slate-800">
-          <button
-            onClick={() => { sound.playClick(); onOpenPractice?.(); }}
-            className="hover:text-emerald-400 flex items-center gap-1 transition-colors"
-          >
-            <Gauge className="w-3.5 h-3.5" /> Practice nets
-          </button>
-          <span>•</span>
-          <button
-            onClick={() => { sound.playClick(); onBackToMenu(); }}
-            className="hover:text-white flex items-center gap-1 transition-colors"
-          >
-            <Home className="w-3.5 h-3.5" /> Back
-          </button>
+                    <div className="flex items-center gap-4 text-right pr-2 flex-shrink-0 font-mono font-bold">
+                      <span className={`w-6 ${b.notOut ? 'text-[#facc15] font-black' : 'text-white'}`}>{b.r}</span>
+                      <span className="w-6 text-slate-400">{b.b}</span>
+                      <span className="w-6 text-slate-400">{b.fours}</span>
+                      <span className="w-6 text-slate-400">{b.sixes}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* BOWLING TABLE */}
+            <div className="bg-[#0b1322] rounded-2xl p-3 border border-slate-800">
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-1.5 border-b border-slate-800/80">
+                <span>BOWLING</span>
+                <div className="flex items-center gap-4 text-right pr-2">
+                  <span className="w-6">O</span>
+                  <span className="w-6">R</span>
+                  <span className="w-6">W</span>
+                  <span className="w-8">ECO</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 mt-2">
+                {bowlersData.map((bow, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                    <span className="font-bold text-white truncate">{bow.name}</span>
+                    <div className="flex items-center gap-4 text-right pr-2 flex-shrink-0 font-mono font-bold">
+                      <span className="w-6 text-slate-300">{bow.o}</span>
+                      <span className="w-6 text-white">{bow.r}</span>
+                      <span className="w-6 text-red-400 font-black">{bow.w}</span>
+                      <span className="w-8 text-slate-400">{bow.eco}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* OVER BY OVER */}
+            <div className="bg-[#0b1322] rounded-2xl p-3 border border-slate-800">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                OVER BY OVER
+              </div>
+
+              <div className="space-y-2">
+                {oversData.map((over, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-xs">
+                    <span className="font-mono font-bold text-slate-400 w-6">{over.overNum}</span>
+                    <div className="flex items-center gap-1.5 flex-1 px-3">
+                      {over.balls.map((bVal, bIdx) => {
+                        const isSix = bVal === '6';
+                        const isFour = bVal === '4';
+                        const isWicket = bVal === 'W';
+                        return (
+                          <div
+                            key={bIdx}
+                            className={`w-5 h-5 rounded-full flex items-center justify-center font-display font-black text-[10px] text-white shadow-sm ${
+                              isSix
+                                ? 'bg-[#9333ea]'
+                                : isFour
+                                ? 'bg-[#16a34a]'
+                                : isWicket
+                                ? 'bg-[#ef4444]'
+                                : 'bg-[#1e293b] text-slate-300'
+                            }`}
+                          >
+                            {bVal}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span className="font-display font-black text-white text-xs w-6 text-right">{over.runs}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

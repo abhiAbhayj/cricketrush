@@ -683,21 +683,28 @@ export class CricketPhysics {
   releaseBall() {
     this.ball.state = 'BOWLED';
     this.ball.inPlay = true;
-    this.ball.x = this.bowler.x + (this.bowler.armSide === 'left' ? -3 : 3);
-    this.ball.y = this.bowlerCreaseY;
-    this.ball.height = this.ball.isFullToss ? 12 : 13;
+    const armOffsetX = this.bowler.armSide === 'left' ? -6 : 6;
+    this.ball.x = this.bowler.x + armOffsetX;
+    this.ball.y = this.bowlerCreaseY - 12; // High-arm release overhead behind bowling crease
+    this.ball.height = this.ball.isFullToss ? 12 : 24; // High-arm delivery release height (approx 2.2m above ground)
+    this.ball.releaseHeight = this.ball.height;
+    this.ball.hasBounced = false;
+    this.ball.bounceApexHeight = 15;
+    this.ball.bounceImpactX = null;
+    this.ball.bounceImpactY = null;
+    this.ball.bounceTime = 0;
     this.ball.trail = [];
 
     // Realistic flight speed scaling
     const baseSpeed = (this.ball.speedKmh / 140) * 11;
     this.ball.vy = baseSpeed;
 
-    const totalDistanceY = this.batsmanCreaseY - this.bowlerCreaseY;
+    const totalDistanceY = this.batsmanCreaseY - (this.bowlerCreaseY - 12);
     this.ball.totalFlightTimeMs = (totalDistanceY / baseSpeed) * 16.6;
 
     // Compensate initial velocity for aerodynamic curve so ball pitches EXACTLY on bounceSpotX
     const targetY = this.ball.isFullToss ? this.batsmanCreaseY : this.ball.bounceSpotY;
-    const flightSteps = Math.max(1, (targetY - this.bowlerCreaseY) / (baseSpeed || 10));
+    const flightSteps = Math.max(1, (targetY - (this.bowlerCreaseY - 12)) / (baseSpeed || 10));
     const swingAcc = (this.ball.swingCurve || 0) * 0.08;
     const swingDrift = 0.5 * swingAcc * Math.pow(flightSteps, 2);
 
@@ -1277,7 +1284,15 @@ export class CricketPhysics {
     if (this.bowler.isBowling && this.ball.state === 'RUN_UP') {
       this.bowler.runUpProgress += 0.035 * dt;
       this.bowler.y = (this.pitchTop - 25) + this.bowler.runUpProgress * 25;
-      this.bowler.bowlingArmAngle = this.bowler.runUpProgress * Math.PI * 2;
+
+      // Realistic high-arm bowling wind-up:
+      // Gathering stride (0 -> 0.65) then overhead windmill delivery (0.65 -> 1.0)
+      if (this.bowler.runUpProgress < 0.65) {
+        this.bowler.bowlingArmAngle = Math.sin(this.bowler.runUpProgress * Math.PI * 6) * 0.35;
+      } else {
+        const windProgress = (this.bowler.runUpProgress - 0.65) / 0.35;
+        this.bowler.bowlingArmAngle = -Math.PI * 0.8 + (windProgress * Math.PI * 0.8);
+      }
 
       // Dynamic Batsman Footwork & Trigger Movement during run-up!
       this.batsman.stanceProgress = (this.batsman.stanceProgress + 0.14 * dt) % (Math.PI * 2);
@@ -1286,6 +1301,7 @@ export class CricketPhysics {
 
       if (this.bowler.runUpProgress >= 1.0) {
         this.bowler.isBowling = false;
+        this.bowler.bowlingArmAngle = 0; // High-arm vertical delivery apex!
         this.releaseBall();
       }
     } else {
@@ -1320,10 +1336,74 @@ export class CricketPhysics {
 
       // Update timing meter flight progress
       const effectiveBatsmanY = this.batsmanCreaseY - (this.batsman.isSteppingOut ? this.batsman.stepOutOffset : 0);
-      const currentDistY = this.ball.y - this.bowlerCreaseY;
-      const totalDistY = effectiveBatsmanY - this.bowlerCreaseY;
+      const startDeliveryY = this.bowlerCreaseY - 12;
+      const currentDistY = this.ball.y - startDeliveryY;
+      const totalDistY = effectiveBatsmanY - startDeliveryY;
       this.ball.flightProgress = Math.min(1.0, Math.max(0, currentDistY / totalDistY));
       this.ball.timeUntilArrivalMs = Math.max(0, ((effectiveBatsmanY - this.ball.y) / (this.ball.vy || 10)) * 16.6);
+
+      // PRE-BOUNCE: Aerodynamic Swing & Parabolic Descent from High-Arm (24px) down to Dirt (0px)
+      if (!this.ball.hasBounced) {
+        // Continuous aerodynamic swing in air
+        if (this.ball.swingCurve !== 0) {
+          this.ball.vx += this.ball.swingCurve * 0.09 * dt;
+        }
+
+        // Late Reverse Swing in second half of flight
+        if (this.ball.reverseSwingRate !== 0 && this.ball.flightProgress > 0.45) {
+          this.ball.vx += this.ball.reverseSwingRate * 0.14 * dt;
+        }
+
+        // Slower ball dipper deceleration in mid-air
+        if (this.ball.isSlowerBall && this.ball.flightProgress > 0.42) {
+          this.ball.vy *= 0.982;
+        }
+
+        // 2.5D Parabolic Height Drop from High-Arm (24px) down to Dirt (0px):
+        const distToBounce = Math.max(1, this.ball.bounceSpotY - startDeliveryY);
+        const progressToBounce = Math.min(1.0, Math.max(0, (this.ball.y - startDeliveryY) / distToBounce));
+
+        // Descends parabolically to touch the pitch surface (h = 0) at the bounce spot!
+        this.ball.height = Math.max(0, (this.ball.releaseHeight || 24) * Math.pow(1 - progressToBounce, 1.35));
+
+        // Pitch bounce detection with variation-specific kick & bounce heights
+        if (!this.ball.isFullToss && this.ball.y >= this.ball.bounceSpotY) {
+          this.ball.hasBounced = true;
+          this.ball.height = 0; // Strictly touches down on the dirt!
+          this.ball.bounceImpactX = this.ball.x;
+          this.ball.bounceImpactY = this.ball.y;
+          this.ball.bounceTime = Date.now();
+          this.createPitchDust(this.ball.x, this.ball.y);
+
+          // Variation-specific rebound apex heights:
+          if (this.ball.lengthType === 'short' || this.ball.deliveryType === 'bouncer') {
+            this.ball.bounceApexHeight = 24; // Bouncer kicks up to helmet height
+          } else if (this.ball.deliveryType === 'topspinner') {
+            this.ball.bounceApexHeight = 21; // Steep bounce topspinner
+          } else if (this.ball.deliveryType === 'flipper') {
+            this.ball.bounceApexHeight = 4.5; // Skids fast and low under willow
+            this.ball.vy *= 1.08;
+          } else if (this.ball.deliveryType === 'yorker') {
+            this.ball.bounceApexHeight = 2.0; // Toe-crushing yorker
+          } else if (this.ball.lengthType === 'slot') {
+            this.ball.bounceApexHeight = 8.5; // Half-volley in the slot
+          } else {
+            this.ball.bounceApexHeight = 15; // Good length waist height
+          }
+
+          // VISIBLE SHARP LATERAL TURN / SEAM BREAK OFF THE DECK:
+          if (this.ball.spinLateralV !== 0) {
+            this.ball.vx += this.ball.spinLateralV * 1.5; // Sharp deviation off pitch!
+          }
+        }
+      } else {
+        // POST-BOUNCE: Rebound Parabolic Arc Rises from Dirt towards Batsman
+        const distAfterBounce = Math.max(1, effectiveBatsmanY - this.ball.bounceSpotY);
+        const progressAfterBounce = Math.min(1.0, Math.max(0, (this.ball.y - this.ball.bounceSpotY) / distAfterBounce));
+
+        const apexHeight = this.ball.bounceApexHeight || 15;
+        this.ball.height = Math.max(0, apexHeight * Math.sin(progressAfterBounce * Math.PI * 0.85));
+      }
 
       // Track trajectory trail with bounce state for broadcast virtual-eye drawing
       this.ball.trail.push({
@@ -1332,49 +1412,6 @@ export class CricketPhysics {
         hasBounced: this.ball.hasBounced
       });
       if (this.ball.trail.length > 40) this.ball.trail.shift();
-
-      // Realistic aerodynamic swing in air before bounce (perfectly matching release compensation)
-      if (!this.ball.hasBounced && this.ball.swingCurve !== 0) {
-        this.ball.vx += this.ball.swingCurve * 0.08 * dt;
-      }
-
-      // Late Reverse Swing in second half of flight
-      if (this.ball.reverseSwingRate !== 0 && this.ball.flightProgress > 0.52) {
-        this.ball.vx += this.ball.reverseSwingRate * 0.12 * dt;
-      }
-
-      // Slower ball dipper deceleration in mid-air
-      if (this.ball.isSlowerBall && this.ball.flightProgress > 0.48) {
-        this.ball.vy *= 0.984;
-      }
-
-      // Pitch bounce detection with variation-specific kick & bounce heights
-      if (!this.ball.isFullToss && !this.ball.hasBounced && this.ball.y >= this.ball.bounceSpotY) {
-        this.ball.hasBounced = true;
-        this.createPitchDust(this.ball.x, this.ball.y);
-
-        if (this.ball.lengthType === 'short' || this.ball.deliveryType === 'bouncer') {
-          this.ball.height = 24;
-          this.ball.vz = 5.8;
-        } else if (this.ball.deliveryType === 'topspinner') {
-          this.ball.height = 22;
-          this.ball.vz = 5.4;
-        } else if (this.ball.deliveryType === 'flipper') {
-          this.ball.height = 4.5;
-          this.ball.vz = 0.5;
-          this.ball.vy *= 1.08; // Skids fast under willow
-        } else if (this.ball.deliveryType === 'yorker') {
-          this.ball.height = 2;
-          this.ball.vz = 0.2;
-        } else {
-          this.ball.height = 14;
-          this.ball.vz = 3.4;
-        }
-
-        if (this.ball.spinLateralV !== 0) {
-          this.ball.vx += this.ball.spinLateralV;
-        }
-      }
 
       // Ball reaches batsman crease
       if (this.ball.y >= effectiveBatsmanY - 4) {
