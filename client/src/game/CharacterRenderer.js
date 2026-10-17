@@ -5,6 +5,8 @@
 // Runners, Fielders, 80-Meter Stadium Crowd Stands & Regulation 30-Yard Circle
 // ============================================================================
 
+import { PixelSpriteManager } from './PixelSpriteManager';
+
 /**
  * Helper to draw clean rounded rectangles with stroke
  */
@@ -89,10 +91,43 @@ export const CharacterRenderer = {
     jerseyColor = '#0066b2',
     skinTone = '#f5d0b0'
   }) {
-    ctx.save();
-
     const visualX = Math.round(x + (isSwinging ? 0 : weightShiftX));
     const visualY = Math.round(y - (isSteppingOut ? stepOutOffset : 0));
+
+    // Choose authentic 16-bit pixel art action pose from user sprite sheet
+    let spriteKey = 'batsman_stance';
+    let scale = 0.45;
+
+    if (footworkState === 'bowled' || footworkState === 'out') {
+      spriteKey = 'batsman_bowled';
+      scale = 0.44;
+    } else if (isSwinging) {
+      if (swingProgress < 0.22) {
+        spriteKey = 'batsman_backlift';
+        scale = 0.45;
+      } else if (swingProgress < 0.58) {
+        spriteKey = 'batsman_step';
+        scale = 0.45;
+      } else {
+        spriteKey = 'batsman_drive';
+        scale = 0.45;
+      }
+    } else if (triggerTap > 0.35) {
+      spriteKey = 'batsman_backlift';
+      scale = 0.45;
+    }
+
+    const drawn = PixelSpriteManager.drawSprite(ctx, spriteKey, visualX, visualY, {
+      scale,
+      flipX: isLeftHanded,
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.90
+    });
+
+    if (drawn) return;
+
+    ctx.save();
     ctx.translate(visualX, visualY);
 
     // Left-handed batsman mirrors the stance naturally across the pitch
@@ -287,8 +322,59 @@ export const CharacterRenderer = {
     skinTone = '#c68656',
     faceStyle = 'afro',
     jerseyColor = '#0066b2',
-    isFielding = false
+    isFielding = false,
+    hasBall = false
   }) {
+    const isRunning = runUpProgress > 0 && runUpProgress < 1.0;
+    const isFollowingThrough = followThroughProgress > 0;
+
+    let spriteKey = 'bowler_runup1';
+    let scale = 0.44;
+
+    if (isFielding) {
+      spriteKey = 'fielder_sprint';
+      scale = 0.26;
+    } else if (isFollowingThrough) {
+      spriteKey = 'bowler_followthrough';
+      scale = 0.45;
+    } else if (isRunning) {
+      if (actionType === 'wrist_spin' || actionType === 'finger_spin') {
+        if (runUpProgress > 0.72) {
+          spriteKey = 'spinner_release';
+          scale = 0.42;
+        } else if (runUpProgress > 0.32) {
+          spriteKey = 'spinner_twirl';
+          scale = 0.42;
+        } else {
+          spriteKey = 'bowler_runup1';
+          scale = 0.44;
+        }
+      } else {
+        // High-Arm Delivery Action Sequence
+        if (runUpProgress < 0.42) {
+          spriteKey = (Math.floor(runUpProgress * 8) % 2 === 0) ? 'bowler_runup1' : 'bowler_runup2';
+          scale = 0.44;
+        } else if (runUpProgress < 0.80) {
+          spriteKey = 'bowler_gather';
+          scale = 0.40;
+        } else {
+          // Authentic High-Arm Overhead Release!
+          spriteKey = 'bowler_higharm';
+          scale = 0.43;
+        }
+      }
+    }
+
+    const drawn = PixelSpriteManager.drawSprite(ctx, spriteKey, x, y, {
+      scale,
+      flipX: armSide === 'left',
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.88
+    });
+
+    if (drawn) return;
+
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -296,9 +382,7 @@ export const CharacterRenderer = {
     drawEllipse(ctx, 0, 12, 12, 5, 'rgba(0, 0, 0, 0.35)');
 
     // 2. Athletic Stride & Trousers
-    const isRunning = runUpProgress > 0 && runUpProgress < 1.0;
     const stride = isRunning ? Math.sin(runUpProgress * Math.PI * 8) * 5.0 : (isFielding ? Math.sin(Date.now() * 0.015) * 5.0 : 0);
-    const isFollowingThrough = followThroughProgress > 0;
     const leanY = isFollowingThrough ? followThroughProgress * 3 : (isFielding ? 2 : 0);
 
     // Left Leg
@@ -454,6 +538,18 @@ export const CharacterRenderer = {
    * Draw Wicket-Keeper in crouching stance directly behind stumps (matching Reference Screenshot)
    */
   drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false, jerseyColor = '#0066b2' } = {}) {
+    const spriteKey = isStumping ? 'keeper_catch' : 'keeper_crouch';
+    const scale = isStumping ? 0.48 : 0.42;
+
+    const drawn = PixelSpriteManager.drawSprite(ctx, spriteKey, x, y, {
+      scale,
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.88
+    });
+
+    if (drawn) return;
+
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -497,6 +593,15 @@ export const CharacterRenderer = {
    * Draw Non-Striker Batsman standing on opposite side of bowler's end stumps (matching Reference Screenshot)
    */
   drawNonStriker(ctx, x, y, { skinTone = '#f5d0b0', jerseyColor = '#0066b2' } = {}) {
+    const drawn = PixelSpriteManager.drawSprite(ctx, 'batsman_idle', x, y, {
+      scale: 0.24,
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.90
+    });
+
+    if (drawn) return;
+
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -543,6 +648,26 @@ export const CharacterRenderer = {
     jerseyColor = '#0066b2',
     skinTone = '#f5d0b0'
   } = {}) {
+    let spriteKey = 'runner_stride1';
+    let scale = 0.44;
+
+    if (isSliding) {
+      spriteKey = 'runner_slide';
+      scale = 0.46;
+    } else {
+      spriteKey = Math.sin(runProgress * Math.PI * 10) > 0 ? 'runner_stride1' : 'runner_stride2';
+    }
+
+    const drawn = PixelSpriteManager.drawSprite(ctx, spriteKey, x, y, {
+      scale,
+      flipX: runDirection < 0,
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.88
+    });
+
+    if (drawn) return;
+
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -604,6 +729,26 @@ export const CharacterRenderer = {
    * Draw Fielder in Vector-Arcade style (alert posture, diving slide, or leaping catch)
    */
   drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false) {
+    let spriteKey = 'fielder_crouch';
+    let scale = 0.42;
+
+    if (isCatching) {
+      spriteKey = 'celebration_arms_high';
+      scale = 0.38;
+    } else if (isDiving) {
+      spriteKey = 'fielder_dive';
+      scale = 0.44;
+    }
+
+    const drawn = PixelSpriteManager.drawSprite(ctx, spriteKey, x, y, {
+      scale,
+      jerseyColor,
+      anchorX: 0.5,
+      anchorY: 0.88
+    });
+
+    if (drawn) return;
+
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
