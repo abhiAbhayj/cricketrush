@@ -162,6 +162,7 @@ export default function App() {
       strikerName,
       nonStrikerName,
       battingLineup: BATSMEN_LINEUP,
+      bowlerList: BOWLER_ROSTER,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,

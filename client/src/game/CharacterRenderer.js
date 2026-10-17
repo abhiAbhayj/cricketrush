@@ -603,7 +603,7 @@ export const CharacterRenderer = {
   /**
    * Draw Fielder in Vector-Arcade style (alert posture, diving slide, or leaping catch)
    */
-  drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false) {
+  drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false, vx = 0, vy = 0, isFielding = false) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -633,8 +633,8 @@ export const CharacterRenderer = {
       // Cricket ball
       drawEllipse(ctx, 0, -19, 2.8, 2.8, '#dc2626', '#090e17', 1.0);
     } else if (isDiving) {
-      // Diving slide along grass
-      drawEllipse(ctx, 0, 4, 16, 5, 'rgba(0, 0, 0, 0.35)');
+      // Diving slide along grass with turf spray
+      drawEllipse(ctx, 0, 4, 18, 5, 'rgba(0, 0, 0, 0.35)');
       ctx.rotate(0.30);
       drawRoundRect(ctx, -11, 1, 9, 4.8, 1.8, jerseyColor, '#090e17', 1.2);
       drawRoundRect(ctx, -5.5, -4, 15, 8.5, 2.8, jerseyColor, '#090e17', 1.4);
@@ -643,38 +643,67 @@ export const CharacterRenderer = {
       ctx.beginPath();
       ctx.moveTo(9, 0); ctx.lineTo(17, -2);
       ctx.stroke();
+      // White fielding gloves sliding forward
+      drawRoundRect(ctx, 16, -4, 4, 3.5, 1, '#ffffff', '#090e17', 1.0);
       drawEllipse(ctx, -9, -6.5, 4.8, 4.5, '#090e17');
     } else {
-      // Upright athletic ready stance (matching reference screenshot)
-      drawEllipse(ctx, 0, 12, 12, 4.8, 'rgba(0, 0, 0, 0.35)');
-      // Trousers with white side stripes
-      drawRoundRect(ctx, -6.0, 2, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
-      drawRoundRect(ctx, 1.2, 2, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
+      const moveSpeed = Math.hypot(vx, vy);
+      const isRunning = moveSpeed > 0.45;
+      const stride = isRunning ? Math.sin(Date.now() * 0.022) * 5.0 : 0;
+      const armSwing = isRunning ? Math.sin(Date.now() * 0.022) * 6.0 : 0;
+
+      // Soft ground shadow (stretches dynamically when sprinting)
+      drawEllipse(ctx, 0, 12, isRunning ? 14 : 12, 4.8, 'rgba(0, 0, 0, 0.35)');
+
+      // Slight athletic sprint lean in direction of movement
+      if (isRunning && Math.abs(vx) > 0.2) {
+        ctx.rotate(Math.max(-0.25, Math.min(0.25, (vx / (moveSpeed || 1)) * 0.22)));
+      }
+
+      // Athletic legs & trousers with white outer racing stripes
+      drawRoundRect(ctx, -6.0, 2 - stride, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
+      drawRoundRect(ctx, 1.2, 2 + stride, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
+
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.1;
       ctx.beginPath();
-      ctx.moveTo(-5.4, 3); ctx.lineTo(-5.4, 11);
-      ctx.moveTo(5.6, 3); ctx.lineTo(5.6, 11);
+      ctx.moveTo(-5.4, 3 - stride); ctx.lineTo(-5.4, 11 - stride);
+      ctx.moveTo(5.6, 3 + stride); ctx.lineTo(5.6, 11 + stride);
       ctx.stroke();
-      // Shoes
-      drawRoundRect(ctx, -6.0, 11.5, 5.0, 2.8, 1, '#090e17');
-      drawRoundRect(ctx, 1.2, 11.5, 5.0, 2.8, 1, '#090e17');
-      // Jersey
+
+      // Shoes / athletic spikes
+      drawRoundRect(ctx, -6.0, 11.5 - stride, 5.0, 2.8, 1, '#090e17');
+      drawRoundRect(ctx, 1.2, 11.5 + stride, 5.0, 2.8, 1, '#090e17');
+
+      // Torso / Jersey
       drawRoundRect(ctx, -7.5, -8, 15, 11, 3.2, jerseyColor, '#090e17', 1.4);
+
       // White collar
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.moveTo(-2.5, -8); ctx.lineTo(0, -5); ctx.lineTo(2.5, -8);
       ctx.closePath();
-      // Arms
+      ctx.fill();
+
+      // Dynamic arms (swinging athletically when sprinting or bent ready crouch)
       ctx.strokeStyle = jerseyColor;
       ctx.lineWidth = 3.0;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-9, 1);
-      ctx.moveTo(6, -4); ctx.lineTo(9, 1);
+      if (isRunning) {
+        ctx.moveTo(-6, -4); ctx.lineTo(-9, 1 + armSwing);
+        ctx.moveTo(6, -4); ctx.lineTo(9, 1 - armSwing);
+      } else {
+        ctx.moveTo(-6, -4); ctx.lineTo(-9, 1);
+        ctx.moveTo(6, -4); ctx.lineTo(9, 1);
+      }
       ctx.stroke();
-      // Head with dark hair / cap
+
+      // White fielding wristbands / gloves
+      drawRoundRect(ctx, -10.5, isRunning ? (1 + armSwing - 1.5) : -0.5, 3.2, 3.2, 1, '#ffffff', '#090e17', 0.8);
+      drawRoundRect(ctx, 7.5, isRunning ? (1 - armSwing - 1.5) : -0.5, 3.2, 3.2, 1, '#ffffff', '#090e17', 0.8);
+
+      // Head with dark hair / athletic cap
       drawEllipse(ctx, 0, -14, 5.2, 4.8, '#c68656', '#090e17', 1.3);
       drawEllipse(ctx, 0, -16, 5.8, 4.0, '#111827', '#090e17', 1.2);
     }
