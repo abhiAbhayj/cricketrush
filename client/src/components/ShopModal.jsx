@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { storageService } from '../services/storage';
 import { sound } from '../game/SoundEffects';
-import { ArrowLeft, ShoppingBag, Coins, Check, Lock, Sparkles, Shield, Zap, Award } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Coins, Check, Lock, Sparkles, Shield, Zap, Award, Globe, Flame } from 'lucide-react';
+import { ALL_JERSEYS } from '../game/TeamData';
 
 const BATS = [
   { id: 'willow', name: 'Classic English Willow', price: 0, color: '#d97706', power: '+0%', speed: 'Standard', desc: 'Balanced traditional cleft willow with authentic woody ping.' },
@@ -18,16 +19,7 @@ const BATS = [
   { id: 'titan', name: 'Titanium Titan', price: 2200, color: '#475569', power: '+30%', speed: 'Maximum', desc: 'Ultimate weapon forged with titanium fibers for unstoppable sixes.' }
 ];
 
-const JERSEYS = [
-  { id: 'blue', name: 'Blue Surge', price: 0, color: '#2563eb', desc: 'The iconic blue colors of champion chase masters.' },
-  { id: 'gold', name: 'Aussie Gold', price: 400, color: '#eab308', desc: 'Canary yellow championship jersey.' },
-  { id: 'crimson', name: 'English Crimson', price: 550, color: '#dc2626', desc: 'Deep red and royal navy match kit.' },
-  { id: 'emerald', name: 'Emerald Blaze', price: 650, color: '#10b981', desc: 'Vibrant electric green subcontinent flair.' },
-  { id: 'maroon', name: 'Caribbean Maroon', price: 750, color: '#881337', desc: 'Calypso rhythm and boundary-blasting maroon.' },
-  { id: 'cyber', name: 'Neon Cyber', price: 850, color: '#06b6d4', desc: 'Futuristic high-visibility electrified kit.' },
-  { id: 'stealth', name: 'Midnight Stealth', price: 1100, color: '#0f172a', desc: 'Matte black armor jersey with subtle gold trim.' },
-  { id: 'retro', name: 'Retro 1992 Rainbow', price: 1400, color: '#f97316', desc: 'Iconic rainbow-shouldered vintage classic.' }
-];
+const JERSEYS = ALL_JERSEYS;
 
 const PADS = [
   { id: 'pad_white', name: 'Classic White Shin Guards', price: 0, color: '#f8fafc', desc: 'Standard high-density cane batting pads.' },
@@ -43,8 +35,21 @@ const GLOVES = [
   { id: 'glove_gold', name: 'Golden Sovereign Gloves', price: 700, color: '#eab308', desc: 'Ultra-supple sheepskin palm with embossed metallic cuffs.' }
 ];
 
+// Helper to normalize jersey IDs with legacy aliases
+const LEGACY_JERSEY_ALIASES = {
+  blue: 'jersey_ind',
+  gold: 'jersey_aus',
+  crimson: 'jersey_eng',
+  emerald: 'jersey_sa',
+  maroon: 'jersey_wi',
+  stealth: 'jersey_stealth',
+  retro: 'jersey_retro',
+  cyber: 'jersey_cyber'
+};
+
 export default function ShopModal({ onBack, profile, onProfileUpdate }) {
-  const [activeTab, setActiveTab] = useState('bats'); // 'bats', 'jerseys', 'pads', 'gloves'
+  const [activeTab, setActiveTab] = useState('jerseys'); // Default to jerseys tab!
+  const [jerseyCategory, setJerseyCategory] = useState('all'); // 'all', 'country', 'ipl', 'special'
 
   const handleBuy = (item, tab) => {
     if (profile.coins < item.price) {
@@ -67,7 +72,7 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
       equippedKey = 'equippedGlove';
     }
 
-    const currentUnlocked = profile[unlockedKey] || [tab === 'bats' ? 'willow' : tab === 'jerseys' ? 'blue' : tab === 'pads' ? 'pad_white' : 'glove_classic'];
+    const currentUnlocked = profile[unlockedKey] || [tab === 'bats' ? 'willow' : tab === 'jerseys' ? 'jersey_ind' : tab === 'pads' ? 'pad_white' : 'glove_classic'];
     const updatedUnlocked = [...currentUnlocked, item.id];
 
     const updatedProfile = storageService.updateProfile({
@@ -98,9 +103,20 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
   let equippedItem = profile.equippedBat || 'willow';
 
   if (activeTab === 'jerseys') {
-    items = JERSEYS;
-    unlockedList = profile.unlockedJerseys || ['blue'];
-    equippedItem = profile.equippedJersey || 'blue';
+    items = jerseyCategory === 'all'
+      ? JERSEYS
+      : JERSEYS.filter(j => j.category === jerseyCategory);
+
+    // Normalize unlocked jerseys with default IND kit and aliases
+    const rawUnlocked = profile.unlockedJerseys || ['jersey_ind', 'blue'];
+    const expandedUnlocked = new Set([...rawUnlocked, 'jersey_ind', 'blue']);
+    rawUnlocked.forEach(id => {
+      if (LEGACY_JERSEY_ALIASES[id]) expandedUnlocked.add(LEGACY_JERSEY_ALIASES[id]);
+    });
+    unlockedList = Array.from(expandedUnlocked);
+
+    const rawEquipped = profile.equippedJersey || 'jersey_ind';
+    equippedItem = LEGACY_JERSEY_ALIASES[rawEquipped] || rawEquipped;
   } else if (activeTab === 'pads') {
     items = PADS;
     unlockedList = profile.unlockedPads || ['pad_white'];
@@ -125,7 +141,7 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
           </button>
           <h1 className="text-2xl font-display font-extrabold tracking-wide text-white flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-amber-400" />
-            GEAR VAULT
+            GEAR & KITS VAULT
           </h1>
 
           {/* Coin balance */}
@@ -136,17 +152,7 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
         </div>
 
         {/* Tab switcher */}
-        <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-900 rounded-2xl border border-slate-800 mb-5">
-          <button
-            onClick={() => { sound.playClick(); setActiveTab('bats'); }}
-            className={`py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'bats'
-                ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🏏 Bats ({BATS.length})
-          </button>
+        <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-900 rounded-2xl border border-slate-800 mb-4">
           <button
             onClick={() => { sound.playClick(); setActiveTab('jerseys'); }}
             className={`py-2 rounded-xl text-xs font-bold transition-all ${
@@ -156,6 +162,16 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
             }`}
           >
             👕 Kits ({JERSEYS.length})
+          </button>
+          <button
+            onClick={() => { sound.playClick(); setActiveTab('bats'); }}
+            className={`py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'bats'
+                ? 'bg-emerald-500 text-slate-950 font-black shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            🏏 Bats ({BATS.length})
           </button>
           <button
             onClick={() => { sound.playClick(); setActiveTab('pads'); }}
@@ -179,6 +195,52 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
           </button>
         </div>
 
+        {/* Jersey Category Sub-Tabs when in Kits tab */}
+        {activeTab === 'jerseys' && (
+          <div className="flex items-center gap-1.5 p-1 bg-slate-950/70 rounded-2xl border border-slate-800 mb-5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => { sound.playClick(); setJerseyCategory('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                jerseyCategory === 'all'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Kits ({JERSEYS.length})
+            </button>
+            <button
+              onClick={() => { sound.playClick(); setJerseyCategory('country'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                jerseyCategory === 'country'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🌍 Countries ({JERSEYS.filter(j => j.category === 'country').length})
+            </button>
+            <button
+              onClick={() => { sound.playClick(); setJerseyCategory('ipl'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                jerseyCategory === 'ipl'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ⚡ IPL Teams ({JERSEYS.filter(j => j.category === 'ipl').length})
+            </button>
+            <button
+              onClick={() => { sound.playClick(); setJerseyCategory('special'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                jerseyCategory === 'special'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ✨ Retro & Special ({JERSEYS.filter(j => j.category === 'special').length})
+            </button>
+          </div>
+        )}
+
         {/* Items Grid */}
         <div className="space-y-3">
           {items.map(item => {
@@ -196,25 +258,49 @@ export default function ShopModal({ onBack, profile, onProfileUpdate }) {
                 }`}
               >
                 <div className="flex items-center gap-3.5">
-                  {/* Item Icon Color Preview */}
+                  {/* Item Icon Color Preview with dual-tone gradient & badge */}
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/20 shadow-inner flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
+                    className="w-13 h-13 min-w-[50px] min-h-[50px] rounded-2xl flex items-center justify-center border border-white/20 shadow-md flex-shrink-0 relative overflow-hidden"
+                    style={{
+                      background: activeTab === 'jerseys' && item.secondaryColor
+                        ? `linear-gradient(135deg, ${item.color} 52%, ${item.secondaryColor} 52%)`
+                        : item.color
+                    }}
                   >
-                    <span className="text-xl">
-                      {activeTab === 'bats' ? '🏏' : activeTab === 'jerseys' ? '👕' : activeTab === 'pads' ? '🛡️' : '🧤'}
-                    </span>
+                    {activeTab === 'jerseys' && item.badge ? (
+                      <span className="text-2xl drop-shadow select-none">{item.badge}</span>
+                    ) : (
+                      <span className="text-xl">
+                        {activeTab === 'bats' ? '🏏' : activeTab === 'jerseys' ? '👕' : activeTab === 'pads' ? '🛡️' : '🧤'}
+                      </span>
+                    )}
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
-                      {item.name}
-                      {isEquipped && (
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 uppercase tracking-wider">
-                          Equipped
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                        {item.name}
+                        {isEquipped && (
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 uppercase tracking-wider">
+                            Equipped
+                          </span>
+                        )}
+                      </h3>
+                      {item.code && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-amber-300 border border-slate-700">
+                          {item.code}
                         </span>
                       )}
-                    </h3>
+                      {item.category && (
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded ${
+                          item.category === 'country' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          item.category === 'ipl' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' :
+                          'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                        }`}>
+                          {item.category === 'country' ? 'T20 Country' : item.category === 'ipl' ? 'IPL Franchise' : 'Special Edition'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-300 mt-0.5 line-clamp-1">
                       {item.desc}
                     </p>

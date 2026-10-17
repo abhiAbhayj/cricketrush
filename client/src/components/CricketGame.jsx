@@ -41,36 +41,10 @@ const SHOT_TYPES = [
   { id: 'scoop', label: 'Scoop Ramp', key: 'D', aim: 'straight', icon: '🎯', desc: 'Ramps over keeper' }
 ];
 
-export const WORLD_BOWLERS = [
-  { name: 'N. Sarpotdar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'afro' },
-  { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard' },
-  { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic' },
-  { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'beard' },
-  { name: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'beard' },
-  { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'classic' },
-  { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'headband' },
-  { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic' },
-  { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'headband' },
-  { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'headband' },
-  { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic' },
-  { name: 'Sunil Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox', skinTone: '#5a3d28', faceStyle: 'spiky' },
-  { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic' }
-];
+import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, TEAMS } from '../game/TeamData';
 
-export const DEFAULT_BATSMEN_LINEUP = [
-  'S. Kinvara',
-  'S. Kadam',
-  'D. Salunkhe',
-  'K. Wintersgill',
-  'V. Kohli',
-  'R. Sharma',
-  'S. Gill',
-  'S. Yadav',
-  'KL Rahul',
-  'H. Pandya',
-  'R. Pant',
-  'A. Patel'
-];
+export const WORLD_BOWLERS = GLOBAL_WORLD_BOWLERS;
+export const DEFAULT_BATSMEN_LINEUP = GLOBAL_BATSMEN_LINEUP;
 
 export default function CricketGame({
   matchConfig,
@@ -1465,7 +1439,8 @@ export default function CricketGame({
       ctx.restore();
     }
 
-    const jerseyColor = userProfile?.equippedJersey === 'gold' ? '#eab308' : userProfile?.equippedJersey === 'crimson' ? '#dc2626' : userProfile?.equippedJersey === 'emerald' ? '#10b981' : '#2563eb';
+    const battingJerseyColor = getJerseyColor(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind');
+    const fieldingJerseyColor = getJerseyColor(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa'));
 
     // 6 & 8. Batsmen: Either sprinting between wickets or standard stance
     if (engine.running?.active && (engine.running.isCallingRun || engine.running.runsCompleted > 0)) {
@@ -1476,7 +1451,7 @@ export default function CricketGame({
         runProgress: engine.running.progress,
         runDirection: engine.running.direction,
         isSliding: engine.running.isSliding,
-        jerseyColor
+        jerseyColor: battingJerseyColor
       });
 
       // Non-Striker Runner
@@ -1485,11 +1460,13 @@ export default function CricketGame({
         runProgress: engine.running.progress,
         runDirection: -engine.running.direction,
         isSliding: engine.running.isSliding,
-        jerseyColor
+        jerseyColor: battingJerseyColor
       });
     } else {
       // 6. Realistic Humanoid Non-Striker (Top Crease Right Side)
-      CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y);
+      CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y, {
+        jerseyColor: battingJerseyColor
+      });
 
       // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Helmet, Facial Texture & Living Footwork)
       CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
@@ -1504,7 +1481,7 @@ export default function CricketGame({
         footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
         isLeftHanded,
         batSkin: userProfile?.equippedBat,
-        jerseyColor,
+        jerseyColor: battingJerseyColor,
         faceStyle: 'beard',
         skinTone: '#d49b70'
       });
@@ -1519,16 +1496,17 @@ export default function CricketGame({
       actionType: engine.bowler.actionType || 'high_arm',
       faceStyle: engine.bowler.faceStyle || 'afro',
       skinTone: engine.bowler.skinTone || '#c68656',
-      jerseyColor: '#2563eb'
+      jerseyColor: fieldingJerseyColor
     });
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
     CharacterRenderer.drawWicketKeeper(ctx, engine.keeper.x, engine.keeper.y, {
-      isStumping: engine.keeper.isStumping
+      isStumping: engine.keeper.isStumping,
+      jerseyColor: fieldingJerseyColor
     });
 
     // 9. Realistic Humanoid Fielders (with Diving Slides & Throw Tracers)
-    fielders.draw(ctx, '#ef4444');
+    fielders.draw(ctx, fieldingJerseyColor);
 
     // 10. Cricket Ball (with 2.5D height, shadow scaling & rotating seam)
     if (engine.ball.inPlay) {

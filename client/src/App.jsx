@@ -14,6 +14,8 @@ import { storageService } from './services/storage';
 import { api } from './services/api';
 import { sound } from './game/SoundEffects';
 
+import { TEAMS, ALL_JERSEYS, GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP } from './game/TeamData';
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('MENU');
   const [profile, setProfile] = useState(storageService.getProfile());
@@ -49,39 +51,19 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleUrlHash);
   }, []);
 
-  // Quick Play Match Launcher with authentic 1, 2, 3 over, 16, 20, 24, 30 ball chase scenarios
-  const startQuickPlay = (selectedBalls = null) => {
-    // Comprehensive roster of authentic world-class bowlers with matching styles, arm sides and actions
-    const BOWLER_ROSTER = [
-      { name: 'N. Sarpotdar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm' },
-      { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot' },
-      { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing' },
-      { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin' },
-      { name: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin' },
-      { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around', action: 'finger_spin' },
-      { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing' },
-      { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin' },
-      { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' },
-      { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' },
-      { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing' },
-      { name: 'Sunil Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox' },
-      { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' }
-    ];
+  // Quick Play Match Launcher with authentic team rosters (Abhishek, Rohit, Virat, Rickelton, Markram, Klaasen, etc.)
+  const startQuickPlay = (selectedBalls = null, battingTeamKey = 'IND', bowlingTeamKey = 'SA') => {
+    // Resolve batting & bowling teams from comprehensive TEAMS registry
+    const battingTeam = TEAMS[battingTeamKey] || TEAMS.IND;
+    const bowlingTeam = TEAMS[bowlingTeamKey] || (battingTeamKey === 'SA' ? TEAMS.IND : TEAMS.SA);
 
-    const BATSMEN_LINEUP = [
-      'S. Anchalia',
-      'P. Sanzgiri',
-      'F. Danby',
-      'T. Nallamby',
-      'S. Kinvara',
-      'S. Kadam',
-      'A. Sonpurkar',
-      'K. Wintersgill',
-      profile?.playerName || 'D. Salunkhe',
-      'V. Kohli',
-      'R. Sharma',
-      'S. Gill'
-    ];
+    const BOWLER_ROSTER = (bowlingTeam.bowlers && bowlingTeam.bowlers.length > 0)
+      ? bowlingTeam.bowlers
+      : GLOBAL_WORLD_BOWLERS;
+
+    const BATSMEN_LINEUP = (battingTeam.batsmen && battingTeam.batsmen.length > 0)
+      ? battingTeam.batsmen
+      : GLOBAL_BATSMEN_LINEUP;
 
     const chosenBowler = BOWLER_ROSTER[Math.floor(Math.random() * BOWLER_ROSTER.length)];
 
@@ -91,7 +73,7 @@ export default function App() {
     let targetRuns = 22;
     let wicketsAllowed = 2;
     let matchPhase = 'DEATH OVERS';
-    let roundTitle = 'ROUND 1';
+    let roundTitle = `${battingTeam.code} vs ${bowlingTeam.code}`;
     let teamScoreBase = 124;
     let teamWicketsBase = 1;
     let initialBalls = 102;
@@ -100,7 +82,7 @@ export default function App() {
       targetRuns = 19 + Math.floor(Math.random() * 6); // 19 - 24 runs in 1 over
       wicketsAllowed = 2;
       matchPhase = 'SUPER OVER';
-      roundTitle = 'SUPER OVER FINAL';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • SUPER OVER`;
       teamScoreBase = 0;
       teamWicketsBase = 0;
       initialBalls = 0;
@@ -108,7 +90,7 @@ export default function App() {
       targetRuns = 4; // Authentic situational chase matching reference (e.g. 167/7 needing 4 to win)
       wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
-      roundTitle = 'ROUND 1';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • THRILLER`;
       teamScoreBase = 167;
       teamWicketsBase = 7;
       initialBalls = 108;
@@ -116,7 +98,7 @@ export default function App() {
       targetRuns = 38 + Math.floor(Math.random() * 8); // 38 - 45 runs in 16 balls
       wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
-      roundTitle = 'ROUND 2';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • CHASE`;
       teamScoreBase = 120;
       teamWicketsBase = 2;
       initialBalls = 104;
@@ -124,7 +106,7 @@ export default function App() {
       targetRuns = 43; // Exact match to Image 1 & 2 ("Need 43 off 18 balls")
       wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
-      roundTitle = 'ROUND 1';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • MATCH PLAY`;
       teamScoreBase = 124;
       teamWicketsBase = 1;
       initialBalls = 102;
@@ -132,7 +114,7 @@ export default function App() {
       targetRuns = 46 + Math.floor(Math.random() * 10);
       wicketsAllowed = 3;
       matchPhase = 'POWERPLAY';
-      roundTitle = 'POWERPLAY SURGE';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • POWERPLAY`;
       teamScoreBase = 105;
       teamWicketsBase = 2;
       initialBalls = 100;
@@ -140,7 +122,7 @@ export default function App() {
       targetRuns = 52 + Math.floor(Math.random() * 10);
       wicketsAllowed = 4;
       matchPhase = 'MIDDLE OVERS';
-      roundTitle = 'CHASE MASTER';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • CHASE MASTER`;
       teamScoreBase = 95;
       teamWicketsBase = 2;
       initialBalls = 96;
@@ -148,29 +130,45 @@ export default function App() {
       targetRuns = 68 + Math.floor(Math.random() * 12);
       wicketsAllowed = 5;
       matchPhase = 'CHASE MASTER';
-      roundTitle = 'T5 CHAMPIONSHIP';
+      roundTitle = `${battingTeam.code} vs ${bowlingTeam.code} • T5 CUP`;
       teamScoreBase = 80;
       teamWicketsBase = 2;
       initialBalls = 90;
     }
 
+    // Striker batsman: if profile name is customized (not default 'Cricket Fan'), lead with profile name; else lead with star batsman (e.g. Abhishek Sharma)
+    const hasCustomName = profile?.playerName && profile.playerName !== 'Cricket Fan';
+    const primaryStriker = hasCustomName ? profile.playerName : BATSMEN_LINEUP[0];
+    const secondaryStriker = BATSMEN_LINEUP[1] || 'Rohit Sharma';
+
+    const strikerName = teamWicketsBase >= 7
+      ? (hasCustomName ? profile.playerName : (BATSMEN_LINEUP[6] || BATSMEN_LINEUP[0]))
+      : (BATSMEN_LINEUP[teamWicketsBase] || primaryStriker);
+
+    const nonStrikerName = teamWicketsBase >= 7
+      ? (BATSMEN_LINEUP[7] || BATSMEN_LINEUP[1])
+      : (BATSMEN_LINEUP[teamWicketsBase + 1] || secondaryStriker);
+
     startMatch({
-      title: `${ballsAllowed}-Ball ${matchPhase}`,
+      title: `${battingTeam.name} vs ${bowlingTeam.name} (${ballsAllowed}B)`,
       targetRuns,
       ballsAllowed,
       wicketsAllowed,
       bowlerName: chosenBowler.name,
       bowlerType: chosenBowler.type,
-      bowlingArm: chosenBowler.arm,
-      bowlingAngle: chosenBowler.angle,
-      bowlerAction: chosenBowler.action,
-      strikerName: teamWicketsBase >= 7 ? (profile?.playerName || 'D. Salunkhe') : (profile?.playerName || BATSMEN_LINEUP[teamWicketsBase] || BATSMEN_LINEUP[0]),
-      nonStrikerName: teamWicketsBase >= 7 ? 'K. Wintersgill' : (BATSMEN_LINEUP[teamWicketsBase + 1] || BATSMEN_LINEUP[1]),
+      bowlingArm: chosenBowler.arm || 'right',
+      bowlingAngle: chosenBowler.angle || 'over',
+      bowlerAction: chosenBowler.action || 'high_arm',
+      strikerName,
+      nonStrikerName,
       battingLineup: BATSMEN_LINEUP,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
-      teamCode: 'BEB',
+      teamCode: battingTeam.code,
+      teamJersey: battingTeam.jersey?.id || 'jersey_ind',
+      bowlingTeamCode: bowlingTeam.code,
+      bowlingJersey: bowlingTeam.jersey?.id || 'jersey_sa',
       teamScoreBase,
       teamWicketsBase,
       initialBalls

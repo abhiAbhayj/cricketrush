@@ -1,6 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { sound } from '../game/SoundEffects';
-import { Play, Flame, Trophy, PlusCircle, Target, ShoppingBag, Settings, Coins, Zap, Shield, Sparkles, Compass, Gauge } from 'lucide-react';
+import {
+  Play,
+  Flame,
+  Trophy,
+  PlusCircle,
+  Target,
+  ShoppingBag,
+  Settings,
+  Coins,
+  Zap,
+  Shield,
+  Sparkles,
+  Compass,
+  Gauge,
+  ChevronDown,
+  Check,
+  X,
+  Shuffle,
+  Globe,
+  Users
+} from 'lucide-react';
+import { TEAMS } from '../game/TeamData';
+
+const RIVALRIES = [
+  { bat: 'IND', bowl: 'SA', label: 'IND vs SA', badge: '🇮🇳 v 🇿🇦' },
+  { bat: 'IND', bowl: 'AUS', label: 'IND vs AUS', badge: '🇮🇳 v 🇦🇺' },
+  { bat: 'IND', bowl: 'PAK', label: 'IND vs PAK', badge: '🇮🇳 v 🇵🇰' },
+  { bat: 'CSK', bowl: 'MI', label: 'CSK vs MI', badge: '💛 v 💙' },
+  { bat: 'SRH', bowl: 'KKR', label: 'SRH vs KKR', badge: '🧡 v 💜' },
+  { bat: 'RCB', bowl: 'RR', label: 'RCB vs RR', badge: '❤️ v 🩷' }
+];
 
 export default function MainMenu({
   profile,
@@ -15,6 +45,36 @@ export default function MainMenu({
   onOpenSettings
 }) {
   const currentXpInLevel = profile.xp % 100;
+
+  // Selected Batting and Bowling Teams for Quick Play
+  const [battingTeamKey, setBattingTeamKey] = useState('IND');
+  const [bowlingTeamKey, setBowlingTeamKey] = useState('SA');
+
+  // Team Selector Modal State
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [teamModalTab, setTeamModalTab] = useState('batting'); // 'batting' or 'bowling'
+  const [teamCategoryFilter, setTeamCategoryFilter] = useState('all'); // 'all', 'international', 'ipl'
+
+  const currentBattingTeam = TEAMS[battingTeamKey] || TEAMS.IND;
+  const currentBowlingTeam = TEAMS[bowlingTeamKey] || TEAMS.SA;
+
+  const teamList = Object.values(TEAMS);
+  const filteredTeams = teamCategoryFilter === 'all'
+    ? teamList
+    : teamList.filter(t => t.type === teamCategoryFilter);
+
+  const handleRandomizeRivalry = (e) => {
+    e.stopPropagation();
+    sound.playClick();
+    const allKeys = Object.keys(TEAMS);
+    const randomBat = allKeys[Math.floor(Math.random() * allKeys.length)];
+    let randomBowl = allKeys[Math.floor(Math.random() * allKeys.length)];
+    if (randomBowl === randomBat) {
+      randomBowl = allKeys.find(k => k !== randomBat) || 'SA';
+    }
+    setBattingTeamKey(randomBat);
+    setBowlingTeamKey(randomBowl);
+  };
 
   return (
     <div className="w-full h-full flex flex-col bg-cricket-dark text-slate-100 overflow-y-auto safe-p-top safe-p-bottom px-4 py-4 sm:py-6">
@@ -77,7 +137,7 @@ export default function MainMenu({
         <div className="text-center my-2 sm:my-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold tracking-wider uppercase mb-1.5">
             <Sparkles className="w-3.5 h-3.5" />
-            Arcade Chase 2.0
+            T20 World & IPL Edition
           </div>
           <h1 className="text-4xl sm:text-5xl font-display font-black tracking-tight text-white uppercase italic">
             CRICKET <span className="text-emerald-400 text-glow-green">RUSH</span>
@@ -89,22 +149,22 @@ export default function MainMenu({
 
         {/* Action Modes Grid */}
         <div className="space-y-3 my-2">
-          {/* Quick Play Action Card with 10, 12, 22, 30, 40, 60 Ball Formats */}
+          {/* Quick Play Action Card with Interactive Matchup Selection & Formats */}
           <div className="w-full relative overflow-hidden rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 text-slate-950 shadow-xl shadow-emerald-500/25">
             <div
-              onClick={() => { sound.playClick(); onStartQuickPlay(); }}
+              onClick={() => { sound.playClick(); onStartQuickPlay(null, battingTeamKey, bowlingTeamKey); }}
               className="flex items-center justify-between cursor-pointer group"
             >
               <div className="text-left z-10">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-900/80 block">
-                  Instant Match
+                  Instant Match • {currentBattingTeam.code} vs {currentBowlingTeam.code}
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-display font-black uppercase tracking-wide text-slate-950 flex items-center gap-2">
                   QUICK PLAY
                   <Play className="w-5 h-5 fill-slate-950" />
                 </h3>
                 <p className="text-xs text-slate-900/90 font-semibold">
-                  Tap for a random chase or pick ball format below:
+                  Tap to play or choose teams & ball format below:
                 </p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-slate-950 z-10 group-hover:scale-110 transition-transform">
@@ -112,8 +172,85 @@ export default function MainMenu({
               </div>
             </div>
 
+            {/* Matchup Team Selector Bar */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                sound.playClick();
+                setShowTeamModal(true);
+              }}
+              className="mt-3 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-slate-950 text-white border border-white/10 flex items-center justify-between cursor-pointer transition-all shadow-md group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg select-none">{currentBattingTeam.badge}</span>
+                  <div>
+                    <span className="text-amber-300 font-display font-black text-xs block leading-none">
+                      {currentBattingTeam.code} (Batting)
+                    </span>
+                    <span className="text-[10px] text-slate-300 font-medium">
+                      {currentBattingTeam.batsmen?.[0]} & {currentBattingTeam.batsmen?.[1]}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-bold text-slate-500">VS</span>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg select-none">{currentBowlingTeam.badge}</span>
+                  <div>
+                    <span className="text-cyan-300 font-display font-black text-xs block leading-none">
+                      {currentBowlingTeam.code} (Bowling)
+                    </span>
+                    <span className="text-[10px] text-slate-300 font-medium">
+                      {currentBowlingTeam.bowlers?.[0]?.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors pl-2">
+                <span>Select</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Quick Rivalry Shortcuts */}
+            <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/70 whitespace-nowrap mr-0.5">
+                Rivals:
+              </span>
+              {RIVALRIES.map(r => (
+                <button
+                  key={r.label}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playClick();
+                    setBattingTeamKey(r.bat);
+                    setBowlingTeamKey(r.bowl);
+                  }}
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
+                    battingTeamKey === r.bat && bowlingTeamKey === r.bowl
+                      ? 'bg-slate-950 text-amber-300 shadow font-black'
+                      : 'bg-slate-950/30 hover:bg-slate-950/60 text-slate-950 font-bold'
+                  }`}
+                >
+                  {r.badge} {r.label}
+                </button>
+              ))}
+
+              <button
+                onClick={handleRandomizeRivalry}
+                className="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/30 hover:bg-slate-950 text-slate-950 hover:text-white transition-all flex items-center gap-1 whitespace-nowrap"
+                title="Random Rivalry"
+              >
+                <Shuffle className="w-3 h-3" />
+                <span>Random</span>
+              </button>
+            </div>
+
             {/* Ball Formats Bar */}
-            <div className="mt-3 pt-2.5 border-t border-slate-950/15 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="mt-2.5 pt-2 border-t border-slate-950/15 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/70 whitespace-nowrap mr-1">
                 Formats:
               </span>
@@ -123,10 +260,10 @@ export default function MainMenu({
                   onClick={(e) => {
                     e.stopPropagation();
                     sound.playClick();
-                    onStartQuickPlay(balls);
+                    onStartQuickPlay(balls, battingTeamKey, bowlingTeamKey);
                   }}
                   className="px-2.5 py-1 rounded-xl bg-slate-950/85 hover:bg-slate-950 text-white font-mono font-bold text-xs shadow hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
-                  title={`Play ${balls} ball match`}
+                  title={`Play ${balls} ball match with ${currentBattingTeam.code} vs ${currentBowlingTeam.code}`}
                 >
                   {balls}B
                 </button>
@@ -134,7 +271,7 @@ export default function MainMenu({
             </div>
           </div>
 
-          {/* NET PRACTICE CARD (NEW!) */}
+          {/* NET PRACTICE CARD */}
           <button
             onClick={() => { sound.playClick(); onOpenPractice(); }}
             className="w-full group relative overflow-hidden rounded-3xl p-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 hover:from-cyan-500 hover:to-blue-500 text-white shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-between border border-blue-400/30"
@@ -250,6 +387,190 @@ export default function MainMenu({
           </button>
         </div>
       </div>
+
+      {/* ==================================================================== */}
+      {/* Interactive Team Selector Modal (All Countries & IPL Teams) */}
+      {/* ==================================================================== */}
+      {showTeamModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel w-full max-w-lg max-h-[85vh] rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-black text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-emerald-400" />
+                  CHOOSE MATCHUP TEAMS
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Select your batting lineup and bowling opponent
+                </p>
+              </div>
+              <button
+                onClick={() => { sound.playClick(); setShowTeamModal(false); }}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Batting vs Bowling Switcher Tab */}
+            <div className="px-4 pt-3 flex gap-2">
+              <button
+                onClick={() => { sound.playClick(); setTeamModalTab('batting'); }}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  teamModalTab === 'batting'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-md'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>Batting As:</span>
+                <span className="font-extrabold">{currentBattingTeam.badge} {currentBattingTeam.code}</span>
+              </button>
+
+              <button
+                onClick={() => { sound.playClick(); setTeamModalTab('bowling'); }}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  teamModalTab === 'bowling'
+                    ? 'bg-cyan-400 text-slate-950 font-black shadow-md'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>Bowling Rival:</span>
+                <span className="font-extrabold">{currentBowlingTeam.badge} {currentBowlingTeam.code}</span>
+              </button>
+            </div>
+
+            {/* League filter: All / International / IPL */}
+            <div className="px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => { sound.playClick(); setTeamCategoryFilter('all'); }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  teamCategoryFilter === 'all'
+                    ? 'bg-emerald-500 text-slate-950 font-black'
+                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                All Teams ({teamList.length})
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setTeamCategoryFilter('international'); }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  teamCategoryFilter === 'international'
+                    ? 'bg-emerald-500 text-slate-950 font-black'
+                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                🌍 Countries (9)
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setTeamCategoryFilter('ipl'); }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                  teamCategoryFilter === 'ipl'
+                    ? 'bg-emerald-500 text-slate-950 font-black'
+                    : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                ⚡ IPL Franchises (10)
+              </button>
+            </div>
+
+            {/* Teams Grid */}
+            <div className="p-4 overflow-y-auto space-y-2 flex-1">
+              {filteredTeams.map((team) => {
+                const isSelected = teamModalTab === 'batting'
+                  ? battingTeamKey === team.code
+                  : bowlingTeamKey === team.code;
+
+                return (
+                  <div
+                    key={team.code}
+                    onClick={() => {
+                      sound.playClick();
+                      if (teamModalTab === 'batting') {
+                        setBattingTeamKey(team.code);
+                        // If bowling team matches new batting team, auto-swap to rival
+                        if (bowlingTeamKey === team.code) {
+                          setBowlingTeamKey(team.code === 'SA' ? 'IND' : 'SA');
+                        }
+                      } else {
+                        setBowlingTeamKey(team.code);
+                        if (battingTeamKey === team.code) {
+                          setBattingTeamKey(team.code === 'IND' ? 'SA' : 'IND');
+                        }
+                      }
+                    }}
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'border-emerald-500 bg-emerald-500/15 shadow-md shadow-emerald-500/20'
+                        : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/20 shadow-md text-2xl select-none"
+                        style={{
+                          background: team.jersey?.secondaryColor
+                            ? `linear-gradient(135deg, ${team.jersey.color} 50%, ${team.jersey.secondaryColor} 50%)`
+                            : team.jersey?.color || '#2563eb'
+                        }}
+                      >
+                        {team.badge}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-display font-extrabold text-white text-sm">
+                            {team.name}
+                          </h4>
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-amber-300 border border-slate-700">
+                            {team.code}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 mt-0.5 line-clamp-1">
+                          {teamModalTab === 'batting'
+                            ? `Batters: ${team.batsmen?.slice(0, 4).join(', ')}...`
+                            : `Bowlers: ${team.bowlers?.map(b => b.name).slice(0, 3).join(', ')}...`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      {isSelected ? (
+                        <div className="w-7 h-7 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 hover:text-white">
+                          <span className="text-xs">+</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Bottom Confirm Button */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
+              <div className="text-xs">
+                <span className="text-slate-400">Matchup: </span>
+                <span className="font-bold text-amber-400">{currentBattingTeam.code}</span>
+                <span className="text-slate-500"> vs </span>
+                <span className="font-bold text-cyan-400">{currentBowlingTeam.code}</span>
+              </div>
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setShowTeamModal(false);
+                }}
+                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+              >
+                Confirm Matchup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

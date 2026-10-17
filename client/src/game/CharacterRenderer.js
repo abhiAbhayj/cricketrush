@@ -495,7 +495,7 @@ export const CharacterRenderer = {
   /**
    * Draw Wicket-Keeper in crouching stance directly behind stumps (matching Reference Screenshot)
    */
-  drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false } = {}) {
+  drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false, jerseyColor = '#0066b2' } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -506,9 +506,9 @@ export const CharacterRenderer = {
     drawBattingPad(ctx, -9.0, 0);
     drawBattingPad(ctx, 2.0, 0);
 
-    // Torso in Royal Blue Keeper Jersey
+    // Torso in Fielding Team Jersey
     const torsoY = isStumping ? -14 : -9;
-    drawRoundRect(ctx, -8.5, torsoY, 17, 12, 3.5, '#2563eb', '#0f172a', 1.5);
+    drawRoundRect(ctx, -8.5, torsoY, 17, 12, 3.5, jerseyColor, '#0f172a', 1.5);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.moveTo(-3, torsoY); ctx.lineTo(0, torsoY + 3); ctx.lineTo(3, torsoY);
@@ -538,7 +538,7 @@ export const CharacterRenderer = {
   /**
    * Draw Non-Striker Batsman standing on left side of bowler's end stumps (matching Reference Screenshot)
    */
-  drawNonStriker(ctx, x, y, { skinTone = '#f5d0b0' } = {}) {
+  drawNonStriker(ctx, x, y, { skinTone = '#f5d0b0', jerseyColor = '#0066b2' } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -549,8 +549,8 @@ export const CharacterRenderer = {
     drawBattingPad(ctx, -6.5, 1);
     drawBattingPad(ctx, 1.5, 2);
 
-    // Royal Blue Jersey Torso
-    drawRoundRect(ctx, -8.0, -9, 16, 12, 3.5, '#2563eb', '#0f172a', 1.5);
+    // Batting Team Jersey Torso
+    drawRoundRect(ctx, -8.0, -9, 16, 12, 3.5, jerseyColor, '#0f172a', 1.5);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.moveTo(-3, -9); ctx.lineTo(0, -6); ctx.lineTo(3, -9);
