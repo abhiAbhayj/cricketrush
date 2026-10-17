@@ -20,7 +20,8 @@ import {
   Flame,
   Award,
   Shield,
-  HelpCircle
+  HelpCircle,
+  X
 } from 'lucide-react';
 
 // Comprehensive 18 Bowling Variations with Authentic Cricket Speed Calibration:
@@ -129,6 +130,7 @@ export default function NetPractice({ onBack, profile, settings }) {
   const [feedback, setFeedback] = useState(null);
   const [timingMeterProgress, setTimingMeterProgress] = useState(0);
   const [timingDeltaRecord, setTimingDeltaRecord] = useState(null);
+  const [showControlsDrawer, setShowControlsDrawer] = useState(false);
 
   // Performance Telemetry
   const [stats, setStats] = useState({
@@ -538,7 +540,7 @@ export default function NetPractice({ onBack, profile, settings }) {
       });
     }
 
-    // 5. Professional Multi-Ring Pitch Landing Reticle Cursor
+    // 5. Professional Hawk-Eye Multi-Ring Pitch Landing Reticle Cursor
     if (engine.ball.state === 'BOWLED') {
       const bx = engine.ball.bounceSpotX;
       const by = engine.ball.bounceSpotY;
@@ -554,35 +556,62 @@ export default function NetPractice({ onBack, profile, settings }) {
       const ringRadius = Math.max(8, 28 * (1 - (engine.ball.flightProgress || 0)));
 
       ctx.save();
-      // Outer Pulsing Reticle Ring
+      // 1. Soft radial landing zone halo
+      const haloGrad = ctx.createRadialGradient(bx, by, 2, bx, by, 22 + pulse);
+      haloGrad.addColorStop(0, `${lengthColor}55`);
+      haloGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(bx, by, 22 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Outer Pulsing Reticle Ring
       ctx.beginPath();
       ctx.arc(bx, by, 12 + pulse, 0, Math.PI * 2);
       ctx.strokeStyle = lengthColor;
       ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      // Inner Convergence Ring (shrinks as ball gets closer to pitch landing spot)
+      // 3. Inner Convergence Ring (shrinks as ball gets closer to pitch landing spot)
       ctx.beginPath();
       ctx.arc(bx, by, ringRadius, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.6;
       ctx.setLineDash([3, 3]);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Center Crosshairs (+)
+      // 4. Center Crosshairs (+) with 4 compass corner ticks
       ctx.strokeStyle = lengthColor;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(bx - 7, by); ctx.lineTo(bx + 7, by);
-      ctx.moveTo(bx, by - 7); ctx.lineTo(bx, by + 7);
+      ctx.moveTo(bx - 8, by); ctx.lineTo(bx + 8, by);
+      ctx.moveTo(bx, by - 8); ctx.lineTo(bx, by + 8);
       ctx.stroke();
 
-      // Floating Pitch Zone & Bowler Variation Name Badge
-      ctx.font = 'bold 9px "Inter", sans-serif';
-      ctx.fillStyle = lengthColor;
+      // 5. Sleek Dark Pill Badge with glowing border for variation & length label
+      const badgeText = `${varTitle} • ${lengthLabel}`;
+      ctx.font = 'bold 8.5px "Inter", sans-serif';
+      const textWidth = ctx.measureText(badgeText).width;
+      const pillW = textWidth + 14;
+      const pillH = 16;
+      const pillX = bx - pillW / 2;
+      const pillY = by - 24;
+
+      // Dark background pill
+      ctx.fillStyle = 'rgba(10, 16, 28, 0.90)';
+      ctx.beginPath();
+      ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      ctx.fill();
+      ctx.strokeStyle = lengthColor;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Badge text
+      ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.fillText(`${varTitle} • ${lengthLabel}`, bx, by - 16);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, bx, pillY + pillH / 2);
       ctx.restore();
     }
 
@@ -590,24 +619,41 @@ export default function NetPractice({ onBack, profile, settings }) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     ctx.fillRect(engine.batsman.x - 10, engine.batsmanCreaseY + 6, 20, 2.5);
 
-    // 6. Trajectory Flight Path Tracer Line
-    if (engine.ball.trail.length > 2) {
-      ctx.beginPath();
-      ctx.moveTo(engine.ball.trail[0].x, engine.ball.trail[0].y);
+    // 6. Virtual-Eye Trajectory Flight Ribbon & Ball Tracer
+    if (engine.ball.trail && engine.ball.trail.length > 2) {
+      ctx.save();
       for (let i = 1; i < engine.ball.trail.length; i++) {
-        ctx.lineTo(engine.ball.trail[i].x, engine.ball.trail[i].y);
+        const p1 = engine.ball.trail[i - 1];
+        const p2 = engine.ball.trail[i];
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = p2.hasBounced
+          ? 'rgba(250, 204, 21, 0.95)'
+          : engine.ball.state === 'HIT'
+          ? 'rgba(234, 179, 8, 0.85)'
+          : 'rgba(56, 189, 248, 0.92)';
+        ctx.lineWidth = engine.ball.state === 'HIT' ? 3.0 : 3.5;
+        ctx.shadowColor = p2.hasBounced ? '#eab308' : '#0284c7';
+        ctx.shadowBlur = 6;
+        ctx.stroke();
       }
-      ctx.strokeStyle = engine.ball.state === 'HIT' ? 'rgba(234, 179, 8, 0.7)' : 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.restore();
     }
 
-    // 7. Realistic Humanoid Bowler (Top Crease)
+    // 7. Realistic Humanoid Bowler (Top Crease with authentic bowling action)
+    const bowlerAction = bowlerStyle === 'legbreak' || bowlerStyle === 'flipper' ? 'wrist_spin'
+      : bowlerStyle === 'offbreak' || bowlerStyle === 'doosra' || bowlerStyle === 'drifter' || bowlerStyle === 'arm_ball' ? 'finger_spin'
+      : bowlerStyle === 'carrom' ? 'unorthodox'
+      : bowlerStyle === 'reverse_swing' ? 'slingshot'
+      : bowlerStyle === 'inswing' || bowlerStyle === 'outswing' || bowlerStyle === 'offcutter' || bowlerStyle === 'legcutter' ? 'fast_swing'
+      : 'high_arm';
+
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
       runUpProgress: engine.bowler.runUpProgress,
       bowlingArmAngle: engine.bowler.bowlingArmAngle,
       armSide: engine.bowler.armSide,
-      actionType: engine.bowler.actionType || 'high_arm',
+      actionType: bowlerAction,
       faceStyle: 'headband',
       skinTone: '#c68656'
     });
@@ -661,21 +707,41 @@ export default function NetPractice({ onBack, profile, settings }) {
         ctx.restore();
       }
 
+      // 3D Leather Cricket Ball with Radial Light Reflection & Stitched Seam
+      const ballGrad = ctx.createRadialGradient(
+        b.x - visualRadius * 0.35,
+        visualY - visualRadius * 0.35,
+        visualRadius * 0.15,
+        b.x,
+        visualY,
+        visualRadius
+      );
+      ballGrad.addColorStop(0, '#f87171'); // Highlight light reflection
+      ballGrad.addColorStop(0.35, '#dc2626'); // Rich crimson leather
+      ballGrad.addColorStop(0.85, '#991b1b'); // Deep cherry core
+      ballGrad.addColorStop(1, '#450a0a'); // Shadow rim
+
       ctx.beginPath();
       ctx.arc(b.x, visualY, visualRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#dc2626';
+      ctx.fillStyle = ballGrad;
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 0.8;
       ctx.stroke();
 
-      // Rotating seam line
-      const seamAngle = (b.traveled || 0) * 0.12;
+      // Authentic Curved Rotating White Stitched Cricket Seam
+      const seamAngle = (b.traveled || 0) * 0.14;
+      ctx.save();
+      ctx.translate(b.x, visualY);
+      ctx.rotate(seamAngle);
       ctx.beginPath();
-      ctx.arc(b.x, visualY, visualRadius * 0.75, seamAngle, seamAngle + Math.PI * 0.55);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
+      ctx.ellipse(0, 0, visualRadius * 0.88, visualRadius * 0.30, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([2, 2]); // Stitched thread dashes
       ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
     // 11. Particles
@@ -692,250 +758,368 @@ export default function NetPractice({ onBack, profile, settings }) {
   const perfectPct = stats.ballsFaced > 0 ? Math.round((stats.perfectHits / stats.ballsFaced) * 100) : 0;
   const currentCategoryList = bowlingCategory === 'pace' ? PACE_VARIATIONS : SPIN_VARIATIONS;
 
-  return (
-    <div className="w-full h-full flex flex-col lg:flex-row bg-[#080d1a] text-slate-100 overflow-hidden select-none">
-      {/* ==================================================================== */}
-      {/* LEFT TRAINING PANEL: 18 BOWLING VARIATIONS & LENGTH ZONES            */}
-      {/* ==================================================================== */}
-      <div className="w-full lg:w-96 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-[#0c1322] p-4 overflow-y-auto space-y-3.5 max-h-[42vh] lg:max-h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
+  const renderBowlingControls = (isDrawer = false) => (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
+        {!isDrawer ? (
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <h3 className="font-display font-extrabold text-sm text-white">
+              🎯 BOWLING VARIATIONS & CONTROLS
+            </h3>
+          </div>
+        )}
+        {!isDrawer && (
           <h2 className="font-display font-extrabold text-base text-white flex items-center gap-1.5">
             🏏 BATTING NETS & TRAINER
           </h2>
+        )}
+        {isDrawer ? (
+          <button
+            onClick={() => setShowControlsDrawer(false)}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        ) : (
           <div className="w-12" />
-        </div>
+        )}
+      </div>
 
-        {/* Category Toggle: PACE vs SPIN */}
-        <div className="flex p-1 bg-slate-900 rounded-xl border border-slate-800">
-          <button
-            onClick={() => {
-              setBowlingCategory('spin');
-              setBowlerStyle('legbreak');
-              sound.playClick();
-            }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              bowlingCategory === 'spin'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🌀 Spin Bowling (65 - 95 km/h)
-          </button>
-          <button
-            onClick={() => {
-              setBowlingCategory('pace');
-              setBowlerStyle('fast');
-              sound.playClick();
-            }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              bowlingCategory === 'pace'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            ⚡ Pace & Swing (105 - 155 km/h)
-          </button>
-        </div>
+      {/* Category Toggle: PACE vs SPIN */}
+      <div className="flex p-1 bg-slate-900 rounded-xl border border-slate-800">
+        <button
+          onClick={() => {
+            setBowlingCategory('spin');
+            setBowlerStyle('legbreak');
+            sound.playClick();
+          }}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            bowlingCategory === 'spin'
+              ? 'bg-purple-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          🌀 Spin Bowling (65 - 95 km/h)
+        </button>
+        <button
+          onClick={() => {
+            setBowlingCategory('pace');
+            setBowlerStyle('fast');
+            sound.playClick();
+          }}
+          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            bowlingCategory === 'pace'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          ⚡ Pace & Swing (105 - 155 km/h)
+        </button>
+      </div>
 
-        {/* Bowling Hand & Approach Angle Selectors (Right/Left Arm & Over/Around the Wicket) */}
-        <div className="grid grid-cols-2 gap-2 p-2 rounded-xl bg-slate-900/90 border border-slate-800">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Bowling Hand
-            </label>
-            <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
-              <button
-                type="button"
-                onClick={() => updateDeliveryConfig({ bowlingArm: 'right' })}
-                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
-                  bowlingArm === 'right'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                ✋ Right
-              </button>
-              <button
-                type="button"
-                onClick={() => updateDeliveryConfig({ bowlingArm: 'left' })}
-                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
-                  bowlingArm === 'left'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🤚 Left
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Approach
-            </label>
-            <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
-              <button
-                type="button"
-                onClick={() => updateDeliveryConfig({ bowlingAngle: 'over' })}
-                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
-                  bowlingAngle === 'over'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                🔄 Over
-              </button>
-              <button
-                type="button"
-                onClick={() => updateDeliveryConfig({ bowlingAngle: 'around' })}
-                className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
-                  bowlingAngle === 'around'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                ↪️ Around
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 1. Bowler Variations Grid */}
+      {/* Bowling Hand & Approach Angle Selectors (Right/Left Arm & Over/Around the Wicket) */}
+      <div className="grid grid-cols-2 gap-2 p-2 rounded-xl bg-slate-900/90 border border-slate-800">
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-            Select Bowling Variation ({currentCategoryList.length} Styles)
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            Bowling Hand
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-44 overflow-y-auto pr-1">
-            {currentCategoryList.map(style => (
-              <button
-                key={style.id}
-                onClick={() => updateDeliveryConfig({ bowlerStyle: style.id, speedKmh: style.defaultSpeed })}
-                className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all ${
-                  bowlerStyle === style.id
-                    ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-sm'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="font-display font-bold text-[11px] truncate flex items-center gap-1">
-                  <span>{style.icon}</span> {style.label}
-                </span>
-                <span className="text-[9px] text-slate-400 mt-0.5">{style.speedRange}</span>
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => updateDeliveryConfig({ bowlingArm: 'right' })}
+              className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                bowlingArm === 'right'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ✋ Right
+            </button>
+            <button
+              type="button"
+              onClick={() => updateDeliveryConfig({ bowlingArm: 'left' })}
+              className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                bowlingArm === 'left'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🤚 Left
+            </button>
           </div>
         </div>
 
-        {/* 2. Pitch Length Selector */}
         <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-            Delivery Length (Zones Marked on Turf)
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            Approach
           </label>
-          <div className="grid grid-cols-3 gap-1.5">
-            {LENGTHS.map(len => (
-              <button
-                key={len.id}
-                onClick={() => updateDeliveryConfig({ deliveryLength: len.id })}
-                className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all ${
-                  deliveryLength === len.id
-                    ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                {len.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => updateDeliveryConfig({ bowlingAngle: 'over' })}
+              className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                bowlingAngle === 'over'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🔄 Over
+            </button>
+            <button
+              type="button"
+              onClick={() => updateDeliveryConfig({ bowlingAngle: 'around' })}
+              className={`py-1 rounded text-[11px] font-bold transition-all text-center ${
+                bowlingAngle === 'around'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              ↪️ Around
+            </button>
           </div>
-        </div>
-
-        {/* 3. Line Selector */}
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-            Delivery Line
-          </label>
-          <div className="grid grid-cols-4 gap-1.5">
-            {LINES.map(line => (
-              <button
-                key={line.id}
-                onClick={() => updateDeliveryConfig({ deliveryLine: line.id })}
-                className={`py-1.5 px-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
-                  deliveryLine === line.id
-                    ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                {line.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 4. Speed Customizer Slider */}
-        <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <div className="flex justify-between items-center mb-1 text-xs">
-            <span className="font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Gauge className="w-3.5 h-3.5 text-amber-400" /> Delivery Speed
-            </span>
-            <span className="font-mono font-extrabold text-white text-sm">
-              {speedKmh} km/h
-            </span>
-          </div>
-          <input
-            type="range"
-            min={currentStyleObj.min}
-            max={currentStyleObj.max}
-            step="1"
-            value={speedKmh}
-            onChange={(e) => updateDeliveryConfig({ speedKmh: Number(e.target.value) })}
-            className="w-full accent-emerald-500 cursor-pointer"
-          />
-        </div>
-
-        {/* 5. Practice Actions & Auto-Bowl */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => { sound.playClick(); triggerDelivery(); }}
-            className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-display font-black text-sm tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95 transition-transform"
-          >
-            <Play className="w-4 h-4 fill-slate-950" /> BOWL NOW
-          </button>
-          <button
-            onClick={() => { setAutoBowl(!autoBowl); sound.playClick(); }}
-            className={`py-3 px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors ${
-              autoBowl
-                ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400'
-            }`}
-          >
-            Auto: {autoBowl ? 'ON' : 'OFF'}
-          </button>
         </div>
       </div>
+
+      {/* 1. Bowler Variations Grid */}
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+          Select Bowling Variation ({currentCategoryList.length} Styles)
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-44 overflow-y-auto pr-1">
+          {currentCategoryList.map(style => (
+            <button
+              key={style.id}
+              onClick={() => updateDeliveryConfig({ bowlerStyle: style.id, speedKmh: style.defaultSpeed })}
+              className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                bowlerStyle === style.id
+                  ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-sm'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="font-display font-bold text-[11px] truncate flex items-center gap-1">
+                <span>{style.icon}</span> {style.label}
+              </span>
+              <span className="text-[9px] text-slate-400 mt-0.5">{style.speedRange}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Pitch Length Selector */}
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+          Delivery Length (Zones Marked on Turf)
+        </label>
+        <div className="grid grid-cols-3 gap-1.5">
+          {LENGTHS.map(len => (
+            <button
+              key={len.id}
+              onClick={() => updateDeliveryConfig({ deliveryLength: len.id })}
+              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all ${
+                deliveryLength === len.id
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              {len.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Line Selector */}
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+          Delivery Line
+        </label>
+        <div className="grid grid-cols-4 gap-1.5">
+          {LINES.map(line => (
+            <button
+              key={line.id}
+              onClick={() => updateDeliveryConfig({ deliveryLine: line.id })}
+              className={`py-1.5 px-1.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                deliveryLine === line.id
+                  ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              {line.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Speed Customizer Slider */}
+      <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+        <div className="flex justify-between items-center mb-1 text-xs">
+          <span className="font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <Gauge className="w-3.5 h-3.5 text-amber-400" /> Delivery Speed
+          </span>
+          <span className="font-mono font-extrabold text-white text-sm">
+            {speedKmh} km/h
+          </span>
+        </div>
+        <input
+          type="range"
+          min={currentStyleObj.min}
+          max={currentStyleObj.max}
+          step="1"
+          value={speedKmh}
+          onChange={(e) => updateDeliveryConfig({ speedKmh: Number(e.target.value) })}
+          className="w-full accent-emerald-500 cursor-pointer"
+        />
+      </div>
+
+      {/* 5. Practice Actions & Auto-Bowl */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            sound.playClick();
+            triggerDelivery();
+            if (isDrawer) setShowControlsDrawer(false);
+          }}
+          className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-display font-black text-sm tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95 transition-transform"
+        >
+          <Play className="w-4 h-4 fill-slate-950" /> BOWL NOW
+        </button>
+        <button
+          onClick={() => { setAutoBowl(!autoBowl); sound.playClick(); }}
+          className={`py-3 px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+            autoBowl
+              ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+              : 'bg-slate-900 border-slate-800 text-slate-400'
+          }`}
+        >
+          Auto: {autoBowl ? 'ON' : 'OFF'}
+        </button>
+      </div>
+
+      {isDrawer && (
+        <button
+          onClick={() => setShowControlsDrawer(false)}
+          className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-colors"
+        >
+          Done / Close
+        </button>
+      )}
+    </>
+  );
+
+  return (
+    <div className="w-full h-full flex flex-col lg:flex-row bg-[#080d1a] text-slate-100 overflow-hidden select-none">
+      {/* ==================================================================== */}
+      {/* DESKTOP LEFT TRAINING PANEL: 18 BOWLING VARIATIONS & LENGTH ZONES     */}
+      {/* ==================================================================== */}
+      <div className="hidden lg:flex w-96 flex-col border-r border-slate-800 bg-[#0c1322] p-4 overflow-y-auto space-y-3.5">
+        {renderBowlingControls(false)}
+      </div>
+
+      {/* ==================================================================== */}
+      {/* MOBILE SLIDE-UP DRAWER FOR VARIATIONS & CONTROLS                    */}
+      {/* ==================================================================== */}
+      {showControlsDrawer && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div
+            onClick={() => setShowControlsDrawer(false)}
+            className="absolute inset-0 bg-black/75 backdrop-blur-sm animate-fade-in"
+          />
+          <div className="relative w-full max-h-[85vh] rounded-t-3xl bg-[#0c1322] border-t-2 border-emerald-500/50 p-4 overflow-y-auto space-y-3.5 shadow-2xl animate-slide-up">
+            {renderBowlingControls(true)}
+          </div>
+        </div>
+      )}
 
       {/* ==================================================================== */}
       {/* CENTER PRACTICE NET PITCH CANVAS                                     */}
       {/* ==================================================================== */}
-      <div ref={containerRef} className="relative flex-1 h-full flex flex-col items-center justify-center overflow-hidden bg-black">
-        {/* Practice Net Header Status */}
-        <div className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between max-w-md mx-auto pointer-events-none">
-          <div className="px-3.5 py-1.5 rounded-xl bg-[#0c1322]/90 border border-slate-800 text-xs flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30">
+      <div ref={containerRef} className="relative flex-1 w-full h-full flex flex-col items-center justify-center overflow-hidden bg-black">
+        {/* Mobile Top Floating Broadcast Bar */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 z-30 flex items-center justify-between gap-1.5 pointer-events-auto">
+          {/* Back button */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs font-bold text-white shadow-lg active:scale-95 transition-transform"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+
+          {/* Current variation badge */}
+          <div className="flex-1 max-w-sm px-2.5 py-1 rounded-xl bg-slate-950/90 border border-slate-700/80 text-center shadow-lg truncate">
+            <span className="text-[10px] font-mono text-emerald-400 font-black mr-1">
               {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlingAngle === 'around' ? 'Around' : 'Over'}
             </span>
-            <span className="font-bold text-white uppercase">{bowlerStyle.replace('_', ' ')}</span>
-            <span className="text-amber-400 font-mono">({speedKmh} km/h)</span>
+            <span className="text-xs font-bold text-white uppercase truncate">
+              {currentStyleObj.icon} {currentStyleObj.label}
+            </span>
+            <span className="text-[10px] font-mono text-amber-300 ml-1">
+              ({speedKmh} km/h • {deliveryLength.toUpperCase()})
+            </span>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-[#0c1322]/90 border border-slate-800 text-xs font-bold text-slate-300">
-            Zone: <span className="text-emerald-400 capitalize">{deliveryLength}</span> • <span className="text-cyan-400 capitalize">{deliveryLine}</span>
+          {/* Quick Actions: Bowl & Controls drawer toggle */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { sound.playClick(); triggerDelivery(); }}
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-transform flex items-center gap-1"
+              title="Bowl Now"
+            >
+              <Zap className="w-3.5 h-3.5 fill-slate-950" />
+              <span>BOWL</span>
+            </button>
+
+            {/* Mobile Drawer Trigger (lg:hidden) */}
+            <button
+              onClick={() => { sound.playClick(); setShowControlsDrawer(true); }}
+              className="lg:hidden p-2 rounded-xl bg-slate-900/90 border border-emerald-500/50 text-emerald-400 shadow-lg active:scale-95 transition-transform"
+              title="Bowling Variations & Settings"
+            >
+              <Sliders className="w-4 h-4" />
+            </button>
           </div>
+        </div>
+
+        {/* Mobile Quick Preset Chips Row */}
+        <div className="absolute top-12 left-0 right-0 z-25 flex items-center justify-center gap-1.5 px-2 pointer-events-auto overflow-x-auto py-1">
+          {[
+            { label: '⚡ Fast 148', style: 'fast', speed: 148, category: 'pace', arm: 'right', angle: 'over', length: 'good' },
+            { label: '🌀 Leg Spin 78', style: 'legbreak', speed: 78, category: 'spin', arm: 'right', angle: 'over', length: 'good' },
+            { label: '🎯 Yorker 145', style: 'yorker', speed: 145, category: 'pace', arm: 'right', angle: 'over', length: 'yorker' },
+            { label: '🔥 Bouncer 146', style: 'bouncer', speed: 146, category: 'pace', arm: 'right', angle: 'over', length: 'short' }
+          ].map((preset, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                sound.playClick();
+                setBowlingCategory(preset.category);
+                setBowlerStyle(preset.style);
+                setSpeedKmh(preset.speed);
+                setDeliveryLength(preset.length);
+                updateDeliveryConfig({
+                  bowlerStyle: preset.style,
+                  speedKmh: preset.speed,
+                  deliveryLength: preset.length
+                });
+                triggerDelivery();
+              }}
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all whitespace-nowrap active:scale-95 ${
+                bowlerStyle === preset.style
+                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 shadow-sm'
+                  : 'bg-slate-950/80 border-slate-700/80 text-slate-300 hover:text-white'
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
         </div>
 
         {/* Canvas (Touch anywhere on screen to play shot) */}

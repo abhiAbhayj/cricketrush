@@ -41,6 +41,36 @@ const SHOT_TYPES = [
   { id: 'scoop', label: 'Scoop Ramp', key: 'D', aim: 'straight', icon: '🎯', desc: 'Ramps over keeper' }
 ];
 
+export const WORLD_BOWLERS = [
+  { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard' },
+  { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic' },
+  { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'beard' },
+  { name: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'beard' },
+  { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'classic' },
+  { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'headband' },
+  { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic' },
+  { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'headband' },
+  { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'headband' },
+  { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic' },
+  { name: 'Sunil Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox', skinTone: '#5a3d28', faceStyle: 'spiky' },
+  { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic' }
+];
+
+export const DEFAULT_BATSMEN_LINEUP = [
+  'V. Kohli',
+  'R. Sharma',
+  'S. Gill',
+  'S. Yadav',
+  'KL Rahul',
+  'H. Pandya',
+  'R. Pant',
+  'A. Patel',
+  'R. Jadeja',
+  'T. Head',
+  'H. Klaasen',
+  'G. Maxwell'
+];
+
 export default function CricketGame({
   matchConfig,
   onGameOver,
@@ -54,6 +84,11 @@ export default function CricketGame({
   const fieldersRef = useRef(null);
   const animFrameRef = useRef(null);
 
+  const battingLineup = matchConfig?.battingLineup || DEFAULT_BATSMEN_LINEUP;
+  const initialBowler = WORLD_BOWLERS.find(b => b.name === matchConfig?.bowlerName) ||
+    WORLD_BOWLERS.find(b => b.type === matchConfig?.bowlerType) ||
+    WORLD_BOWLERS[0];
+
   // Match State initialized matching authentic situational chase (Image 1 & 2)
   const [teamCode] = useState(matchConfig?.teamCode || 'JAJ');
   const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 124);
@@ -61,9 +96,10 @@ export default function CricketGame({
   const [targetRuns] = useState(matchConfig?.targetRuns || 43);
   const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
   const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
-  const [bowlerType, setBowlerType] = useState(matchConfig?.bowlerType || 'fast');
-  const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || (matchConfig?.bowlerType?.includes('leftarm') ? 'left' : 'right'));
-  const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || 'over');
+  const [bowlerType, setBowlerType] = useState(matchConfig?.bowlerType || initialBowler.type);
+  const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || initialBowler.arm);
+  const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || initialBowler.angle);
+  const [bowlerAction, setBowlerAction] = useState(matchConfig?.bowlerAction || initialBowler.action);
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
 
   // Intelligent Left-Handed Batsman Detection
@@ -80,24 +116,24 @@ export default function CricketGame({
 
   // Batsmen and Bowler details (authentic match initialization from 0)
   const [striker, setStriker] = useState({
-    name: profile?.playerName || matchConfig?.strikerName || 'R. Bhende',
+    name: profile?.playerName || matchConfig?.strikerName || battingLineup[0],
     runs: 0,
     balls: 0,
     fiftiesClaimed: false,
     centuriesClaimed: false
   });
 
-  const [nonStriker] = useState({
-    name: matchConfig?.nonStrikerName || 'S. Ghatpande',
-    runs: 15,
-    balls: 5
+  const [nonStriker, setNonStriker] = useState({
+    name: matchConfig?.nonStrikerName || battingLineup[1],
+    runs: 14,
+    balls: 6
   });
 
   const [bowler, setBowler] = useState({
-    name: matchConfig?.bowlerName || 'E. Kirtland',
+    name: matchConfig?.bowlerName || initialBowler.name,
     wickets: 0,
-    runsConceded: 21,
-    overs: '1.0'
+    runsConceded: 0,
+    overs: '0.0'
   });
 
   // Current over balls array: starts empty [ ]
@@ -567,32 +603,49 @@ export default function CricketGame({
     setCurrentBallsFaced(nextBallsFaced);
     setCurrentWicketsLost(nextWicketsLost);
 
-    // Striker milestones (50 and 100) - Only legal batsman runs count!
+    // Striker milestones (50 and 100) or New Batsman Incoming on Wicket!
     if (!isWide) {
-      setStriker(prev => {
-        const nextStrikerRuns = prev.runs + runsScored;
-        const nextStrikerBalls = prev.balls + 1;
+      if (isWicket) {
+        // Current batsman is out! Rotate to the next batsman from battingLineup
+        const nextBatterIndex = nextWicketsLost + 1; // 0 was striker, 1 was nonStriker; 1st wicket brings battingLineup[2]
+        const nextBatterName = battingLineup[nextBatterIndex] || `Batter #${nextBatterIndex + 1}`;
+        setTimeout(() => {
+          setStriker({
+            name: nextBatterName,
+            runs: 0,
+            balls: 0,
+            fiftiesClaimed: false,
+            centuriesClaimed: false
+          });
+          setFieldChangeNotice(`NEW BATSMAN IN: ${nextBatterName.toUpperCase()} 🏏`);
+          setTimeout(() => setFieldChangeNotice(null), 3200);
+        }, 1100);
+      } else {
+        setStriker(prev => {
+          const nextStrikerRuns = prev.runs + runsScored;
+          const nextStrikerBalls = prev.balls + 1;
 
-        if (nextStrikerRuns >= 50 && !prev.fiftiesClaimed) {
-          setTimeout(() => {
-            sound.playFiftyFanfare();
-            confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
-            triggerSpecialCelebration('fifty', `FIFTY! ${nextStrikerRuns}* (${nextStrikerBalls}b) 🎉`, 'SUPERB HALF-CENTURY MILESTONE!');
-          }, 500);
-          return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls, fiftiesClaimed: true };
-        }
+          if (nextStrikerRuns >= 50 && !prev.fiftiesClaimed) {
+            setTimeout(() => {
+              sound.playFiftyFanfare();
+              confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+              triggerSpecialCelebration('fifty', `FIFTY! ${nextStrikerRuns}* (${nextStrikerBalls}b) 🎉`, 'SUPERB HALF-CENTURY MILESTONE!');
+            }, 500);
+            return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls, fiftiesClaimed: true };
+          }
 
-        if (nextStrikerRuns >= 100 && !prev.centuriesClaimed) {
-          setTimeout(() => {
-            sound.playCenturyFanfare();
-            confetti({ particleCount: 150, spread: 100, origin: { y: 0.4 } });
-            triggerSpecialCelebration('century', `CENTURY! ${nextStrikerRuns}* (${nextStrikerBalls}b) 👑`, 'MAGNIFICENT CENTURY FOR THE RECORD BOOKS!');
-          }, 500);
-          return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls, centuriesClaimed: true };
-        }
+          if (nextStrikerRuns >= 100 && !prev.centuriesClaimed) {
+            setTimeout(() => {
+              sound.playCenturyFanfare();
+              confetti({ particleCount: 150, spread: 100, origin: { y: 0.4 } });
+              triggerSpecialCelebration('century', `CENTURY! ${nextStrikerRuns}* (${nextStrikerBalls}b) 👑`, 'MAGNIFICENT CENTURY FOR THE RECORD BOOKS!');
+            }, 500);
+            return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls, centuriesClaimed: true };
+          }
 
-        return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls };
-      });
+          return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls };
+        });
+      }
     }
 
     // Bowler stats
@@ -726,19 +779,20 @@ export default function CricketGame({
 
       if (isStartOfOver) {
         if (overIndex > 0) {
-          // Dynamic Over-by-Over Bowler Rotation: Pacer -> Spinner -> Swing Specialist
-          const bowlerRoster = [
-            { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over' },
-            { name: 'R. Jadeja', type: 'spin', arm: 'left', angle: 'over' },
-            { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'around' },
-            { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around' },
-            { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over' }
-          ];
-          const nextB = bowlerRoster[overIndex % bowlerRoster.length];
+          // Dynamic Over-by-Over Bowler Rotation with unique actions and styles
+          const nextB = WORLD_BOWLERS[overIndex % WORLD_BOWLERS.length];
           setBowler(prev => ({ ...prev, name: nextB.name, wickets: 0, overs: `${overIndex}.0` }));
           setBowlerType(nextB.type);
           setBowlingArm(nextB.arm);
           setBowlingAngle(nextB.angle);
+          setBowlerAction(nextB.action);
+          if (engineRef.current) {
+            engineRef.current.bowler.skinTone = nextB.skinTone;
+            engineRef.current.bowler.faceStyle = nextB.faceStyle;
+            engineRef.current.bowler.actionType = nextB.action;
+          }
+          setFieldChangeNotice(`NEW OVER: ${nextB.name.toUpperCase()} (${nextB.arm === 'left' ? 'LA' : 'RA'} ${nextB.angle.toUpperCase()}) INTO THE ATTACK 🎯`);
+          setTimeout(() => setFieldChangeNotice(null), 3000);
         }
 
         if (overIndex === 0) {
@@ -759,10 +813,15 @@ export default function CricketGame({
 
     const engine = engineRef.current;
     if (engine) {
+      const activeBowlerData = WORLD_BOWLERS.find(b => b.name === bowler.name) || WORLD_BOWLERS[0];
       const deliveryInfo = engine.startDelivery({
         bowlerType,
         bowlingArm,
-        bowlingAngle
+        bowlingAngle,
+        bowlerAction: bowlerAction || activeBowlerData.action,
+        action: bowlerAction || activeBowlerData.action,
+        skinTone: activeBowlerData.skinTone,
+        faceStyle: activeBowlerData.faceStyle
       }, 1.0);
       sound.playBowlerRelease();
       if (deliveryInfo) {
@@ -1015,7 +1074,7 @@ export default function CricketGame({
       });
     }
 
-    // 5. Professional Animated Pitch Cursor / Bounce Landing Reticle
+    // 5. Professional Hawk-Eye Animated Pitch Cursor / Bounce Landing Reticle
     if (engine.ball.state === 'BOWLED') {
       const bx = engine.ball.bounceSpotX;
       const by = engine.ball.bounceSpotY;
@@ -1031,35 +1090,62 @@ export default function CricketGame({
       const ringRadius = Math.max(8, 28 * (1 - (engine.ball.flightProgress || 0)));
 
       ctx.save();
-      // Outer Pulsing Reticle Ring
+      // 1. Soft radial landing zone halo
+      const haloGrad = ctx.createRadialGradient(bx, by, 2, bx, by, 22 + pulse);
+      haloGrad.addColorStop(0, `${lengthColor}55`);
+      haloGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(bx, by, 22 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Outer Pulsing Reticle Ring
       ctx.beginPath();
       ctx.arc(bx, by, 12 + pulse, 0, Math.PI * 2);
       ctx.strokeStyle = lengthColor;
       ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      // Inner Convergence Ring (shrinks as ball gets closer to pitch landing spot)
+      // 3. Inner Convergence Ring (shrinks as ball gets closer to pitch landing spot)
       ctx.beginPath();
       ctx.arc(bx, by, ringRadius, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.6;
       ctx.setLineDash([3, 3]);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Center Crosshairs (+)
+      // 4. Center Crosshairs (+) with 4 compass corner ticks
       ctx.strokeStyle = lengthColor;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(bx - 7, by); ctx.lineTo(bx + 7, by);
-      ctx.moveTo(bx, by - 7); ctx.lineTo(bx, by + 7);
+      ctx.moveTo(bx - 8, by); ctx.lineTo(bx + 8, by);
+      ctx.moveTo(bx, by - 8); ctx.lineTo(bx, by + 8);
       ctx.stroke();
 
-      // Floating Pitch Zone & Bowler Variation Name Badge
-      ctx.font = 'bold 9px "Inter", sans-serif';
-      ctx.fillStyle = lengthColor;
+      // 5. Sleek Dark Pill Badge with glowing border for variation & length label
+      const badgeText = `${varTitle} • ${lengthLabel}`;
+      ctx.font = 'bold 8.5px "Inter", sans-serif';
+      const textWidth = ctx.measureText(badgeText).width;
+      const pillW = textWidth + 14;
+      const pillH = 16;
+      const pillX = bx - pillW / 2;
+      const pillY = by - 24;
+
+      // Dark background pill
+      ctx.fillStyle = 'rgba(10, 16, 28, 0.90)';
+      ctx.beginPath();
+      ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      ctx.fill();
+      ctx.strokeStyle = lengthColor;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Badge text
+      ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.fillText(`${varTitle} • ${lengthLabel}`, bx, by - 16);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, bx, pillY + pillH / 2);
       ctx.restore();
     }
 
@@ -1220,21 +1306,41 @@ export default function CricketGame({
         ctx.restore();
       }
 
+      // 3D Leather Cricket Ball with Radial Light Reflection & Stitched Seam
+      const ballGrad = ctx.createRadialGradient(
+        b.x - visualRadius * 0.35,
+        visualY - visualRadius * 0.35,
+        visualRadius * 0.15,
+        b.x,
+        visualY,
+        visualRadius
+      );
+      ballGrad.addColorStop(0, '#f87171'); // Highlight light reflection
+      ballGrad.addColorStop(0.35, '#dc2626'); // Rich crimson leather
+      ballGrad.addColorStop(0.85, '#991b1b'); // Deep cherry core
+      ballGrad.addColorStop(1, '#450a0a'); // Shadow rim
+
       ctx.beginPath();
       ctx.arc(b.x, visualY, visualRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#dc2626';
+      ctx.fillStyle = ballGrad;
       ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 0.8;
       ctx.stroke();
 
-      // Rotating seam line
-      const seamAngle = (b.traveled || 0) * 0.12;
+      // Authentic Curved Rotating White Stitched Cricket Seam
+      const seamAngle = (b.traveled || 0) * 0.14;
+      ctx.save();
+      ctx.translate(b.x, visualY);
+      ctx.rotate(seamAngle);
       ctx.beginPath();
-      ctx.arc(b.x, visualY, visualRadius * 0.75, seamAngle, seamAngle + Math.PI * 0.55);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.2;
+      ctx.ellipse(0, 0, visualRadius * 0.88, visualRadius * 0.30, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 1.1;
+      ctx.setLineDash([2, 2]); // Stitched thread dashes
       ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
     // 11. Particles (Grass spray, dust & boundary sparks)
@@ -1483,34 +1589,33 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
-        {/* MATCH PHASE CINEMATIC INTRO BANNER (Exact Replica of Image 2)      */}
+        {/* SLEEK MATCH PHASE BROADCAST PILL (Top-16, non-intrusive, does not block pitch) */}
         {/* ================================================================== */}
         {showPhaseBanner && (
           <div
             onClick={() => setShowPhaseBanner(false)}
-            className="absolute inset-x-0 top-[40%] -translate-y-1/2 z-40 flex flex-col items-center justify-center py-4 sm:py-5 bg-[#09111e]/90 border-y-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.35)] backdrop-blur-sm pointer-events-auto cursor-pointer animate-fade-in"
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-35 flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/92 border border-cyan-400/80 shadow-[0_0_20px_rgba(6,182,212,0.3)] backdrop-blur-md cursor-pointer animate-fade-in pointer-events-auto"
           >
-            <span className="text-[11px] sm:text-xs font-black tracking-[0.35em] uppercase text-cyan-400 mb-1">
+            <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">
               {matchConfig?.roundTitle || 'ROUND 1'}
             </span>
-            <h2 className="text-3xl sm:text-5xl font-display font-black tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-cyan-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+            <span className="text-slate-500 text-xs">•</span>
+            <span className="text-xs font-display font-black text-white uppercase tracking-wider">
               {totalBalls <= 6 ? 'SUPER OVER' : totalBalls <= 18 ? 'DEATH OVERS' : totalBalls <= 24 ? 'POWERPLAY' : 'CHASE MASTER'}
-            </h2>
-            <span className="text-xs sm:text-sm font-mono font-black tracking-widest uppercase text-white mt-1 drop-shadow">
-              NEED {runsRemaining} OFF {ballsRemaining}
             </span>
-            <span className="text-[9.5px] text-cyan-300/80 tracking-wider mt-1.5 uppercase font-medium">
-              Swipe ↔️ Leg/Off • ⬆️ Charge • Tap anywhere to Swing
+            <span className="text-slate-500 text-xs">•</span>
+            <span className="text-[10px] font-mono font-bold text-amber-300 uppercase">
+              NEED {runsRemaining} OFF {ballsRemaining}
             </span>
           </div>
         )}
 
         {/* ================================================================== */}
-        {/* TACTICAL AUTOMATIC FIELD ADJUSTMENT NOTICE                        */}
+        {/* TACTICAL AUTOMATIC FIELD ADJUSTMENT NOTICE (Top-22, sleek badge)   */}
         {/* ================================================================== */}
         {fieldChangeNotice && (
-          <div className="absolute top-28 left-1/2 -translate-x-1/2 z-35 pointer-events-none animate-bounce-subtle">
-            <div className="px-4 py-1.5 rounded-xl bg-slate-950/90 border border-amber-400/60 text-amber-300 font-display font-black text-xs sm:text-sm tracking-wider uppercase shadow-2xl backdrop-blur-md flex items-center gap-1.5">
+          <div className="absolute top-22 left-1/2 -translate-x-1/2 z-35 pointer-events-none animate-bounce-subtle">
+            <div className="px-3.5 py-1 rounded-xl bg-slate-950/92 border border-amber-400/70 text-amber-300 font-display font-black text-[11px] sm:text-xs tracking-wider uppercase shadow-xl backdrop-blur-md flex items-center gap-1.5">
               <span>{fieldChangeNotice}</span>
             </div>
           </div>
@@ -1620,65 +1725,25 @@ export default function CricketGame({
         )}
 
         {/* ================================================================== */}
-        {/* NON-INTRUSIVE FLOATING CELEBRATION (BORDERLESS - DOES NOT DISTURB MATCH) */}
+        {/* SLEEK BROADCAST EVENT BADGE (TOP-16, COMPLETELY NON-INTRUSIVE)    */}
         {/* ================================================================== */}
         {celebrationOverlay && (
-          <div className="absolute top-24 left-0 right-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-bounce-subtle px-4">
-            {celebrationOverlay.type === 'six' ? (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-5xl sm:text-7xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-rose-500 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
-                  🚀 MAXIMUM SIX!
-                </div>
-                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  {celebrationOverlay.distanceMeters || 104}M ROCKET INTO THE STANDS! • NEED {runsRemaining} OFF {ballsRemaining}
-                </div>
-              </div>
-            ) : celebrationOverlay.type === 'late_cut' ? (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-rose-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
-                  ⚡ DELICATE LATE CUT!
-                </div>
-                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-amber-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  STEERED PAST SLIPS TO THIRD MAN • NEED {runsRemaining} OFF {ballsRemaining}
-                </div>
-              </div>
-            ) : celebrationOverlay.type === 'four_gap' ? (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-400 to-green-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
-                  ⚡ BULLET FOUR IN GAP!
-                </div>
-                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-emerald-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  SURGICAL GAP PIERCING TO THE ROPE! • NEED {runsRemaining} OFF {ballsRemaining}
-                </div>
-              </div>
-            ) : celebrationOverlay.type === 'four_air' ? (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
-                  🚀 LOFTED FOUR OVER INFIELD!
-                </div>
-                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-cyan-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  CLEARED 30-YARD CIRCLE WITH EASE! • NEED {runsRemaining} OFF {ballsRemaining}
-                </div>
-              </div>
-            ) : celebrationOverlay.type === 'four' ? (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-5xl sm:text-6xl font-display font-black tracking-tighter uppercase italic text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-400 to-cyan-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] animate-pulse">
-                  ⚡ CRACKING FOUR!
-                </div>
-                <div className="mt-1 text-xs sm:text-sm font-mono font-black text-emerald-300 uppercase tracking-widest drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  BULLET BOUNDARY TO THE ROPE! • NEED {runsRemaining} OFF {ballsRemaining}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center flex flex-col items-center">
-                <div className="text-4xl sm:text-5xl font-display font-black tracking-wide uppercase text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-500 to-amber-400 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-                  {celebrationOverlay.title}
-                </div>
-                <div className="mt-1 text-xs font-mono font-bold text-slate-200 tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                  {celebrationOverlay.subTitle}
-                </div>
-              </div>
-            )}
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-fade-in flex flex-col items-center">
+            <div className={`px-4 py-1.5 rounded-full backdrop-blur-md shadow-2xl flex items-center gap-2.5 border ${
+              celebrationOverlay.type === 'six'
+                ? 'bg-gradient-to-r from-amber-500/95 via-orange-500/95 to-rose-600/95 border-amber-300 text-white shadow-amber-500/40'
+                : celebrationOverlay.type?.includes('four') || celebrationOverlay.type === 'late_cut'
+                ? 'bg-gradient-to-r from-emerald-600/95 via-teal-600/95 to-cyan-600/95 border-emerald-300 text-white shadow-emerald-500/40'
+                : 'bg-gradient-to-r from-red-600/95 to-rose-700/95 border-rose-300 text-white shadow-rose-600/40'
+            }`}>
+              <span className="font-display font-black text-xs sm:text-sm tracking-wide uppercase drop-shadow flex items-center gap-1.5">
+                {celebrationOverlay.type === 'six' ? '🚀' : celebrationOverlay.type?.includes('four') ? '⚡' : '💥'}
+                {celebrationOverlay.title}
+              </span>
+              <span className="text-[10px] sm:text-xs font-mono font-bold text-amber-200 tracking-wider uppercase px-2 py-0.5 rounded bg-black/45">
+                {celebrationOverlay.distanceMeters ? `${celebrationOverlay.distanceMeters}M` : celebrationOverlay.subTitle}
+              </span>
+            </div>
           </div>
         )}
 

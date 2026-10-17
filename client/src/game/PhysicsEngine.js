@@ -36,10 +36,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      // Expansive Big Stadium with 30-yard regulation circle (Bigger Stadium)
-      this.boundaryRadius = Math.max(620, Math.min(880, Math.max(this.width, this.height) * 0.95));
-      this.innerCircleRadiusX = 140;
-      this.innerCircleRadiusY = 165;
+      // Expansive Big Stadium with 30-yard regulation circle & visible crowd perimeter
+      this.boundaryRadius = Math.max(380, Math.min(540, Math.max(this.width * 0.82, this.height * 0.48)));
+      this.innerCircleRadiusX = Math.min(145, this.boundaryRadius * 0.38);
+      this.innerCircleRadiusY = Math.min(170, this.boundaryRadius * 0.44);
     } else {
       this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
       this.pitchTop = this.height * 0.26;
@@ -50,10 +50,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 38;
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
-      // Expansive Big Stadium with 30-yard regulation circle
-      this.boundaryRadius = Math.max(660, Math.min(940, Math.max(this.width, this.height) * 0.98));
-      this.innerCircleRadiusX = 155;
-      this.innerCircleRadiusY = 180;
+      // Expansive Big Stadium with 30-yard regulation circle & visible crowd perimeter
+      this.boundaryRadius = Math.max(420, Math.min(640, Math.max(this.width * 0.52, this.height * 0.72)));
+      this.innerCircleRadiusX = Math.min(160, this.boundaryRadius * 0.36);
+      this.innerCircleRadiusY = Math.min(185, this.boundaryRadius * 0.42);
     }
   }
 
@@ -639,6 +639,16 @@ export class CricketPhysics {
         this.ball.speedKmh = 136;
         this.ball.swingCurve = 0;
         this.ball.spinLateralV = 0;
+    }
+
+    if (config.bowlerAction || config.action) {
+      this.bowler.actionType = config.bowlerAction || config.action;
+    }
+    if (config.skinTone) {
+      this.bowler.skinTone = config.skinTone;
+    }
+    if (config.faceStyle) {
+      this.bowler.faceStyle = config.faceStyle;
     }
 
     if (config.speedKmh) {

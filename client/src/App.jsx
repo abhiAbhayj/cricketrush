@@ -51,13 +51,37 @@ export default function App() {
 
   // Quick Play Match Launcher with authentic 1, 2, 3 over, 16, 20, 24, 30 ball chase scenarios
   const startQuickPlay = (selectedBalls = null) => {
-    // 50/50 balanced rotation between pace and spin bowling
-    const pacers = ['fast', 'fastmedium', 'mediumfast', 'inswing', 'outswing', 'reverse_swing'];
-    const spinners = ['legspin', 'offspin', 'googly', 'doosra', 'leftarm_orthodox'];
-    const isSpin = Math.random() < 0.50;
-    const chosenBowler = isSpin
-      ? spinners[Math.floor(Math.random() * spinners.length)]
-      : pacers[Math.floor(Math.random() * pacers.length)];
+    // Comprehensive roster of authentic world-class bowlers with matching styles, arm sides and actions
+    const BOWLER_ROSTER = [
+      { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot' },
+      { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing' },
+      { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin' },
+      { name: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin' },
+      { name: 'R. Ashwin', type: 'offspin', arm: 'right', angle: 'around', action: 'finger_spin' },
+      { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing' },
+      { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin' },
+      { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' },
+      { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' },
+      { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing' },
+      { name: 'Sunil Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox' },
+      { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm' }
+    ];
+
+    const BATSMEN_LINEUP = [
+      profile?.playerName || 'V. Kohli',
+      'R. Sharma',
+      'S. Gill',
+      'S. Yadav',
+      'KL Rahul',
+      'H. Pandya',
+      'R. Pant',
+      'A. Patel',
+      'T. Head',
+      'H. Klaasen',
+      'G. Maxwell'
+    ];
+
+    const chosenBowler = BOWLER_ROSTER[Math.floor(Math.random() * BOWLER_ROSTER.length)];
 
     const ballOptions = [6, 12, 16, 18, 20, 24, 30];
     const ballsAllowed = selectedBalls || ballOptions[Math.floor(Math.random() * ballOptions.length)];
@@ -104,18 +128,19 @@ export default function App() {
       roundTitle = 'T5 CHAMPIONSHIP';
     }
 
-    const isLeftArm = chosenBowler.includes('leftarm') || Math.random() < 0.28;
-    const bowlingArm = isLeftArm ? 'left' : 'right';
-    const bowlingAngle = Math.random() < 0.35 ? 'around' : 'over';
-
     startMatch({
       title: `${ballsAllowed}-Ball ${matchPhase}`,
       targetRuns,
       ballsAllowed,
       wicketsAllowed,
-      bowlerType: chosenBowler,
-      bowlingArm,
-      bowlingAngle,
+      bowlerName: chosenBowler.name,
+      bowlerType: chosenBowler.type,
+      bowlingArm: chosenBowler.arm,
+      bowlingAngle: chosenBowler.angle,
+      bowlerAction: chosenBowler.action,
+      strikerName: BATSMEN_LINEUP[0],
+      nonStrikerName: BATSMEN_LINEUP[1],
+      battingLineup: BATSMEN_LINEUP,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
