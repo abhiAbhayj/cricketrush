@@ -780,8 +780,10 @@ export const CharacterRenderer = {
   },
 
   /**
-   * Draw Realistic Stadium Crowd Stands & Tiered Spectators along the 80m boundary
-   * With dynamic jumping, waving arms, camera flash cheering animations, floodlight towers, and packed stands!
+   * Draw Realistic Stadium Crowd Stands & Tiered Spectators along the 80m boundary (matching Reference Screenshot):
+   * White boundary rope, green grass run-off apron, cyan glowing LED advertising ribbon with white sponsor logos & tunnel gate,
+   * Tier 1 lower seating bowl divided by bright yellow aisle staircases with horizontal ladder rungs,
+   * concourse promenade deck with double safety railings, Tier 2 upper grandstand, and packed colorful spectators!
    */
   drawStadiumCrowdStands(ctx, cx, cy, boundaryRadius, width, height, crowdState = {}) {
     ctx.save();
@@ -789,217 +791,342 @@ export const CharacterRenderer = {
     const landing = crowdState.sixLanding || null;
     const now = Date.now();
 
-    // 1. Boundary Rope Ring (White with yellow foam wedges)
+    // 1. Boundary Rope (Crisp white curved boundary line matching screenshot)
     ctx.beginPath();
     ctx.arc(cx, cy, boundaryRadius, 0, Math.PI * 2);
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 2.4;
     ctx.stroke();
 
-    // Foam Boundary Toblerone Markers (Yellow & Red sponsor blocks)
-    const numMarkers = 48;
-    for (let i = 0; i < numMarkers; i++) {
-      const angle = (i / numMarkers) * Math.PI * 2;
-      const mx = cx + Math.cos(angle) * (boundaryRadius + 3.5);
-      const my = cy + Math.sin(angle) * (boundaryRadius + 3.5);
+    // 2. Green Turf Run-Off Margin behind boundary rope
+    ctx.beginPath();
+    ctx.arc(cx, cy, boundaryRadius + 6, 0, Math.PI * 2);
+    ctx.strokeStyle = '#225325';
+    ctx.lineWidth = 10;
+    ctx.stroke();
+
+    // 3. Electronic LED Advertising Ribbon Board (Curved Cyan/Blue glow with Sponsor Logos)
+    // Board Base Ribbon
+    ctx.beginPath();
+    ctx.arc(cx, cy, boundaryRadius + 14, 0, Math.PI * 2);
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Glowing Cyan Top Edge (Signature illuminated board rim seen in screenshot)
+    ctx.beginPath();
+    ctx.arc(cx, cy, boundaryRadius + 11.5, 0, Math.PI * 2);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // White Illuminated Electronic Sponsor Logos & Brand Boxes spaced along the LED ribbon
+    const numSponsorBanners = 36;
+    for (let b = 0; b < numSponsorBanners; b++) {
+      const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.0003);
+      const bx = cx + Math.cos(bAngle) * (boundaryRadius + 14);
+      const by = cy + Math.sin(bAngle) * (boundaryRadius + 14);
 
       ctx.save();
-      ctx.translate(mx, my);
-      ctx.rotate(angle + Math.PI / 2);
-      ctx.fillStyle = i % 2 === 0 ? '#eab308' : '#ef4444';
-      ctx.fillRect(-7, -2.5, 14, 5);
+      ctx.translate(bx, by);
+      ctx.rotate(bAngle + Math.PI / 2);
+      if (b % 4 === 0) {
+        // White logo block
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-8, -2, 16, 4);
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(-6, -1.2, 12, 2.4);
+      } else if (b % 4 === 2) {
+        // Glowing cyan pill banner
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(-9, -2, 18, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-7, -1, 14, 2);
+      }
       ctx.restore();
     }
 
-    // 2. Animated Electronic LED Boundary Ribbon Board
+    // White Tunnel Entrance Gate cutout on the boundary (seen in screenshot!)
+    const gateAngle = Math.PI * 0.98;
+    const gx = cx + Math.cos(gateAngle) * (boundaryRadius + 13);
+    const gy = cy + Math.sin(gateAngle) * (boundaryRadius + 13);
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(gateAngle + Math.PI / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-10, -3.5, 20, 7);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-8, -2.5, 16, 5);
+    ctx.restore();
+
+    // 4. Stadium Grandstand Dimensions
+    const r1_in = boundaryRadius + 18;
+    const r1_out = boundaryRadius + 96;
+    const r_conc_in = boundaryRadius + 96;
+    const r_conc_out = boundaryRadius + 118;
+    const r2_in = boundaryRadius + 118;
+    const r2_out = boundaryRadius + 230;
+
+    // TIER 1 (Lower Grandstand) Base Concrete Bowl
     ctx.beginPath();
-    ctx.arc(cx, cy, boundaryRadius + 9, 0, Math.PI * 2);
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 8;
+    ctx.arc(cx, cy, (r1_in + r1_out) / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#141e2e';
+    ctx.lineWidth = r1_out - r1_in;
     ctx.stroke();
 
-    // Glowing LED brand pulses along the boundary ribbon
-    const ledCount = 24;
-    for (let l = 0; l < ledCount; l++) {
-      const lAngle = (l / ledCount) * Math.PI * 2 + (now * 0.0008);
-      const lx = cx + Math.cos(lAngle) * (boundaryRadius + 9);
-      const ly = cy + Math.sin(lAngle) * (boundaryRadius + 9);
-      ctx.fillStyle = l % 3 === 0 ? '#38bdf8' : l % 3 === 1 ? '#facc15' : '#4ade80';
+    // CONCOURSE PROMENADE (Between Tier 1 & Tier 2)
+    ctx.beginPath();
+    ctx.arc(cx, cy, (r_conc_in + r_conc_out) / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = r_conc_out - r_conc_in;
+    ctx.stroke();
+
+    // Inner Safety Steel Handrail on Concourse
+    ctx.beginPath();
+    ctx.arc(cx, cy, r_conc_in + 1, 0, Math.PI * 2);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // Outer Safety Steel Handrail on Concourse
+    ctx.beginPath();
+    ctx.arc(cx, cy, r_conc_out - 1, 0, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // TIER 2 (Upper Grandstand) Base Concrete Bowl
+    ctx.beginPath();
+    ctx.arc(cx, cy, (r2_in + r2_out) / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = '#0d1522';
+    ctx.lineWidth = r2_out - r2_in;
+    ctx.stroke();
+
+    // 5. BRIGHT YELLOW AISLE STAIRCASES (The defining signature visual in screenshot!)
+    // 20 Gangways / Staircases dividing Tier 1 & Tier 2 into neat bays
+    const numAisles = 20;
+    const dTheta = 0.034; // ~1.95 degrees wide aisle
+
+    for (let a = 0; a < numAisles; a++) {
+      const aisleAngle = (a / numAisles) * Math.PI * 2;
+
+      // Draw Tier 1 Yellow Staircase (r1_in to r1_out)
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.3;
+
+      // Side rail 1
       ctx.beginPath();
-      ctx.arc(lx, ly, 2.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r1_in, cy + Math.sin(aisleAngle - dTheta / 2) * r1_in);
+      ctx.lineTo(cx + Math.cos(aisleAngle - dTheta / 2) * (r1_out - 2), cy + Math.sin(aisleAngle - dTheta / 2) * (r1_out - 2));
+      ctx.stroke();
+
+      // Side rail 2
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(aisleAngle + dTheta / 2) * r1_in, cy + Math.sin(aisleAngle + dTheta / 2) * r1_in);
+      ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * (r1_out - 2), cy + Math.sin(aisleAngle + dTheta / 2) * (r1_out - 2));
+      ctx.stroke();
+
+      // Horizontal yellow ladder step rungs spaced every 6.5px radially!
+      for (let r = r1_in + 4; r < r1_out - 2; r += 6.5) {
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r, cy + Math.sin(aisleAngle - dTheta / 2) * r);
+        ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r, cy + Math.sin(aisleAngle + dTheta / 2) * r);
+        ctx.stroke();
+      }
+
+      // Draw Tier 2 Yellow Staircase (r2_in to r2_out)
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * (r2_in + 2), cy + Math.sin(aisleAngle - dTheta / 2) * (r2_in + 2));
+      ctx.lineTo(cx + Math.cos(aisleAngle - dTheta / 2) * r2_out, cy + Math.sin(aisleAngle - dTheta / 2) * r2_out);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(aisleAngle + dTheta / 2) * (r2_in + 2), cy + Math.sin(aisleAngle + dTheta / 2) * (r2_in + 2));
+      ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r2_out, cy + Math.sin(aisleAngle + dTheta / 2) * r2_out);
+      ctx.stroke();
+
+      for (let r = r2_in + 5; r < r2_out - 4; r += 7.0) {
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r, cy + Math.sin(aisleAngle - dTheta / 2) * r);
+        ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r, cy + Math.sin(aisleAngle + dTheta / 2) * r);
+        ctx.stroke();
+      }
     }
 
-    // 3. Fully Packed Tiered Grandstands (8 Concentric Tier Steps full of People!)
-    const stepDistances = [
-      boundaryRadius + 18,
-      boundaryRadius + 34,
-      boundaryRadius + 52,
+    // 6. PACKED COLORFUL SPECTATORS IN SEATING BAYS
+    // Vibrant shirt palette matching Reference Screenshot: Royal Blue, Red, Yellow, White, Green, Orange
+    const jerseyColors = ['#2563eb', '#dc2626', '#f59e0b', '#ffffff', '#16a34a', '#ea580c', '#38bdf8', '#ef4444'];
+    const skinTones = ['#f5d0b0', '#e0a980', '#c68656', '#b57948'];
+
+    // Rows for Tier 1
+    const tier1Rows = [
+      boundaryRadius + 24,
+      boundaryRadius + 32,
+      boundaryRadius + 40,
+      boundaryRadius + 48,
+      boundaryRadius + 56,
+      boundaryRadius + 64,
       boundaryRadius + 72,
-      boundaryRadius + 94,
-      boundaryRadius + 118,
-      boundaryRadius + 144,
-      boundaryRadius + 172
+      boundaryRadius + 80,
+      boundaryRadius + 88
     ];
-    const jerseyColors = ['#2563eb', '#dc2626', '#eab308', '#10b981', '#9333ea', '#ffffff', '#0284c7', '#ea580c'];
 
-    stepDistances.forEach((dist, stepIdx) => {
-      // Concrete tier step bench
-      ctx.beginPath();
-      ctx.arc(cx, cy, dist, 0, Math.PI * 2);
-      ctx.strokeStyle = stepIdx % 2 === 0 ? '#1e293b' : '#0f172a';
-      ctx.lineWidth = 14;
-      ctx.stroke();
+    // Rows for Tier 2
+    const tier2Rows = [
+      boundaryRadius + 125,
+      boundaryRadius + 134,
+      boundaryRadius + 143,
+      boundaryRadius + 152,
+      boundaryRadius + 162,
+      boundaryRadius + 172,
+      boundaryRadius + 182,
+      boundaryRadius + 193,
+      boundaryRadius + 204,
+      boundaryRadius + 215
+    ];
 
-      // Steel Safety Handrail along the tier
-      ctx.beginPath();
-      ctx.arc(cx, cy, dist + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    const drawSpectatorRows = (rows, isUpper = false) => {
+      const bayAngleSpan = (Math.PI * 2 / numAisles) - dTheta - 0.024;
 
-      // Densely packed spectators along this tier
-      const specCount = 48 + stepIdx * 8;
-      for (let s = 0; s < specCount; s++) {
-        const sAngle = (s / specCount) * Math.PI * 2;
-        let sx = cx + Math.cos(sAngle) * dist;
-        let sy = cy + Math.sin(sAngle) * dist;
+      rows.forEach((rowDist, rowIdx) => {
+        // Draw concrete seating bench line
+        ctx.beginPath();
+        ctx.arc(cx, cy, rowDist, 0, Math.PI * 2);
+        ctx.strokeStyle = isUpper ? '#162235' : '#1c283c';
+        ctx.lineWidth = 6.8;
+        ctx.stroke();
 
-        // Ball landing reaction: nearby spectators scramble / cheer
-        let isNearLanding = false;
-        if (landing && landing.active) {
-          const dToLanding = Math.hypot(sx - landing.x, sy - landing.y);
-          if (dToLanding < 65) {
-            isNearLanding = true;
-            const scatterAngle = Math.atan2(sy - landing.y, sx - landing.x);
-            sx += Math.cos(scatterAngle) * 7;
-            sy += Math.sin(scatterAngle) * 7 - 4;
-          }
-        }
+        // Render spectators in each bay along this row
+        for (let a = 0; a < numAisles; a++) {
+          const aisleCenter = (a / numAisles) * Math.PI * 2;
+          const bayStart = aisleCenter + dTheta / 2 + 0.012;
+          const numSeats = Math.floor((rowDist * bayAngleSpan) / 6.2);
 
-        // Cheering jump offset
-        if (isCheering || isNearLanding) {
-          const jumpOffset = Math.abs(Math.sin(now * 0.012 + s * 0.65)) * 5;
-          sy -= jumpOffset;
-        }
+          for (let s = 0; s < numSeats; s++) {
+            const seatAngle = bayStart + (s + 0.5) * (bayAngleSpan / numSeats);
+            let sx = cx + Math.cos(seatAngle) * rowDist;
+            let sy = cy + Math.sin(seatAngle) * rowDist;
 
-        // Cheering raised arms or placards
-        if (isCheering || isNearLanding) {
-          ctx.strokeStyle = '#d49b70';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.moveTo(sx - 2.5, sy); ctx.lineTo(sx - 5.5, sy - 6.5);
-          ctx.moveTo(sx + 2.5, sy); ctx.lineTo(sx + 5.5, sy - 6.5);
-          ctx.stroke();
+            // Ball landing in this bay reaction:
+            let isNearLanding = false;
+            if (landing && landing.active) {
+              const dToLanding = Math.hypot(sx - landing.x, sy - landing.y);
+              if (dToLanding < 75) {
+                isNearLanding = true;
+                const scatter = Math.atan2(sy - landing.y, sx - landing.x);
+                sx += Math.cos(scatter) * 6;
+                sy += Math.sin(scatter) * 6 - 3;
+              }
+            }
 
-          // Boundary Placard Signs ("4" or "6") held by occasional fans!
-          if (s % 7 === 0) {
-            ctx.fillStyle = s % 2 === 0 ? '#facc15' : '#ffffff';
-            ctx.fillRect(sx - 4.5, sy - 12, 9, 6);
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 5px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(s % 2 === 0 ? '6' : '4', sx, sy - 7.5);
-          } else if (s % 11 === 0) {
-            // Cheering team flag on pole
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(sx + 4, sy); ctx.lineTo(sx + 4, sy - 13); ctx.stroke();
-            ctx.fillStyle = s % 3 === 0 ? '#3b82f6' : s % 3 === 1 ? '#ef4444' : '#10b981';
+            // Cheering jump offset
+            if (isCheering || isNearLanding) {
+              const jumpOffset = Math.abs(Math.sin(now * 0.014 + a * 1.5 + s * 0.6)) * 4.5;
+              sy -= jumpOffset;
+            }
+
+            // Spectator Shirt (Circular colorful dots as seen in screenshot)
+            const colorIdx = (a * 17 + rowIdx * 5 + s * 3) % jerseyColors.length;
+            ctx.fillStyle = isNearLanding ? '#fef08a' : jerseyColors[colorIdx];
             ctx.beginPath();
-            ctx.moveTo(sx + 4, sy - 13);
-            ctx.lineTo(sx + 10, sy - 10);
-            ctx.lineTo(sx + 4, sy - 7);
-            ctx.closePath();
+            ctx.arc(sx, sy, 2.7, 0, Math.PI * 2);
             ctx.fill();
+
+            // Spectator Head
+            const skinIdx = (a * 7 + s * 2) % skinTones.length;
+            ctx.fillStyle = skinTones[skinIdx];
+            ctx.beginPath();
+            ctx.arc(sx, sy - 2.1, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cheering raised arms or "6" placards
+            if (isCheering || isNearLanding) {
+              if (s % 5 === 0) {
+                // Cheering arms raised up
+                ctx.strokeStyle = skinTones[skinIdx];
+                ctx.lineWidth = 1.1;
+                ctx.beginPath();
+                ctx.moveTo(sx - 2.2, sy); ctx.lineTo(sx - 4.5, sy - 5.5);
+                ctx.moveTo(sx + 2.2, sy); ctx.lineTo(sx + 4.5, sy - 5.5);
+                ctx.stroke();
+              } else if (s % 9 === 0) {
+                // Golden "6" placard held high
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(sx - 4, sy - 10, 8, 5.5);
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 5px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('6', sx, sy - 6);
+              }
+            }
+
+            // Random camera flashes in packed crowd during a boundary six
+            if (isCheering ? Math.random() < 0.035 : Math.random() < 0.005) {
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(sx, sy - 1, 3.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
           }
         }
+      });
+    };
 
-        // Spectator Shirt
-        ctx.fillStyle = isNearLanding ? '#fef08a' : jerseyColors[(s * 5 + stepIdx * 3) % jerseyColors.length];
-        ctx.beginPath();
-        ctx.arc(sx, sy, 3.2, 0, Math.PI * 2);
-        ctx.fill();
+    drawSpectatorRows(tier1Rows, false);
+    drawSpectatorRows(tier2Rows, true);
 
-        // Spectator Head
-        ctx.fillStyle = '#d49b70';
-        ctx.beginPath();
-        ctx.arc(sx, sy - 2.8, 2.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Spectator Cap
-        if (s % 2 === 0) {
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(sx - 2, sy - 5, 4, 1.5);
-        }
-
-        // Random camera flashes & mobile LED torches twinkling in the packed crowd
-        if (isCheering ? Math.random() < 0.04 : Math.random() < 0.008) {
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(sx, sy - 1, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    });
-
-    // 4. Corner Stadium Floodlight Towers
+    // 7. Corner Stadium Floodlight Towers
     const floodlightAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
     floodlightAngles.forEach(fAngle => {
-      const flDist = boundaryRadius + 185;
+      const flDist = boundaryRadius + 245;
       const flX = cx + Math.cos(fAngle) * flDist;
       const flY = cy + Math.sin(fAngle) * flDist;
 
-      // Heavy steel lattice tower base
-      ctx.fillStyle = '#334155';
+      // Steel lattice base
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.roundRect(flX - 10, flY - 10, 20, 20, 4);
+      ctx.roundRect(flX - 12, flY - 12, 24, 24, 4);
       ctx.fill();
-      ctx.strokeStyle = '#64748b';
+      ctx.strokeStyle = '#475569';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Floodlight Lamp Bank (Bright glowing stadium lights)
+      // Glowing Lamp Bank
       ctx.fillStyle = '#fef08a';
       ctx.shadowColor = '#fef08a';
-      ctx.shadowBlur = 12;
-      for (let lx = -6; lx <= 6; lx += 6) {
-        for (let ly = -6; ly <= 6; ly += 6) {
+      ctx.shadowBlur = 10;
+      for (let lx = -7; lx <= 7; lx += 7) {
+        for (let ly = -7; ly <= 7; ly += 7) {
           ctx.beginPath();
-          ctx.arc(flX + lx, flY + ly, 2.5, 0, Math.PI * 2);
+          ctx.arc(flX + lx, flY + ly, 2.8, 0, Math.PI * 2);
           ctx.fill();
         }
       }
       ctx.shadowBlur = 0;
     });
 
-    // 5. Ball Landing Impact Shockwave in the Stands
+    // 8. Ball Landing Impact Shockwave in the Stands
     if (landing && landing.active) {
-      ctx.save();
       const lx = landing.x;
       const ly = landing.y;
 
-      // Expanding ripple shockwave in stands
       ctx.beginPath();
       ctx.arc(lx, ly, 22 + Math.sin(now * 0.015) * 8, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Camera Flash Burst
       ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
       ctx.beginPath();
-      ctx.arc(lx, ly, 30, 0, Math.PI * 2);
+      ctx.arc(lx, ly, 28, 0, Math.PI * 2);
       ctx.fill();
 
-      // Floating text badge in stands
-      ctx.font = '900 13px "Inter", sans-serif';
+      ctx.font = '900 12px "Inter", sans-serif';
       ctx.fillStyle = '#fef08a';
       ctx.textAlign = 'center';
       ctx.shadowColor = '#000000';
       ctx.shadowBlur = 8;
-      ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 26);
-      ctx.restore();
+      ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 24);
     }
 
     ctx.restore();

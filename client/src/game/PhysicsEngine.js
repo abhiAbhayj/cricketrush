@@ -86,7 +86,9 @@ export class CricketPhysics {
       timeUntilArrivalMs: 0, // For batsman timing meter
       totalFlightTimeMs: 400,
       flightProgress: 0,
-      trail: []
+      trail: [],
+      airTrail: [],
+      groundTrail: []
     };
 
     if (!this.batsmanHand) {
@@ -1058,6 +1060,8 @@ export class CricketPhysics {
   executeHit(timingQuality, power, shotStyle) {
     this.ball.state = 'HIT';
     this.ball.hasBounced = true;
+    this.ball.airTrail = [{ x: this.ball.x, y: this.ball.y - this.ball.height }];
+    this.ball.groundTrail = [{ x: this.ball.x, y: this.ball.y }];
 
     let exitAngle = 0;
     let altitudeVz = 0;
@@ -1475,8 +1479,13 @@ export class CricketPhysics {
       this.ball.y += this.ball.vy * dt;
       this.ball.traveled += Math.hypot(this.ball.vx, this.ball.vy);
 
-      this.ball.trail.push({ x: this.ball.x, y: this.ball.y - this.ball.height });
-      if (this.ball.trail.length > 30) this.ball.trail.shift();
+      if (!this.ball.airTrail) this.ball.airTrail = [];
+      if (!this.ball.groundTrail) this.ball.groundTrail = [];
+      this.ball.airTrail.push({ x: this.ball.x, y: this.ball.y - this.ball.height });
+      this.ball.groundTrail.push({ x: this.ball.x, y: this.ball.y });
+      if (this.ball.airTrail.length > 60) this.ball.airTrail.shift();
+      if (this.ball.groundTrail.length > 60) this.ball.groundTrail.shift();
+      this.ball.trail = this.ball.airTrail;
 
       // Rocket Six Trail: blazing glowing sparks & fiery comet smoke
       if (this.ball.isRocketSix) {

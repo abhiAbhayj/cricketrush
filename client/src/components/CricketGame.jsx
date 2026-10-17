@@ -314,11 +314,11 @@ export default function CricketGame({
             cam.targetZoom = 0.94;
           } else if (engine.ball.state === 'HIT') {
             if (engine.ball.isRocketSix) {
-              // Angle 4: SIX_SKYCAM - panoramic skycam tracking rocket six into crowd stands on 80m ground
+              // Angle 4: SIX_SKYCAM - broadcast tracking camera for soaring six into crowd stands (matching Reference Screenshot)
               cam.mode = 'SIX_SKYCAM';
-              cam.targetX = engine.ball.x;
-              cam.targetY = engine.ball.y;
-              cam.targetZoom = 0.65; // Broad expansive view of the 80m ground and cheering stands
+              cam.targetX = engine.ball.x * 0.72 + cx * 0.28;
+              cam.targetY = engine.ball.y * 0.72 + cy * 0.28;
+              cam.targetZoom = 0.82; // Perfectly balanced broadcast framing showing both pitch and grandstand!
             } else if (engine.running?.active && engine.running?.isCallingRun) {
               // Angle 3: RUNNING_PITCH - broadcast running pitch view showing batsmen sprinting!
               cam.mode = 'RUNNING_PITCH';
@@ -1265,7 +1265,21 @@ export default function CricketGame({
       const shadowRadius = Math.max(2.5, b.radius * (1 / (1 + h * 0.045)));
       const shadowAlpha = Math.max(0.10, 0.45 / (1 + h * 0.05));
 
-      // Dynamic ground shadow
+      // 1. Faint Ground Shadow Trail on Turf (matching Reference Screenshot!)
+      if (b.groundTrail && b.groundTrail.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(b.groundTrail[0].x, b.groundTrail[0].y);
+        for (let i = 1; i < b.groundTrail.length; i++) {
+          ctx.lineTo(b.groundTrail[i].x, b.groundTrail[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 2. Dynamic Ground Shadow on the grass turf below the airborne ball
       ctx.beginPath();
       ctx.ellipse(b.x, b.y, shadowRadius * 1.3, shadowRadius * 0.65, 0, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
@@ -1283,10 +1297,21 @@ export default function CricketGame({
         ctx.restore();
       }
 
-      // Thin dotted red trajectory line connecting bowler release to ball (matching Reference Screenshot!)
-      if (b.trail && b.trail.length > 1) {
+      // 3. Smooth Aerial Trajectory Arc Trail in the sky (matching Reference Screenshot!)
+      if (b.airTrail && b.airTrail.length > 1) {
         ctx.save();
-        // Subtle soft red ambient laser glow
+        ctx.strokeStyle = 'rgba(235, 220, 190, 0.85)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(b.airTrail[0].x, b.airTrail[0].y);
+        for (let i = 1; i < b.airTrail.length; i++) {
+          ctx.lineTo(b.airTrail[i].x, b.airTrail[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      } else if (b.trail && b.trail.length > 1 && b.state === 'BOWLED') {
+        // Thin dotted red laser trajectory line connecting bowler release to ball
+        ctx.save();
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.25)';
         ctx.lineWidth = 3.6;
         ctx.beginPath();
@@ -1296,10 +1321,7 @@ export default function CricketGame({
         }
         ctx.stroke();
 
-        // Crisp dotted red laser line
-        ctx.strokeStyle = b.state === 'BOWLED'
-          ? (b.hasBounced ? '#f59e0b' : '#ef4444')
-          : '#e05338';
+        ctx.strokeStyle = b.hasBounced ? '#f59e0b' : '#ef4444';
         ctx.lineWidth = 1.4;
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
@@ -1314,31 +1336,7 @@ export default function CricketGame({
 
       // Scaled airborne cricket ball with rocket altitude
       const visualY = b.y - h;
-      const visualRadius = b.radius + (h * (b.isRocketSix ? 0.22 : 0.14));
-
-      // Fiery rocket aura for towering sixes & speed aura for gap/aerial boundaries
-      if (b.isRocketSix) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(b.x, visualY, visualRadius + 5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
-        ctx.fill();
-        ctx.restore();
-      } else if (b.isFourInGap) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(b.x, visualY, visualRadius + 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
-        ctx.fill();
-        ctx.restore();
-      } else if (b.isAerialFour) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(b.x, visualY, visualRadius + 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
-        ctx.fill();
-        ctx.restore();
-      }
+      const visualRadius = b.radius + (h * (b.isRocketSix ? 0.18 : 0.12));
 
       // 3D Leather Cricket Ball with Radial Light Reflection & Stitched Seam
       const ballGrad = ctx.createRadialGradient(
