@@ -794,6 +794,44 @@ export default function NetPractice({ onBack, profile, settings }) {
         )}
       </div>
 
+      {/* Quick Presets Section */}
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Quick Presets
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+          {[
+            { label: '⚡ Fast 148', style: 'fast', speed: 148, category: 'pace', length: 'good' },
+            { label: '🌀 Leg Break', style: 'legbreak', speed: 78, category: 'spin', length: 'good' },
+            { label: '🎯 Toe Yorker', style: 'yorker', speed: 145, category: 'pace', length: 'yorker' },
+            { label: '🔥 Sharp Bouncer', style: 'bouncer', speed: 146, category: 'pace', length: 'short' }
+          ].map((preset, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                sound.playClick();
+                setBowlingCategory(preset.category);
+                setBowlerStyle(preset.style);
+                setSpeedKmh(preset.speed);
+                setDeliveryLength(preset.length);
+                updateDeliveryConfig({
+                  bowlerStyle: preset.style,
+                  speedKmh: preset.speed,
+                  deliveryLength: preset.length
+                });
+              }}
+              className={`p-1.5 rounded-xl border text-[11px] font-bold text-center transition-all ${
+                bowlerStyle === preset.style
+                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Category Toggle: PACE vs SPIN */}
       <div className="flex p-1 bg-slate-900 rounded-xl border border-slate-800">
         <button
@@ -1054,23 +1092,24 @@ export default function NetPractice({ onBack, profile, settings }) {
           </button>
 
           {/* Current variation badge */}
-          <div className="flex-1 max-w-sm px-2.5 py-1 rounded-xl bg-slate-950/90 border border-slate-700/80 text-center shadow-lg truncate">
-            <span className="text-[10px] font-mono text-emerald-400 font-black mr-1">
-              {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlingAngle === 'around' ? 'Around' : 'Over'}
-            </span>
-            <span className="text-xs font-bold text-white uppercase truncate">
-              {currentStyleObj.icon} {currentStyleObj.label}
-            </span>
-            <span className="text-[10px] font-mono text-amber-300 ml-1">
-              ({speedKmh} km/h • {deliveryLength.toUpperCase()})
-            </span>
+          <div
+            onClick={() => setShowControlsDrawer(true)}
+            className="flex-1 max-w-sm px-2.5 py-1.5 rounded-xl bg-slate-950/90 border border-slate-700/80 text-center shadow-lg truncate cursor-pointer hover:border-emerald-500/50 transition-colors"
+          >
+            <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-white uppercase truncate">
+              <span>{currentStyleObj.icon}</span>
+              <span className="truncate">{currentStyleObj.label}</span>
+              <span className="text-[10px] font-mono text-emerald-400 font-black">
+                {speedKmh} km/h • {deliveryLength.toUpperCase()}
+              </span>
+            </div>
           </div>
 
           {/* Quick Actions: Bowl & Controls drawer toggle */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => { sound.playClick(); triggerDelivery(); }}
-              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-transform flex items-center gap-1"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-transform flex items-center gap-1"
               title="Bowl Now"
             >
               <Zap className="w-3.5 h-3.5 fill-slate-950" />
@@ -1088,40 +1127,6 @@ export default function NetPractice({ onBack, profile, settings }) {
           </div>
         </div>
 
-        {/* Mobile Quick Preset Chips Row */}
-        <div className="absolute top-12 left-0 right-0 z-25 flex items-center justify-center gap-1.5 px-2 pointer-events-auto overflow-x-auto py-1">
-          {[
-            { label: '⚡ Fast 148', style: 'fast', speed: 148, category: 'pace', arm: 'right', angle: 'over', length: 'good' },
-            { label: '🌀 Leg Spin 78', style: 'legbreak', speed: 78, category: 'spin', arm: 'right', angle: 'over', length: 'good' },
-            { label: '🎯 Yorker 145', style: 'yorker', speed: 145, category: 'pace', arm: 'right', angle: 'over', length: 'yorker' },
-            { label: '🔥 Bouncer 146', style: 'bouncer', speed: 146, category: 'pace', arm: 'right', angle: 'over', length: 'short' }
-          ].map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                sound.playClick();
-                setBowlingCategory(preset.category);
-                setBowlerStyle(preset.style);
-                setSpeedKmh(preset.speed);
-                setDeliveryLength(preset.length);
-                updateDeliveryConfig({
-                  bowlerStyle: preset.style,
-                  speedKmh: preset.speed,
-                  deliveryLength: preset.length
-                });
-                triggerDelivery();
-              }}
-              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all whitespace-nowrap active:scale-95 ${
-                bowlerStyle === preset.style
-                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300 shadow-sm'
-                  : 'bg-slate-950/80 border-slate-700/80 text-slate-300 hover:text-white'
-              }`}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-
         {/* Canvas (Touch anywhere on screen to play shot) */}
         <canvas
           ref={canvasRef}
@@ -1133,9 +1138,9 @@ export default function NetPractice({ onBack, profile, settings }) {
           className="w-full h-full cursor-pointer touch-none"
         />
 
-        {/* Timing Feedback Banner (Positioned at top so it does not obscure pitch) */}
+        {/* Timing Feedback Banner (Cleanly centered below top bar) */}
         {feedback && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce-subtle">
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce-subtle">
             <div
               className={`px-4 py-1.5 rounded-2xl font-display font-black text-xs sm:text-sm tracking-wider uppercase border shadow-2xl backdrop-blur-md ${
                 feedback.type === 'perfect'
@@ -1153,8 +1158,8 @@ export default function NetPractice({ onBack, profile, settings }) {
         )}
 
         {/* Real-Time Visual Timing Meter */}
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-58 sm:w-66">
-          <div className="bg-[#0c1424]/90 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-56 sm:w-64 max-w-[85vw]">
+          <div className="bg-[#0c1424]/90 border border-slate-700/80 rounded-2xl p-2 sm:p-2.5 shadow-2xl backdrop-blur-md">
             <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
               <span className="text-amber-400">Early</span>
               <span className="text-emerald-400 font-extrabold flex items-center gap-1">

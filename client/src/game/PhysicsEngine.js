@@ -175,6 +175,8 @@ export class CricketPhysics {
       nonStrikerX: isLHB ? this.cx - 20 : this.cx + 20,
       nonStrikerY: this.bowlerCreaseY,
       isSliding: false,
+      idleCreaseTimer: 0,
+      queuedRun: false,
       throwActive: false,
       throwProgress: 0,
       throwFromX: 0,
@@ -191,18 +193,24 @@ export class CricketPhysics {
   commandRun() {
     if (!this.running || !this.running.active) return false;
     if (this.running.runsCompleted >= 6) return false;
-    if (!this.running.isCallingRun) {
-      this.running.isCallingRun = true;
-      this.running.isHolding = false;
+    if (this.running.isCallingRun) {
+      // Seamlessly queue the next run (2nd, 3rd, 4th, 5th, 6th) so batsmen turn and sprint without stopping!
+      this.running.queuedRun = true;
       return true;
     }
-    return false;
+    this.running.isCallingRun = true;
+    this.running.isHolding = false;
+    this.running.queuedRun = false;
+    this.running.idleCreaseTimer = 0;
+    return true;
   }
 
   commandHold() {
     if (!this.running || !this.running.active) return false;
     this.running.isHolding = true;
     this.running.isCallingRun = false;
+    this.running.queuedRun = false;
+    this.running.idleCreaseTimer = 0;
     return true;
   }
 
@@ -1233,6 +1241,8 @@ export class CricketPhysics {
       this.running.nonStrikerX = this.cx + 20;
       this.running.nonStrikerY = this.bowlerCreaseY;
       this.running.isSliding = false;
+      this.running.idleCreaseTimer = 0;
+      this.running.queuedRun = false;
       this.running.throwActive = false;
       this.running.throwProgress = 0;
       this.running.dangerLevel = 0;
@@ -1662,7 +1672,15 @@ export class CricketPhysics {
             this.running.progress = 0;
             this.running.direction = -this.running.direction;
             this.running.isSliding = false;
-            this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
+
+            if (this.running.queuedRun) {
+              this.running.queuedRun = false;
+              this.running.isCallingRun = true;
+              this.running.idleCreaseTimer = 0;
+            } else {
+              this.running.isCallingRun = false; // Hold safe at crease unless player commands next run!
+              this.running.idleCreaseTimer = 75; // ~1.25s grace window for player to call or queue next run!
+            }
 
             if (this.running.runsCompleted >= 6) {
               this.running.active = false;
@@ -1670,6 +1688,8 @@ export class CricketPhysics {
               return { event: 'RUNS', runs: this.running.runsCompleted };
             }
           }
+        } else if (this.running.idleCreaseTimer > 0) {
+          this.running.idleCreaseTimer -= dt;
         }
 
         // Fielder laser throw arrival & Run-Out detection
@@ -1695,8 +1715,8 @@ export class CricketPhysics {
               this.createSparks(this.running.throwTargetX, this.running.throwTargetY, '#ffffff', 14);
 
               // If batsman is not running (holding crease or completed sprint), throw arrived at keeper/bowler!
-              // The delivery concludes cleanly without waiting!
-              if (!this.running.isCallingRun) {
+              // The delivery concludes cleanly without waiting once idle grace timer expires!
+              if (!this.running.isCallingRun && (!this.running.idleCreaseTimer || this.running.idleCreaseTimer <= 0)) {
                 this.running.active = false;
                 this.ball.state = 'DEAD';
                 if (this.running.runsCompleted > 0) {
@@ -1711,7 +1731,7 @@ export class CricketPhysics {
 
         // When ball has come to a stop or fielder gathered it:
         if (!this.ball.isAirborne && (currentSpeed < 0.28 || this.ball.isStoppedByFielder)) {
-          if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive)) {
+          if (this.running.isHolding || (!this.running.isCallingRun && !this.running.throwActive && (!this.running.idleCreaseTimer || this.running.idleCreaseTimer <= 0))) {
             this.running.active = false;
             this.ball.state = 'DEAD';
             if (this.running.runsCompleted > 0) {

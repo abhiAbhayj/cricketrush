@@ -56,48 +56,48 @@ export default function ChallengeList({ onBack, onPlayChallenge, onCreateNew }) 
   });
 
   return (
-    <div className="w-full h-full flex flex-col bg-cricket-dark text-slate-100 overflow-y-auto safe-p-top safe-p-bottom px-4 py-6">
+    <div className="w-full h-full flex flex-col bg-cricket-dark text-slate-100 overflow-y-auto safe-p-top safe-p-bottom px-3 sm:px-4 py-4 sm:py-6">
       <div className="max-w-2xl mx-auto w-full">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6">
           <button
             onClick={() => { sound.playClick(); onBack(); }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            <span>Back</span>
           </button>
-          <h1 className="text-2xl font-display font-extrabold tracking-wide text-white">
+          <h1 className="text-lg sm:text-2xl font-display font-extrabold tracking-wide text-white text-center">
             CHALLENGE ARENA
           </h1>
           <button
             onClick={() => { sound.playClick(); onCreateNew(); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-bold text-sm transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-bold text-xs sm:text-sm transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
-            Create
+            <span>Create</span>
           </button>
         </div>
 
         {/* Direct Code Join Input */}
-        <form onSubmit={handleDirectCodeSubmit} className="glass-panel rounded-2xl p-4 mb-6">
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+        <form onSubmit={handleDirectCodeSubmit} className="glass-panel rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+          <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
             Have a Friend's Challenge Code?
           </label>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="e.g. CHASE6, DEATH18, SPIN6, CHASE12..."
+              placeholder="e.g. CHASE6, DEATH18, SPIN6..."
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-white font-mono text-sm tracking-wider uppercase"
+              className="flex-1 px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:outline-none text-white font-mono text-xs sm:text-sm tracking-wider uppercase min-w-0"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-extrabold text-sm tracking-wider flex items-center gap-1.5 transition-transform active:scale-95"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-display font-extrabold text-xs sm:text-sm tracking-wider flex items-center gap-1.5 transition-transform active:scale-95 flex-shrink-0"
             >
-              <Play className="w-4 h-4 fill-slate-950" />
-              PLAY
+              <Play className="w-3.5 h-3.5 fill-slate-950" />
+              <span>PLAY</span>
             </button>
           </div>
           {codeError && (
@@ -109,10 +109,10 @@ export default function ChallengeList({ onBack, onPlayChallenge, onCreateNew }) 
         </form>
 
         {/* Bowler & Format Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 text-xs font-bold no-scrollbar">
+        <div className="flex gap-1.5 overflow-x-auto pb-2 mb-4 text-xs font-bold scrollbar-none">
           {[
-            { id: 'all', label: 'All Challenges' },
-            { id: 'daily', label: '🔥 Daily Formats (10-60B)' },
+            { id: 'all', label: 'All' },
+            { id: 'daily', label: '🔥 Daily (10-60B)' },
             { id: 'fast', label: '⚡ Fast Bowling' },
             { id: 'spin', label: '🌀 Spin Attack' },
             { id: 'swing', label: '🌪️ Swing Scenarios' }
@@ -120,7 +120,7 @@ export default function ChallengeList({ onBack, onPlayChallenge, onCreateNew }) 
             <button
               key={tab.id}
               onClick={() => { sound.playClick(); setActiveTab(tab.id); }}
-              className={`px-3.5 py-2 rounded-xl whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-all text-xs font-bold ${
                 activeTab === tab.id
                   ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 shadow-sm'
                   : 'bg-slate-900/60 text-slate-400 border border-slate-800/80 hover:text-white'

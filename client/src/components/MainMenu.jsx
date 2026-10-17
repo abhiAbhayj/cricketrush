@@ -179,45 +179,75 @@ export default function MainMenu({
                 sound.playClick();
                 setShowTeamModal(true);
               }}
-              className="mt-3 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-slate-950 text-white border border-white/10 flex items-center justify-between cursor-pointer transition-all shadow-md group"
+              className="mt-3 p-2.5 sm:px-3 sm:py-2 rounded-2xl bg-slate-950/90 hover:bg-slate-950 text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer transition-all shadow-md group"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg select-none">{currentBattingTeam.badge}</span>
-                  <div>
-                    <span className="text-amber-300 font-display font-black text-xs block leading-none">
-                      {currentBattingTeam.code} (Batting)
-                    </span>
-                    <span className="text-[10px] text-slate-300 font-medium">
-                      {currentBattingTeam.batsmen?.[0]} & {currentBattingTeam.batsmen?.[1]}
+              <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 flex-1 min-w-0">
+                {/* Batting Team */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-base sm:text-lg border border-white/20 shadow-sm flex-shrink-0"
+                    style={{
+                      background: currentBattingTeam.jersey?.color || '#2563eb'
+                    }}
+                  >
+                    {currentBattingTeam.badge}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-amber-300 font-display font-black text-xs sm:text-sm">
+                        {currentBattingTeam.code}
+                      </span>
+                      <span className="text-[9px] font-bold px-1 rounded bg-amber-400/20 text-amber-300">
+                        BAT
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-300 font-medium truncate block max-w-[100px] sm:max-w-[140px]">
+                      {currentBattingTeam.batsmen?.[0]}
                     </span>
                   </div>
                 </div>
 
-                <span className="text-[11px] font-bold text-slate-500">VS</span>
+                {/* VS Badge */}
+                <div className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-black text-slate-300 uppercase tracking-tighter">
+                  VS
+                </div>
 
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg select-none">{currentBowlingTeam.badge}</span>
-                  <div>
-                    <span className="text-cyan-300 font-display font-black text-xs block leading-none">
-                      {currentBowlingTeam.code} (Bowling)
-                    </span>
-                    <span className="text-[10px] text-slate-300 font-medium">
+                {/* Bowling Team */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-base sm:text-lg border border-white/20 shadow-sm flex-shrink-0"
+                    style={{
+                      background: currentBowlingTeam.jersey?.color || '#059669'
+                    }}
+                  >
+                    {currentBowlingTeam.badge}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-cyan-300 font-display font-black text-xs sm:text-sm">
+                        {currentBowlingTeam.code}
+                      </span>
+                      <span className="text-[9px] font-bold px-1 rounded bg-cyan-400/20 text-cyan-300">
+                        BOWL
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-300 font-medium truncate block max-w-[100px] sm:max-w-[140px]">
                       {currentBowlingTeam.bowlers?.[0]?.name}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors pl-2">
-                <span>Select</span>
+              {/* Change Button */}
+              <div className="flex items-center justify-center sm:justify-end gap-1 text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300 py-1 sm:py-0 border-t sm:border-t-0 border-slate-800">
+                <span>Change Teams</span>
                 <ChevronDown className="w-3.5 h-3.5" />
               </div>
             </div>
 
             {/* Quick Rivalry Shortcuts */}
-            <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/70 whitespace-nowrap mr-0.5">
+            <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/75 whitespace-nowrap mr-0.5">
                 Rivals:
               </span>
               {RIVALRIES.map(r => (
@@ -229,9 +259,9 @@ export default function MainMenu({
                     setBattingTeamKey(r.bat);
                     setBowlingTeamKey(r.bowl);
                   }}
-                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 ${
                     battingTeamKey === r.bat && bowlingTeamKey === r.bowl
-                      ? 'bg-slate-950 text-amber-300 shadow font-black'
+                      ? 'bg-slate-950 text-amber-300 shadow font-black ring-1 ring-amber-400'
                       : 'bg-slate-950/30 hover:bg-slate-950/60 text-slate-950 font-bold'
                   }`}
                 >
@@ -241,7 +271,7 @@ export default function MainMenu({
 
               <button
                 onClick={handleRandomizeRivalry}
-                className="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/30 hover:bg-slate-950 text-slate-950 hover:text-white transition-all flex items-center gap-1 whitespace-nowrap"
+                className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-950/30 hover:bg-slate-950 text-slate-950 hover:text-white transition-all flex items-center gap-1 whitespace-nowrap active:scale-95"
                 title="Random Rivalry"
               >
                 <Shuffle className="w-3 h-3" />
@@ -250,11 +280,17 @@ export default function MainMenu({
             </div>
 
             {/* Ball Formats Bar */}
-            <div className="mt-2.5 pt-2 border-t border-slate-950/15 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/70 whitespace-nowrap mr-1">
-                Formats:
+            <div className="mt-2 pt-2 border-t border-slate-950/15 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/75 whitespace-nowrap mr-1">
+                Overs:
               </span>
-              {[6, 12, 16, 18, 20, 24, 30].map((balls) => (
+              {[
+                { balls: 6, label: '6B (1 Over)' },
+                { balls: 12, label: '12B (2 Ov)' },
+                { balls: 18, label: '18B (3 Ov)' },
+                { balls: 24, label: '24B (4 Ov)' },
+                { balls: 30, label: '30B (5 Ov)' }
+              ].map(({ balls, label }) => (
                 <button
                   key={balls}
                   onClick={(e) => {
@@ -265,7 +301,7 @@ export default function MainMenu({
                   className="px-2.5 py-1 rounded-xl bg-slate-950/85 hover:bg-slate-950 text-white font-mono font-bold text-xs shadow hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
                   title={`Play ${balls} ball match with ${currentBattingTeam.code} vs ${currentBowlingTeam.code}`}
                 >
-                  {balls}B
+                  {label}
                 </button>
               ))}
             </div>
@@ -392,56 +428,56 @@ export default function MainMenu({
       {/* Interactive Team Selector Modal (All Countries & IPL Teams) */}
       {/* ==================================================================== */}
       {showTeamModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-lg max-h-[85vh] rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4">
+          <div className="glass-panel w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/98 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
             {/* Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 border-b border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-display font-black text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-base sm:text-lg font-display font-black text-white flex items-center gap-2">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
                   CHOOSE MATCHUP TEAMS
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-[11px] sm:text-xs text-slate-400">
                   Select your batting lineup and bowling opponent
                 </p>
               </div>
               <button
                 onClick={() => { sound.playClick(); setShowTeamModal(false); }}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Batting vs Bowling Switcher Tab */}
-            <div className="px-4 pt-3 flex gap-2">
+            <div className="px-3 sm:px-4 pt-3 flex gap-2">
               <button
                 onClick={() => { sound.playClick(); setTeamModalTab('batting'); }}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   teamModalTab === 'batting'
                     ? 'bg-amber-400 text-slate-950 font-black shadow-md'
                     : 'bg-slate-800 text-slate-300 hover:text-white'
                 }`}
               >
-                <span>Batting As:</span>
+                <span>Batting:</span>
                 <span className="font-extrabold">{currentBattingTeam.badge} {currentBattingTeam.code}</span>
               </button>
 
               <button
                 onClick={() => { sound.playClick(); setTeamModalTab('bowling'); }}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   teamModalTab === 'bowling'
                     ? 'bg-cyan-400 text-slate-950 font-black shadow-md'
                     : 'bg-slate-800 text-slate-300 hover:text-white'
                 }`}
               >
-                <span>Bowling Rival:</span>
+                <span>Bowling:</span>
                 <span className="font-extrabold">{currentBowlingTeam.badge} {currentBowlingTeam.code}</span>
               </button>
             </div>
 
             {/* League filter: All / International / IPL */}
-            <div className="px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="px-3 sm:px-4 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
               <button
                 onClick={() => { sound.playClick(); setTeamCategoryFilter('all'); }}
                 className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
