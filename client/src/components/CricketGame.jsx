@@ -42,6 +42,7 @@ const SHOT_TYPES = [
 ];
 
 export const WORLD_BOWLERS = [
+  { name: 'N. Sarpotdar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'afro' },
   { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard' },
   { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic' },
   { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'beard' },
@@ -57,6 +58,10 @@ export const WORLD_BOWLERS = [
 ];
 
 export const DEFAULT_BATSMEN_LINEUP = [
+  'S. Kinvara',
+  'S. Kadam',
+  'D. Salunkhe',
+  'K. Wintersgill',
   'V. Kohli',
   'R. Sharma',
   'S. Gill',
@@ -64,11 +69,7 @@ export const DEFAULT_BATSMEN_LINEUP = [
   'KL Rahul',
   'H. Pandya',
   'R. Pant',
-  'A. Patel',
-  'R. Jadeja',
-  'T. Head',
-  'H. Klaasen',
-  'G. Maxwell'
+  'A. Patel'
 ];
 
 export default function CricketGame({
@@ -90,7 +91,7 @@ export default function CricketGame({
     WORLD_BOWLERS[0];
 
   // Match State initialized matching authentic situational chase (Image 1 & 2)
-  const [teamCode] = useState(matchConfig?.teamCode || 'JAJ');
+  const [teamCode] = useState(matchConfig?.teamCode || 'BEB');
   const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 124);
   const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
   const [targetRuns] = useState(matchConfig?.targetRuns || 43);
@@ -1081,18 +1082,30 @@ export default function CricketGame({
     ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
     ctx.fillRect(engine.batsman.x - 10, engine.batsmanCreaseY + 6, 20, 2.5);
 
-    // 4. Stumps & Bails (White stumps with Red bails)
-    ctx.fillStyle = '#ffffff';
-    for (let s = -7; s <= 7; s += 7) {
-      ctx.fillRect(cx + s - 1.5, engine.bowlerStumpsY - 2, 3, 5);
-      if (!engine.stumpsHit) {
-        ctx.fillRect(cx + s - 1.5, engine.stumpsY - 2, 3, 5);
+    // 4. Stumps & Bails (3 Crisp White Stumps with 3 Bright RED Bails matching Reference Screenshot)
+    const renderWicketSet = (stumpY) => {
+      // 3 vertical white wickets with rounded caps & dark 1px outline
+      ctx.fillStyle = '#ffffff';
+      for (let s = -7; s <= 7; s += 7) {
+        ctx.beginPath();
+        ctx.roundRect(cx + s - 1.5, stumpY - 15, 3, 15, 1);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
       }
-    }
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(cx - 8, engine.bowlerStumpsY - 4, 16, 2.5);
+      // 3 bright RED horizontal bails perched across the stumps
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(cx - 8.5, stumpY - 17, 17, 2.5);
+      ctx.strokeStyle = '#991b1b';
+      ctx.lineWidth = 0.6;
+      ctx.strokeRect(cx - 8.5, stumpY - 17, 17, 2.5);
+    };
+
+    renderWicketSet(engine.bowlerStumpsY);
+
     if (!engine.stumpsHit) {
-      ctx.fillRect(cx - 8, engine.stumpsY - 4, 16, 2.5);
+      renderWicketSet(engine.stumpsY);
     } else {
       engine.stumpPieces.forEach(piece => {
         ctx.save();
@@ -1225,14 +1238,16 @@ export default function CricketGame({
       });
     }
 
-    // 7. Realistic Humanoid Bowler (Top Crease with Run-Up & Distinct Bowling Action)
+    // 7. Realistic Vector Bowler (Top Crease with High-Arm Action, Afro Hair & Follow-Through)
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
       runUpProgress: engine.bowler.runUpProgress,
       bowlingArmAngle: engine.bowler.bowlingArmAngle,
+      followThroughProgress: engine.bowler.followThroughProgress || 0,
       armSide: engine.bowler.armSide,
       actionType: engine.bowler.actionType || 'high_arm',
-      faceStyle: engine.bowler.faceStyle || 'headband',
-      skinTone: engine.bowler.skinTone || '#c68656'
+      faceStyle: engine.bowler.faceStyle || 'afro',
+      skinTone: engine.bowler.skinTone || '#c68656',
+      jerseyColor: '#2563eb'
     });
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
@@ -1268,19 +1283,32 @@ export default function CricketGame({
         ctx.restore();
       }
 
-      // Thin trajectory line connecting bowler / bat to ball (Images 2, 3, 4)
+      // Thin dotted red trajectory line connecting bowler release to ball (matching Reference Screenshot!)
       if (b.trail && b.trail.length > 1) {
         ctx.save();
+        // Subtle soft red ambient laser glow
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.25)';
+        ctx.lineWidth = 3.6;
         ctx.beginPath();
         ctx.moveTo(b.trail[0].x, b.trail[0].y);
         for (let i = 1; i < b.trail.length; i++) {
           ctx.lineTo(b.trail[i].x, b.trail[i].y);
         }
+        ctx.stroke();
+
+        // Crisp dotted red laser line
         ctx.strokeStyle = b.state === 'BOWLED'
-          ? (b.hasBounced ? 'rgba(234, 179, 8, 0.85)' : 'rgba(239, 68, 68, 0.75)')
+          ? (b.hasBounced ? '#f59e0b' : '#ef4444')
           : '#e05338';
         ctx.lineWidth = 1.4;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(b.trail[0].x, b.trail[0].y);
+        for (let i = 1; i < b.trail.length; i++) {
+          ctx.lineTo(b.trail[i].x, b.trail[i].y);
+        }
         ctx.stroke();
+        ctx.setLineDash([]);
         ctx.restore();
       }
 

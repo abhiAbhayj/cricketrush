@@ -93,17 +93,18 @@ export class CricketPhysics {
       this.batsmanHand = 'right';
     }
 
-    // Bowler at top crease
+    // Bowler at top crease (Right side of stumps matching Reference Screenshot)
     this.bowler = {
-      x: this.cx - 20,
+      x: this.cx + 14,
       y: this.pitchTop + 10,
       runUpProgress: 0,
       isBowling: false,
       bowlingArmAngle: 0,
+      followThroughProgress: 0,
       armSide: 'right',
       bowlingAngle: 'over', // 'over' or 'around' the wicket
       actionType: 'high_arm', // 'high_arm', 'slingshot', 'fast_swing', 'wrist_spin', 'finger_spin', 'unorthodox'
-      faceStyle: 'classic',
+      faceStyle: 'afro',
       skinTone: '#c68656'
     };
 
@@ -134,9 +135,9 @@ export class CricketPhysics {
       skinTone: '#d49b70'
     };
 
-    // Non-striker Batsman at top crease
+    // Non-striker Batsman at top crease (Left side of stumps matching Reference Screenshot)
     this.nonStriker = {
-      x: this.cx + this.pitchWidth * 0.44 + 8,
+      x: this.cx - 44,
       y: this.bowlerCreaseY + 6
     };
 
@@ -369,13 +370,14 @@ export class CricketPhysics {
     this.ball.state = 'RUN_UP';
 
     // 1. Authentic Crease Positioning based on Arm & Over/Around the wicket
-    // Right-Arm Over: runs up on off-side (cx - 16) | Right-Arm Around: leg-side (cx + 18)
-    // Left-Arm Over:  runs up on leg-side (cx + 16) | Left-Arm Around:  off-side (cx - 18)
+    // Right-Arm Over: runs up on the right side of the stumps (cx + 14) matching Reference Screenshot!
     if (chosenArm === 'left') {
-      this.bowler.x = (chosenAngle === 'over') ? (this.cx + 16) : (this.cx - 18);
-    } else {
       this.bowler.x = (chosenAngle === 'over') ? (this.cx - 16) : (this.cx + 18);
+    } else {
+      this.bowler.x = (chosenAngle === 'over') ? (this.cx + 14) : (this.cx - 18);
     }
+    // Non-striker positioned cleanly on the opposite side of the bowler!
+    this.nonStriker.x = (this.bowler.x > this.cx) ? (this.cx - 44) : (this.cx + 44);
 
     // 2. Determine Pitch Bounce Spot (Length) - STRICTLY RESPECTS USER FILTER
     const isSpinBowler = bType.includes('spin') || bType.includes('break') || bType === 'googly' || bType === 'doosra' || bType === 'flipper' || bType === 'carrom' || bType === 'drifter' || bType === 'arm_ball' || rawBowlerType.includes('spin');
@@ -686,6 +688,9 @@ export class CricketPhysics {
     const armOffsetX = this.bowler.armSide === 'left' ? -6 : 6;
     this.ball.x = this.bowler.x + armOffsetX;
     this.ball.y = this.bowlerCreaseY - 12; // High-arm release overhead behind bowling crease
+    this.ball.releaseX = this.ball.x;
+    this.ball.releaseY = this.ball.y;
+    this.bowler.followThroughProgress = 0;
     this.ball.height = this.ball.isFullToss ? 12 : 24; // High-arm delivery release height (approx 2.2m above ground)
     this.ball.releaseHeight = this.ball.height;
     this.ball.hasBounced = false;
@@ -693,7 +698,7 @@ export class CricketPhysics {
     this.ball.bounceImpactX = null;
     this.ball.bounceImpactY = null;
     this.ball.bounceTime = 0;
-    this.ball.trail = [];
+    this.ball.trail = [{ x: this.ball.x, y: this.ball.y, hasBounced: false }];
 
     // Realistic flight speed scaling
     const baseSpeed = (this.ball.speedKmh / 140) * 11;
@@ -1284,6 +1289,7 @@ export class CricketPhysics {
     if (this.bowler.isBowling && this.ball.state === 'RUN_UP') {
       this.bowler.runUpProgress += 0.035 * dt;
       this.bowler.y = (this.pitchTop - 25) + this.bowler.runUpProgress * 25;
+      this.bowler.followThroughProgress = 0;
 
       // Realistic high-arm bowling wind-up:
       // Gathering stride (0 -> 0.65) then overhead windmill delivery (0.65 -> 1.0)
@@ -1305,6 +1311,9 @@ export class CricketPhysics {
         this.releaseBall();
       }
     } else {
+      if (this.ball.state === 'BOWLED') {
+        this.bowler.followThroughProgress = Math.min(1.0, (this.bowler.followThroughProgress || 0) + 0.08 * dt);
+      }
       // Subtle idle breathing & stance balance
       this.batsman.stanceProgress = (this.batsman.stanceProgress + 0.05 * dt) % (Math.PI * 2);
       this.batsman.triggerTap = Math.abs(Math.sin(this.batsman.stanceProgress * 1.5)) * 1.5;
@@ -1411,7 +1420,7 @@ export class CricketPhysics {
         y: this.ball.y - this.ball.height,
         hasBounced: this.ball.hasBounced
       });
-      if (this.ball.trail.length > 40) this.ball.trail.shift();
+      if (this.ball.trail.length > 120) this.ball.trail.shift();
 
       // Ball reaches batsman crease
       if (this.ball.y >= effectiveBatsmanY - 4) {
