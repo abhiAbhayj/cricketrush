@@ -53,6 +53,7 @@ export default function App() {
   const startQuickPlay = (selectedBalls = null) => {
     // Comprehensive roster of authentic world-class bowlers with matching styles, arm sides and actions
     const BOWLER_ROSTER = [
+      { name: 'N. Sarpotdar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm' },
       { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot' },
       { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing' },
       { name: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin' },
@@ -68,17 +69,18 @@ export default function App() {
     ];
 
     const BATSMEN_LINEUP = [
-      profile?.playerName || 'V. Kohli',
+      'S. Anchalia',
+      'P. Sanzgiri',
+      'F. Danby',
+      'T. Nallamby',
+      'S. Kinvara',
+      'S. Kadam',
+      'A. Sonpurkar',
+      'K. Wintersgill',
+      profile?.playerName || 'D. Salunkhe',
+      'V. Kohli',
       'R. Sharma',
-      'S. Gill',
-      'S. Yadav',
-      'KL Rahul',
-      'H. Pandya',
-      'R. Pant',
-      'A. Patel',
-      'T. Head',
-      'H. Klaasen',
-      'G. Maxwell'
+      'S. Gill'
     ];
 
     const chosenBowler = BOWLER_ROSTER[Math.floor(Math.random() * BOWLER_ROSTER.length)];
@@ -90,42 +92,66 @@ export default function App() {
     let wicketsAllowed = 2;
     let matchPhase = 'DEATH OVERS';
     let roundTitle = 'ROUND 1';
+    let teamScoreBase = 124;
+    let teamWicketsBase = 1;
+    let initialBalls = 102;
 
     if (ballsAllowed === 6) {
       targetRuns = 19 + Math.floor(Math.random() * 6); // 19 - 24 runs in 1 over
       wicketsAllowed = 2;
       matchPhase = 'SUPER OVER';
       roundTitle = 'SUPER OVER FINAL';
+      teamScoreBase = 0;
+      teamWicketsBase = 0;
+      initialBalls = 0;
     } else if (ballsAllowed === 12) {
-      targetRuns = 34 + Math.floor(Math.random() * 8); // 34 - 41 runs in 2 overs
-      wicketsAllowed = 2;
+      targetRuns = 4; // Authentic situational chase matching reference (e.g. 167/7 needing 4 to win)
+      wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
       roundTitle = 'ROUND 1';
+      teamScoreBase = 167;
+      teamWicketsBase = 7;
+      initialBalls = 108;
     } else if (ballsAllowed === 16) {
       targetRuns = 38 + Math.floor(Math.random() * 8); // 38 - 45 runs in 16 balls
       wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
       roundTitle = 'ROUND 2';
+      teamScoreBase = 120;
+      teamWicketsBase = 2;
+      initialBalls = 104;
     } else if (ballsAllowed === 18) {
-      targetRuns = 43; // Exact match to Image 1 & 2 ("Need 43 off 24" or 18 balls)
+      targetRuns = 43; // Exact match to Image 1 & 2 ("Need 43 off 18 balls")
       wicketsAllowed = 3;
       matchPhase = 'DEATH OVERS';
       roundTitle = 'ROUND 1';
+      teamScoreBase = 124;
+      teamWicketsBase = 1;
+      initialBalls = 102;
     } else if (ballsAllowed === 20) {
       targetRuns = 46 + Math.floor(Math.random() * 10);
       wicketsAllowed = 3;
       matchPhase = 'POWERPLAY';
       roundTitle = 'POWERPLAY SURGE';
+      teamScoreBase = 105;
+      teamWicketsBase = 2;
+      initialBalls = 100;
     } else if (ballsAllowed === 24) {
       targetRuns = 52 + Math.floor(Math.random() * 10);
       wicketsAllowed = 4;
       matchPhase = 'MIDDLE OVERS';
       roundTitle = 'CHASE MASTER';
+      teamScoreBase = 95;
+      teamWicketsBase = 2;
+      initialBalls = 96;
     } else if (ballsAllowed === 30) {
       targetRuns = 68 + Math.floor(Math.random() * 12);
       wicketsAllowed = 5;
       matchPhase = 'CHASE MASTER';
       roundTitle = 'T5 CHAMPIONSHIP';
+      teamScoreBase = 80;
+      teamWicketsBase = 2;
+      initialBalls = 90;
     }
 
     startMatch({
@@ -138,15 +164,16 @@ export default function App() {
       bowlingArm: chosenBowler.arm,
       bowlingAngle: chosenBowler.angle,
       bowlerAction: chosenBowler.action,
-      strikerName: BATSMEN_LINEUP[0],
-      nonStrikerName: BATSMEN_LINEUP[1],
+      strikerName: teamWicketsBase >= 7 ? (profile?.playerName || 'D. Salunkhe') : (profile?.playerName || BATSMEN_LINEUP[teamWicketsBase] || BATSMEN_LINEUP[0]),
+      nonStrikerName: teamWicketsBase >= 7 ? 'K. Wintersgill' : (BATSMEN_LINEUP[teamWicketsBase + 1] || BATSMEN_LINEUP[1]),
       battingLineup: BATSMEN_LINEUP,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
-      teamCode: 'JAJ',
-      teamScoreBase: 124,
-      teamWicketsBase: 1
+      teamCode: 'BEB',
+      teamScoreBase,
+      teamWicketsBase,
+      initialBalls
     });
   };
 

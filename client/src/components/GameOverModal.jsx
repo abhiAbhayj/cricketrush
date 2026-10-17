@@ -74,38 +74,36 @@ export default function GameOverModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const teamCode = matchConfig?.teamCode || 'BEB';
+  const teamCode = matchResult.teamCode || matchConfig?.teamCode || 'BEB';
+  const totalScore = matchResult.totalScore ?? ((matchConfig?.teamScoreBase || 0) + (matchResult.runsScored || 0));
+  const totalWickets = matchResult.totalWickets ?? ((matchConfig?.teamWicketsBase || 0) + (matchResult.wicketsLost || 0));
+  const totalTarget = matchResult.totalTarget ?? ((matchConfig?.teamScoreBase || 0) + (matchResult.targetRuns || 0));
   const wicketsLeft = Math.max(0, (matchResult.maxWickets || 10) - (matchResult.wicketsLost || 0));
-  const ballsLeft = Math.max(0, (matchResult.totalBalls || 120) - (matchResult.ballsFaced || 0));
-  const totalScore = (matchConfig?.teamScoreBase || 167) + (matchResult.runsScored || 0) - (matchConfig?.initialChaseRuns || 0);
-  const totalWickets = (matchConfig?.teamWicketsBase || 7) + (matchResult.wicketsLost || 0);
-  const oversCompleted = (matchResult.ballsFaced / 6).toFixed(1);
+  const ballsLeft = Math.max(0, (matchResult.totalBalls || 0) - (matchResult.ballsFaced || 0));
+  const runsShort = Math.max(1, totalTarget - totalScore);
 
-  // Batting lineup matching Image 1
-  const battingLineup = [
-    { name: 'S. Anchalia', dismissal: 'out', r: 26, b: 33, fours: 0, sixes: 0 },
-    { name: 'P. Sanzgiri', hand: 'L', dismissal: 'out', r: 20, b: 20, fours: 0, sixes: 0 },
-    { name: 'F. Danby', dismissal: 'out', r: 26, b: 28, fours: 0, sixes: 0 },
-    { name: 'T. Nallamby', dismissal: 'out', r: 23, b: 29, fours: 0, sixes: 0 },
-    { name: 'S. Kinvara', hand: 'L', dismissal: 'lbw b Sarpotdar', r: 27, b: 30, fours: 0, sixes: 0 },
-    { name: 'S. Kadam', hand: 'L', dismissal: 'lbw b Veldkamp', r: 23, b: 28, fours: 0, sixes: 0 },
-    { name: 'A. Sonpurkar', dismissal: 'lbw b Sarpotdar', r: 0, b: 1, fours: 0, sixes: 0 },
-    { name: 'K. Wintersgill', dismissal: '*', r: 0, b: 0, fours: 0, sixes: 0, notOut: true },
-    { name: profile?.playerName ? profile.playerName : 'D. Salunkhe', dismissal: '*', r: matchResult.runsScored || 4, b: matchResult.ballsFaced || 4, fours: matchResult.fours || 1, sixes: matchResult.sixes || 0, notOut: true }
-  ];
+  const totalInningsBalls = (matchResult.initialBalls !== undefined ? matchResult.initialBalls : (matchConfig?.initialBalls ?? 0)) + (matchResult.ballsFaced || 0);
+  const oversCompleted = `${Math.floor(totalInningsBalls / 6)}.${totalInningsBalls % 6}`;
 
-  // Bowling stats matching Image 1
-  const bowlersData = [
-    { name: 'N. Sarpotdar', o: 0, r: 2, w: 0, eco: '0.0' },
-    { name: 'T. Veldkamp', o: 4, r: 1, w: 4, eco: '4.0' }
-  ];
+  // Batting lineup: Dynamically populated from match statistics
+  const battingLineup = matchResult.battingScorecard && matchResult.battingScorecard.length > 0
+    ? matchResult.battingScorecard
+    : (matchResult.battingLineup || [
+        { name: profile?.playerName || 'D. Salunkhe', dismissal: '*', r: matchResult.runsScored || 0, b: matchResult.ballsFaced || 0, fours: matchResult.fours || 0, sixes: matchResult.sixes || 0, notOut: true }
+      ]);
 
-  // Recent overs matching Image 1
-  const oversData = matchResult.overByOverHistory?.length
-    ? matchResult.overByOverHistory.slice(-2)
+  // Bowling stats: Dynamically populated from match statistics
+  const bowlersData = matchResult.bowlingScorecard && matchResult.bowlingScorecard.length > 0
+    ? matchResult.bowlingScorecard
+    : (matchResult.bowlersData || [
+        { name: matchConfig?.bowlerName || 'Bowler', o: `${Math.floor((matchResult.ballsFaced || 0) / 6)}.${(matchResult.ballsFaced || 0) % 6}`, r: matchResult.runsScored || 0, w: matchResult.wicketsLost || 0, eco: matchResult.ballsFaced > 0 ? ((matchResult.runsScored / (matchResult.ballsFaced / 6)).toFixed(1)) : '0.0' }
+      ]);
+
+  // Recent overs: Dynamically populated from match statistics
+  const oversData = matchResult.overByOverHistory && matchResult.overByOverHistory.length > 0
+    ? matchResult.overByOverHistory.slice(-4)
     : [
-        { overNum: 19, balls: ['•', '•', 'W', 'W'], runs: 0 },
-        { overNum: 20, balls: ['•', 'W', '•', '4', '•', '•'], runs: 4 }
+        { overNum: Math.max(1, Math.ceil((matchResult.ballsFaced || 1) / 6)), balls: ['•'], runs: matchResult.runsScored || 0 }
       ];
 
   return (
@@ -128,8 +126,8 @@ export default function GameOverModal({
 
               <div className="text-sm text-slate-300 font-medium">
                 {matchResult.won
-                  ? `Won by ${wicketsLeft} wickets · ${ballsLeft} ball${ballsLeft === 1 ? '' : 's'} left`
-                  : `${Math.max(1, matchResult.targetRuns - matchResult.runsScored)} runs short`}
+                  ? `Won by ${wicketsLeft} wicket${wicketsLeft === 1 ? '' : 's'} · ${ballsLeft} ball${ballsLeft === 1 ? '' : 's'} left`
+                  : `${runsShort} run${runsShort === 1 ? '' : 's'} short`}
               </div>
 
               <div className="flex items-baseline justify-between mt-3 pt-2">
@@ -138,7 +136,7 @@ export default function GameOverModal({
                   <span className="text-xs font-semibold text-slate-400">{oversCompleted} ov</span>
                 </div>
                 <div className="text-xs font-bold text-slate-400">
-                  Target <span className="text-white font-extrabold">{matchResult.targetRuns}</span>
+                  Target <span className="text-white font-extrabold">{totalTarget}</span>
                 </div>
               </div>
             </div>
@@ -214,24 +212,35 @@ export default function GameOverModal({
               </div>
 
               <div className="space-y-1.5 mt-2 max-h-48 overflow-y-auto">
-                {battingLineup.map((b, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs py-0.5">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className={`font-bold truncate ${b.notOut ? 'text-[#facc15]' : 'text-white'}`}>
-                        {b.name}{b.notOut ? '*' : ''}
-                      </span>
-                      {b.hand && <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono font-bold">{b.hand}</span>}
-                      <span className="text-[11px] text-slate-400 truncate">{b.dismissal !== '*' ? b.dismissal : ''}</span>
-                    </div>
+                {battingLineup.map((b, idx) => {
+                  const runs = b.r ?? b.runs ?? 0;
+                  const balls = b.b ?? b.balls ?? 0;
+                  const fours = b.fours ?? 0;
+                  const sixes = b.sixes ?? 0;
+                  const isNotOut = b.notOut ?? (b.dismissal === '*' || !b.dismissal);
+                  const dismissalDisplay = isNotOut ? '' : (b.dismissal && b.dismissal !== '*' ? b.dismissal : '');
 
-                    <div className="flex items-center gap-4 text-right pr-2 flex-shrink-0 font-mono font-bold">
-                      <span className={`w-6 ${b.notOut ? 'text-[#facc15] font-black' : 'text-white'}`}>{b.r}</span>
-                      <span className="w-6 text-slate-400">{b.b}</span>
-                      <span className="w-6 text-slate-400">{b.fours}</span>
-                      <span className="w-6 text-slate-400">{b.sixes}</span>
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className={`font-bold truncate ${isNotOut ? 'text-[#facc15]' : 'text-white'}`}>
+                          {b.name}{isNotOut ? '*' : ''}
+                        </span>
+                        {b.hand && <span className="text-[9px] px-1 rounded bg-slate-800 text-slate-400 font-mono font-bold">{b.hand}</span>}
+                        {dismissalDisplay && (
+                          <span className="text-[11px] text-slate-400 truncate">{dismissalDisplay}</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-right pr-2 flex-shrink-0 font-mono font-bold">
+                        <span className={`w-6 ${isNotOut ? 'text-[#facc15] font-black' : 'text-white'}`}>{runs}</span>
+                        <span className="w-6 text-slate-400">{balls}</span>
+                        <span className="w-6 text-slate-400">{fours}</span>
+                        <span className="w-6 text-slate-400">{sixes}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -252,10 +261,10 @@ export default function GameOverModal({
                   <div key={idx} className="flex items-center justify-between text-xs py-0.5">
                     <span className="font-bold text-white truncate">{bow.name}</span>
                     <div className="flex items-center gap-4 text-right pr-2 flex-shrink-0 font-mono font-bold">
-                      <span className="w-6 text-slate-300">{bow.o}</span>
-                      <span className="w-6 text-white">{bow.r}</span>
-                      <span className="w-6 text-red-400 font-black">{bow.w}</span>
-                      <span className="w-8 text-slate-400">{bow.eco}</span>
+                      <span className="w-6 text-slate-300">{bow.o ?? bow.overs ?? '0.0'}</span>
+                      <span className="w-6 text-white">{bow.r ?? bow.runsConceded ?? 0}</span>
+                      <span className="w-6 text-red-400 font-black">{bow.w ?? bow.wickets ?? 0}</span>
+                      <span className="w-8 text-slate-400">{bow.eco ?? '0.0'}</span>
                     </div>
                   </div>
                 ))}
@@ -277,6 +286,7 @@ export default function GameOverModal({
                         const isSix = bVal === '6';
                         const isFour = bVal === '4';
                         const isWicket = bVal === 'W';
+                        const isWide = bVal === 'wd';
                         return (
                           <div
                             key={bIdx}
@@ -287,6 +297,8 @@ export default function GameOverModal({
                                 ? 'bg-[#16a34a]'
                                 : isWicket
                                 ? 'bg-[#ef4444]'
+                                : isWide
+                                ? 'bg-[#d97706]'
                                 : 'bg-[#1e293b] text-slate-300'
                             }`}
                           >

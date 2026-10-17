@@ -115,9 +115,19 @@ export default function CricketGame({
   const [currentBallsFaced, setCurrentBallsFaced] = useState(0);
   const [currentWicketsLost, setCurrentWicketsLost] = useState(0);
 
+  // Accurate situational match balls calculation
+  const initialBalls = matchConfig?.initialBalls !== undefined
+    ? matchConfig.initialBalls
+    : (totalBalls < 120 && teamScoreBase > 0 ? 120 - totalBalls : 0);
+
+  const initialStrikerName = profile?.playerName || matchConfig?.strikerName || (teamWicketsBase >= 7 ? 'D. Salunkhe' : battingLineup[teamWicketsBase] || battingLineup[0]);
+  const initialNonStrikerName = matchConfig?.nonStrikerName || (teamWicketsBase >= 7 ? 'K. Wintersgill' : battingLineup[teamWicketsBase + 1] || battingLineup[1]);
+  const initialNonStrikerRuns = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 14 : 0);
+  const initialNonStrikerBalls = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 6 : 0);
+
   // Batsmen and Bowler details (authentic match initialization from 0)
   const [striker, setStriker] = useState({
-    name: profile?.playerName || matchConfig?.strikerName || battingLineup[0],
+    name: initialStrikerName,
     runs: 0,
     balls: 0,
     fiftiesClaimed: false,
@@ -125,9 +135,9 @@ export default function CricketGame({
   });
 
   const [nonStriker, setNonStriker] = useState({
-    name: matchConfig?.nonStrikerName || battingLineup[1],
-    runs: 14,
-    balls: 6
+    name: initialNonStrikerName,
+    runs: initialNonStrikerRuns,
+    balls: initialNonStrikerBalls
   });
 
   const [bowler, setBowler] = useState({
@@ -136,6 +146,133 @@ export default function CricketGame({
     runsConceded: 0,
     overs: '0.0'
   });
+
+  const strikerRef = useRef(striker);
+  strikerRef.current = striker;
+  const nonStrikerRef = useRef(nonStriker);
+  nonStrikerRef.current = nonStriker;
+  const bowlerRef = useRef(bowler);
+  bowlerRef.current = bowler;
+
+  // Dynamic Live Batting Scorecard Ref (retains full innings history)
+  const battingScorecardRef = useRef(null);
+  if (!battingScorecardRef.current) {
+    if (teamWicketsBase === 7) {
+      battingScorecardRef.current = [
+        { name: battingLineup[0] || 'S. Anchalia', r: 26, b: 33, fours: 2, sixes: 0, notOut: false, dismissal: `b ${initialBowler.name}` },
+        { name: battingLineup[1] || 'P. Sanzgiri', hand: 'L', r: 20, b: 20, fours: 1, sixes: 1, notOut: false, dismissal: `c Cover b ${WORLD_BOWLERS[1].name}` },
+        { name: battingLineup[2] || 'F. Danby', r: 26, b: 28, fours: 3, sixes: 0, notOut: false, dismissal: `c Long-on b ${WORLD_BOWLERS[2].name}` },
+        { name: battingLineup[3] || 'T. Nallamby', r: 23, b: 29, fours: 2, sixes: 0, notOut: false, dismissal: `c Keeper b ${WORLD_BOWLERS[3].name}` },
+        { name: battingLineup[4] || 'S. Kinvara', hand: 'L', r: 27, b: 30, fours: 3, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
+        { name: battingLineup[5] || 'S. Kadam', hand: 'L', r: 23, b: 28, fours: 2, sixes: 0, notOut: false, dismissal: `lbw b ${WORLD_BOWLERS[4].name}` },
+        { name: battingLineup[6] || 'A. Sonpurkar', r: 0, b: 1, fours: 0, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
+        { name: initialNonStrikerName, r: 0, b: 0, fours: 0, sixes: 0, notOut: true, dismissal: '*' },
+        { name: initialStrikerName, hand: isLeftHanded ? 'L' : undefined, r: 0, b: 0, fours: 0, sixes: 0, notOut: true, dismissal: '*' }
+      ];
+    } else if (teamWicketsBase > 0) {
+      const prior = [];
+      const runsPerBatter = Math.floor(Math.max(10, teamScoreBase - initialNonStrikerRuns) / teamWicketsBase);
+      for (let i = 0; i < teamWicketsBase; i++) {
+        const bName = battingLineup[i] || `Batter #${i + 1}`;
+        const bHand = bName.toLowerCase().includes('[l]') ? 'L' : undefined;
+        const bBowler = WORLD_BOWLERS[(i + 1) % WORLD_BOWLERS.length].name;
+        prior.push({
+          name: bName,
+          hand: bHand,
+          r: runsPerBatter,
+          b: Math.max(1, Math.round(runsPerBatter * 0.85)),
+          fours: Math.floor(runsPerBatter / 8),
+          sixes: Math.floor(runsPerBatter / 15),
+          notOut: false,
+          dismissal: i % 2 === 0 ? `c Deep Mid-Wicket b ${bBowler}` : `b ${bBowler}`
+        });
+      }
+      prior.push({
+        name: initialNonStrikerName,
+        hand: initialNonStrikerName.toLowerCase().includes('[l]') ? 'L' : undefined,
+        r: initialNonStrikerRuns,
+        b: initialNonStrikerBalls,
+        fours: initialNonStrikerRuns >= 4 ? 1 : 0,
+        sixes: 0,
+        notOut: true,
+        dismissal: '*'
+      });
+      prior.push({
+        name: initialStrikerName,
+        hand: isLeftHanded ? 'L' : undefined,
+        r: 0,
+        b: 0,
+        fours: 0,
+        sixes: 0,
+        notOut: true,
+        dismissal: '*'
+      });
+      battingScorecardRef.current = prior;
+    } else {
+      battingScorecardRef.current = [
+        {
+          name: initialStrikerName,
+          hand: isLeftHanded ? 'L' : undefined,
+          r: 0,
+          b: 0,
+          fours: 0,
+          sixes: 0,
+          notOut: true,
+          dismissal: '*'
+        },
+        {
+          name: initialNonStrikerName,
+          hand: initialNonStrikerName.toLowerCase().includes('[l]') ? 'L' : undefined,
+          r: 0,
+          b: 0,
+          fours: 0,
+          sixes: 0,
+          notOut: true,
+          dismissal: '*'
+        }
+      ];
+    }
+  }
+
+  // Dynamic Live Bowling Scorecard Ref (tracks all bowlers spells & economy)
+  const bowlingScorecardRef = useRef(null);
+  if (!bowlingScorecardRef.current) {
+    if (teamScoreBase > 0) {
+      const priorBowlerName = initialBowler.name === 'N. Sarpotdar' ? 'T. Veldkamp' : 'N. Sarpotdar';
+      const priorOvers = Math.min(4, Math.max(1, Math.floor(initialBalls / 18)));
+      const priorRuns = Math.round(teamScoreBase * 0.45);
+      const priorWickets = Math.min(teamWicketsBase, 2);
+      bowlingScorecardRef.current = [
+        {
+          name: priorBowlerName,
+          balls: priorOvers * 6,
+          o: `${priorOvers}.0`,
+          r: priorRuns,
+          w: priorWickets,
+          eco: (priorRuns / priorOvers).toFixed(1)
+        },
+        {
+          name: initialBowler.name,
+          balls: 0,
+          o: '0.0',
+          r: 0,
+          w: 0,
+          eco: '0.0'
+        }
+      ];
+    } else {
+      bowlingScorecardRef.current = [
+        {
+          name: initialBowler.name,
+          balls: 0,
+          o: '0.0',
+          r: 0,
+          w: 0,
+          eco: '0.0'
+        }
+      ];
+    }
+  }
 
   // Current over balls array: starts empty [ ]
   const [currentOverBalls, setCurrentOverBalls] = useState([]);
@@ -627,20 +764,77 @@ export default function CricketGame({
     setCurrentBallsFaced(nextBallsFaced);
     setCurrentWicketsLost(nextWicketsLost);
 
-    // Striker milestones (50 and 100) or New Batsman Incoming on Wicket!
+    // 1. Update active striker in dynamic battingScorecardRef
+    const currentStrikerName = strikerRef.current?.name || striker.name;
+    let activeStrikerEntry = battingScorecardRef.current.find(b => b.name === currentStrikerName);
+    if (!activeStrikerEntry) {
+      activeStrikerEntry = {
+        name: currentStrikerName,
+        hand: isLeftHanded ? 'L' : undefined,
+        r: 0,
+        b: 0,
+        fours: 0,
+        sixes: 0,
+        notOut: true,
+        dismissal: '*'
+      };
+      battingScorecardRef.current.push(activeStrikerEntry);
+    }
+
+    if (!isWide) {
+      activeStrikerEntry.b += 1;
+      activeStrikerEntry.r += runsScored;
+      if (outcome.event === 'FOUR') activeStrikerEntry.fours += 1;
+      if (outcome.event === 'SIX') activeStrikerEntry.sixes += 1;
+    }
+
+    // 2. Striker milestones (50 and 100) or New Batsman Incoming on Wicket!
     if (!isWide) {
       if (isWicket) {
+        activeStrikerEntry.notOut = false;
+        let dismissalStr = `b ${bowler.name}`;
+        if (outcome.event === 'CAUGHT') {
+          const fName = outcome.fielder || 'Cover';
+          dismissalStr = `c ${fName} b ${bowler.name}`;
+        } else if (outcome.event === 'LBW') {
+          dismissalStr = `lbw b ${bowler.name}`;
+        } else if (outcome.event === 'STUMPED') {
+          dismissalStr = `st †Keeper b ${bowler.name}`;
+        } else if (outcome.event === 'RUN_OUT') {
+          const fName = outcome.fielder || 'Direct Hit';
+          dismissalStr = `run out (${fName})`;
+        } else if (outcome.event === 'BOWLED') {
+          dismissalStr = `b ${bowler.name}`;
+        }
+        activeStrikerEntry.dismissal = dismissalStr;
+
         // Current batsman is out! Rotate to the next batsman from battingLineup
-        const nextBatterIndex = nextWicketsLost + 1; // 0 was striker, 1 was nonStriker; 1st wicket brings battingLineup[2]
+        const nextBatterIndex = teamWicketsBase + nextWicketsLost + 1;
         const nextBatterName = battingLineup[nextBatterIndex] || `Batter #${nextBatterIndex + 1}`;
+        const nextBatterHand = nextBatterName.toLowerCase().includes('[l]') ? 'L' : undefined;
+
+        const newBatterEntry = {
+          name: nextBatterName,
+          hand: nextBatterHand,
+          r: 0,
+          b: 0,
+          fours: 0,
+          sixes: 0,
+          notOut: true,
+          dismissal: '*'
+        };
+        battingScorecardRef.current.push(newBatterEntry);
+
         setTimeout(() => {
-          setStriker({
+          const newStrikerObj = {
             name: nextBatterName,
             runs: 0,
             balls: 0,
             fiftiesClaimed: false,
             centuriesClaimed: false
-          });
+          };
+          strikerRef.current = newStrikerObj;
+          setStriker(newStrikerObj);
           setFieldChangeNotice(`NEW BATSMAN IN: ${nextBatterName.toUpperCase()} 🏏`);
           setTimeout(() => setFieldChangeNotice(null), 3200);
         }, 1100);
@@ -667,35 +861,82 @@ export default function CricketGame({
             return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls, centuriesClaimed: true };
           }
 
-          return { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls };
+          const updated = { ...prev, runs: nextStrikerRuns, balls: nextStrikerBalls };
+          strikerRef.current = updated;
+          return updated;
         });
       }
     }
 
-    // Bowler stats
-    setBowler(prev => ({
-      ...prev,
-      wickets: prev.wickets + (isWicket ? 1 : 0),
-      runsConceded: prev.runsConceded + runsScored,
-      overs: `${completedOvers}.${ballsInOver}`
-    }));
+    // 3. Dynamic Bowler Stats Tracking in bowlingScorecardRef
+    let activeBowlerEntry = bowlingScorecardRef.current.find(bw => bw.name === bowler.name);
+    if (!activeBowlerEntry) {
+      activeBowlerEntry = {
+        name: bowler.name,
+        balls: 0,
+        o: '0.0',
+        r: 0,
+        w: 0,
+        eco: '0.0'
+      };
+      bowlingScorecardRef.current.push(activeBowlerEntry);
+    }
+    if (!isWide) {
+      activeBowlerEntry.balls += 1;
+    }
+    activeBowlerEntry.r += runsScored;
+    if (isWicket && outcome.event !== 'RUN_OUT') {
+      activeBowlerEntry.w += 1;
+    }
+    const bCompOvers = Math.floor(activeBowlerEntry.balls / 6);
+    const bBallsInOver = activeBowlerEntry.balls % 6;
+    activeBowlerEntry.o = `${bCompOvers}.${bBallsInOver}`;
+    activeBowlerEntry.eco = activeBowlerEntry.balls > 0
+      ? (activeBowlerEntry.r / (activeBowlerEntry.balls / 6)).toFixed(1)
+      : '0.0';
 
-    // Over balls history
+    const bowlerObj = {
+      name: activeBowlerEntry.name,
+      wickets: activeBowlerEntry.w,
+      runsConceded: activeBowlerEntry.r,
+      overs: activeBowlerEntry.o
+    };
+    bowlerRef.current = bowlerObj;
+    setBowler(bowlerObj);
+
+    // 4. Over balls history with authentic base over numbering
     const ballSymbol = isWide ? 'wd' : isWicket ? 'W' : runsScored === 0 ? '•' : `${runsScored}`;
     const nextOverBalls = [...currentOverBalls, ballSymbol];
     const nextOverRuns = currentOverRuns + runsScored;
     const legalBallsInCurrentOver = nextOverBalls.filter(b => b !== 'wd').length;
+    const baseOver = Math.floor(initialBalls / 6);
 
     if (legalBallsInCurrentOver >= 6) {
       setAllOversHistory(prev => [
         ...prev,
-        { overNum: prev.length + 1, balls: nextOverBalls, runs: nextOverRuns }
+        { overNum: baseOver + prev.length + 1, balls: nextOverBalls, runs: nextOverRuns }
       ]);
       setCurrentOverBalls([]);
       setCurrentOverRuns(0);
     } else {
       setCurrentOverBalls(nextOverBalls);
       setCurrentOverRuns(nextOverRuns);
+    }
+
+    // 5. Strike rotation on odd runs (1, 3) or at over end (6 legal balls)
+    const isOverEnd = legalBallsInCurrentOver >= 6;
+    const rotateOnRuns = (runsScored % 2 === 1) && !isWide;
+    const shouldRotateStrike = (rotateOnRuns && !isOverEnd) || (!rotateOnRuns && isOverEnd);
+
+    if (!isWicket && shouldRotateStrike) {
+      setTimeout(() => {
+        const prevS = strikerRef.current;
+        const prevNS = nonStrikerRef.current;
+        strikerRef.current = prevNS;
+        nonStrikerRef.current = prevS;
+        setStriker(prevNS);
+        setNonStriker(prevS);
+      }, 700);
     }
 
     if (runsScored > 0 && !isWide) {
@@ -753,11 +994,14 @@ export default function CricketGame({
         const finalOversHistory = [...allOversHistory];
         if (nextOverBalls.length > 0 && legalBallsInCurrentOver < 6) {
           finalOversHistory.push({
-            overNum: finalOversHistory.length + 1,
+            overNum: baseOver + finalOversHistory.length + 1,
             balls: nextOverBalls,
             runs: nextOverRuns
           });
         }
+
+        const finalBattingScorecard = battingScorecardRef.current.map(b => ({ ...b }));
+        const finalBowlingScorecard = bowlingScorecardRef.current.map(bw => ({ ...bw }));
 
         onGameOver({
           won,
@@ -770,7 +1014,16 @@ export default function CricketGame({
           sixes: sixesCount + (outcome.event === 'SIX' ? 1 : 0),
           fours: foursCount + (outcome.event === 'FOUR' ? 1 : 0),
           strikeRate: ((nextRunsScored / (nextBallsFaced || 1)) * 100).toFixed(1),
-          overByOverHistory: finalOversHistory
+          overByOverHistory: finalOversHistory,
+          battingScorecard: finalBattingScorecard,
+          bowlingScorecard: finalBowlingScorecard,
+          teamCode,
+          teamScoreBase,
+          teamWicketsBase,
+          initialBalls,
+          totalScore: teamScoreBase + nextRunsScored,
+          totalWickets: teamWicketsBase + nextWicketsLost,
+          totalTarget: teamScoreBase + targetRuns
         });
       }, 1500);
     } else {
@@ -778,7 +1031,7 @@ export default function CricketGame({
         triggerNextDelivery();
       }, isWide ? 1400 : 1800);
     }
-  }, [currentRunsScored, currentBallsFaced, currentWicketsLost, targetRuns, totalBalls, maxWickets, sixesCount, foursCount, aimDirection, selectedShot, hapticsEnabled, currentOverBalls, currentOverRuns, allOversHistory, onGameOver]);
+  }, [currentRunsScored, currentBallsFaced, currentWicketsLost, targetRuns, totalBalls, maxWickets, sixesCount, foursCount, aimDirection, selectedShot, hapticsEnabled, currentOverBalls, currentOverRuns, allOversHistory, onGameOver, initialBalls, teamCode, teamScoreBase, teamWicketsBase, battingLineup, isLeftHanded, bowler]);
 
   const triggerSpecialCelebration = (type, title, subTitle, distanceMeters = null) => {
     setCelebrationOverlay({ type, title, subTitle, distanceMeters });
@@ -805,7 +1058,26 @@ export default function CricketGame({
         if (overIndex > 0) {
           // Dynamic Over-by-Over Bowler Rotation with unique actions and styles
           const nextB = WORLD_BOWLERS[overIndex % WORLD_BOWLERS.length];
-          setBowler(prev => ({ ...prev, name: nextB.name, wickets: 0, overs: `${overIndex}.0` }));
+          let nextBowlerEntry = bowlingScorecardRef.current?.find(bw => bw.name === nextB.name);
+          if (!nextBowlerEntry) {
+            nextBowlerEntry = {
+              name: nextB.name,
+              balls: 0,
+              o: '0.0',
+              r: 0,
+              w: 0,
+              eco: '0.0'
+            };
+            bowlingScorecardRef.current?.push(nextBowlerEntry);
+          }
+          const bowlerObj = {
+            name: nextBowlerEntry.name,
+            wickets: nextBowlerEntry.w || 0,
+            runsConceded: nextBowlerEntry.r || 0,
+            overs: nextBowlerEntry.o || '0.0'
+          };
+          bowlerRef.current = bowlerObj;
+          setBowler(bowlerObj);
           setBowlerType(nextB.type);
           setBowlingArm(nextB.arm);
           setBowlingAngle(nextB.angle);
