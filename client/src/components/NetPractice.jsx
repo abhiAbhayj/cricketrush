@@ -481,13 +481,13 @@ export default function NetPractice({ onBack, profile, settings }) {
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     // Off-side wide guideline (32px outside off, extended length)
-    const offWideX = cx - 32;
+    const offWideX = isLeftHanded ? (cx - 32) : (cx + 32);
     ctx.moveTo(offWideX, pb - 68); ctx.lineTo(offWideX, pb - 10);
     ctx.moveTo(offWideX - 3, pb - 68); ctx.lineTo(offWideX + 3, pb - 68);
     ctx.moveTo(offWideX - 3, pb - 10); ctx.lineTo(offWideX + 3, pb - 10);
 
     // Leg-side wide guideline (20px down leg, extended length)
-    const legWideX = cx + 20;
+    const legWideX = isLeftHanded ? (cx + 20) : (cx - 20);
     ctx.moveTo(legWideX, pb - 68); ctx.lineTo(legWideX, pb - 10);
     ctx.moveTo(legWideX - 3, pb - 68); ctx.lineTo(legWideX + 3, pb - 68);
     ctx.moveTo(legWideX - 3, pb - 10); ctx.lineTo(legWideX + 3, pb - 10);

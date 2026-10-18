@@ -502,10 +502,10 @@ export class CricketPhysics {
       case 'fastmedium':
         this.bowler.actionType = 'fast_swing';
         speedKmh = config.speedKmh || Math.floor(134 + Math.random() * 6);
-        // INSWING: Starts on 4th stump / off side (negative X), curves IN towards off/middle stump (positive X)
-        defaultAimOffset = -8 + (Math.random() - 0.5) * 2;
-        swingRate = +0.038;
-        spinLateralV = +0.22;
+        // INSWING: Pitches outside off / corridor, curves INSIDE into batsman's pads/stumps
+        defaultAimOffset = +6 + (Math.random() - 0.5) * 2;
+        swingRate = -0.038;
+        spinLateralV = -0.22;
         break;
 
       case 'outswing':
@@ -513,35 +513,37 @@ export class CricketPhysics {
       case 'swing':
         this.bowler.actionType = 'fast_swing';
         speedKmh = config.speedKmh || Math.floor(134 + Math.random() * 6);
-        // OUTSWING: Starts around middle-stump, shapes AWAY to 4th stump / slips (negative X)
+        // OUTSWING: Starts on middle/off, shapes OUTSIDE away from right-handed batsman towards slips
         defaultAimOffset = -1 + (Math.random() - 0.5) * 2;
-        swingRate = -0.040;
-        spinLateralV = -0.28;
+        swingRate = +0.040;
+        spinLateralV = +0.28;
         break;
 
       case 'reverse_swing':
         this.bowler.actionType = 'slingshot';
         speedKmh = config.speedKmh || Math.floor(142 + Math.random() * 6);
-        defaultAimOffset = -6 + (Math.random() - 0.5) * 2;
-        swingRate = +0.050;
-        spinLateralV = +0.30;
+        defaultAimOffset = +5 + (Math.random() - 0.5) * 2;
+        swingRate = -0.050;
+        spinLateralV = -0.30;
         break;
 
       case 'offcutter':
       case 'medium':
         this.bowler.actionType = 'fast_swing';
         speedKmh = config.speedKmh || Math.floor(116 + Math.random() * 6);
-        defaultAimOffset = -6 + (Math.random() - 0.5) * 2;
+        // OFF-CUTTER: Grips pitch and cuts INSIDE into right-handed batsman
+        defaultAimOffset = +6 + (Math.random() - 0.5) * 2;
         swingRate = 0;
-        spinLateralV = +0.45;
+        spinLateralV = -0.45;
         break;
 
       case 'legcutter':
         this.bowler.actionType = 'fast_swing';
         speedKmh = config.speedKmh || Math.floor(116 + Math.random() * 6);
-        defaultAimOffset = +2 + (Math.random() - 0.5) * 2;
+        // LEG-CUTTER: Grips pitch and cuts OUTSIDE away from right-handed batsman
+        defaultAimOffset = -2 + (Math.random() - 0.5) * 2;
         swingRate = 0;
-        spinLateralV = -0.45;
+        spinLateralV = +0.45;
         break;
 
       case 'straight_seam':
@@ -556,9 +558,9 @@ export class CricketPhysics {
         this.bowler.actionType = 'high_arm';
         speedKmh = config.speedKmh || Math.floor(105 + Math.random() * 6);
         this.ball.isSlowerBall = true;
-        swingRate = -0.010;
-        spinLateralV = +0.20;
-        defaultAimOffset = -4 + (Math.random() - 0.5) * 2;
+        swingRate = +0.010;
+        spinLateralV = -0.20;
+        defaultAimOffset = +4 + (Math.random() - 0.5) * 2;
         break;
 
       case 'yorker':
@@ -583,17 +585,19 @@ export class CricketPhysics {
       case 'spin':
         this.bowler.actionType = 'wrist_spin';
         speedKmh = config.speedKmh || Math.floor(76 + Math.random() * 6 * difficulty);
-        defaultAimOffset = +3 + (Math.random() - 0.5) * 2;
-        swingRate = +0.008;
-        spinLateralV = -0.65; // Turns away to off
+        // LEG-SPIN: Pitches on middle/leg, turns OUTSIDE away from right-handed batsman towards slips!
+        defaultAimOffset = -3 + (Math.random() - 0.5) * 2;
+        swingRate = -0.008;
+        spinLateralV = +0.65; // Turns OUTSIDE for batter!
         break;
 
       case 'googly':
         this.bowler.actionType = 'wrist_spin';
         speedKmh = config.speedKmh || Math.floor(78 + Math.random() * 6);
-        defaultAimOffset = -7 + (Math.random() - 0.5) * 2;
-        swingRate = -0.008;
-        spinLateralV = +0.65; // Turns in to stumps
+        // GOOGLY: Leg-spinner wrong'un: Pitches outside off, spins INSIDE into stumps/pads!
+        defaultAimOffset = +7 + (Math.random() - 0.5) * 2;
+        swingRate = +0.008;
+        spinLateralV = -0.65; // Turns INSIDE into stumps!
         break;
 
       case 'topspinner':
@@ -609,64 +613,71 @@ export class CricketPhysics {
         speedKmh = config.speedKmh || Math.floor(86 + Math.random() * 6);
         defaultAimOffset = (Math.random() - 0.5) * 2;
         swingRate = 0;
-        spinLateralV = +0.15;
+        spinLateralV = -0.15;
         break;
 
       case 'drifter':
         this.bowler.actionType = 'finger_spin';
         speedKmh = config.speedKmh || Math.floor(74 + Math.random() * 6);
-        defaultAimOffset = -8 + (Math.random() - 0.5) * 2;
-        swingRate = -0.015;
-        spinLateralV = +0.40;
+        // DRIFTER: Drifts in air towards off, turns INSIDE
+        defaultAimOffset = +8 + (Math.random() - 0.5) * 2;
+        swingRate = +0.015;
+        spinLateralV = -0.40;
         break;
 
       case 'offbreak':
       case 'offspin':
         this.bowler.actionType = 'finger_spin';
         speedKmh = config.speedKmh || Math.floor(77 + Math.random() * 6 * difficulty);
-        defaultAimOffset = -10 + (Math.random() - 0.5) * 2;
-        swingRate = -0.008;
-        spinLateralV = +0.65; // Turns in to stumps
+        // OFF-SPIN: Pitches outside off, turns INSIDE into right-handed batsman towards stumps!
+        defaultAimOffset = +9 + (Math.random() - 0.5) * 2;
+        swingRate = +0.008;
+        spinLateralV = -0.65; // Turns INSIDE into stumps!
         break;
 
       case 'doosra':
         this.bowler.actionType = 'finger_spin';
         speedKmh = config.speedKmh || Math.floor(80 + Math.random() * 6);
-        defaultAimOffset = -2 + (Math.random() - 0.5) * 2;
-        swingRate = +0.006;
-        spinLateralV = -0.60; // Turns away to off
+        // DOOSRA: Off-spinner wrong'un: Pitches around off/middle, turns OUTSIDE away from right-handed batsman!
+        defaultAimOffset = +2 + (Math.random() - 0.5) * 2;
+        swingRate = -0.006;
+        spinLateralV = +0.60; // Turns OUTSIDE for batter!
         break;
 
       case 'carrom':
         this.bowler.actionType = 'unorthodox';
         speedKmh = config.speedKmh || Math.floor(82 + Math.random() * 6);
-        defaultAimOffset = -2 + (Math.random() - 0.5) * 2;
+        // CARROM BALL: Mystery flick ball: turns OUTSIDE away from batter!
+        defaultAimOffset = +2 + (Math.random() - 0.5) * 2;
         swingRate = 0;
-        spinLateralV = -0.50;
+        spinLateralV = +0.50; // Turns OUTSIDE for batter!
         break;
 
       case 'arm_ball':
         this.bowler.actionType = 'finger_spin';
         speedKmh = config.speedKmh || Math.floor(86 + Math.random() * 6);
-        defaultAimOffset = +3 + (Math.random() - 0.5) * 2;
-        swingRate = +0.006;
-        spinLateralV = 0;
+        // ARM BALL: Slides straight on with the arm angle towards OUTSIDE
+        defaultAimOffset = -3 + (Math.random() - 0.5) * 2;
+        swingRate = -0.006;
+        spinLateralV = +0.10; // Slides on OUTSIDE!
         break;
 
       case 'leftarm_orthodox':
         this.bowler.actionType = 'finger_spin';
         speedKmh = config.speedKmh || Math.floor(76 + Math.random() * 6);
-        defaultAimOffset = +3 + (Math.random() - 0.5) * 2;
-        swingRate = +0.008;
-        spinLateralV = -0.65; // Turns away to off
+        // LEFT-ARM ORTHODOX: Turns OUTSIDE away from right-handed batsman!
+        defaultAimOffset = -3 + (Math.random() - 0.5) * 2;
+        swingRate = -0.008;
+        spinLateralV = +0.65; // Turns OUTSIDE for batter!
         break;
 
       case 'leftarm_chinaman':
         this.bowler.actionType = 'wrist_spin';
         speedKmh = config.speedKmh || Math.floor(75 + Math.random() * 6);
-        defaultAimOffset = -9 + (Math.random() - 0.5) * 2;
-        swingRate = -0.008;
-        spinLateralV = +0.65; // Turns in to stumps
+        // LEFT-ARM CHINAMAN: Turns INSIDE into right-handed batsman!
+        defaultAimOffset = +8 + (Math.random() - 0.5) * 2;
+        swingRate = +0.008;
+        spinLateralV = -0.65; // Turns INSIDE into stumps!
         break;
 
       default:
@@ -686,11 +697,11 @@ export class CricketPhysics {
 
     let lineOffset = defaultAimOffset;
     if (chosenLine === 'outside_off') {
-      lineOffset = (this.batsmanHand === 'left' ? +13 : -13);
+      lineOffset = (this.batsmanHand === 'left' ? -14 : +14);
     } else if (chosenLine === 'stumps') {
       lineOffset = (Math.random() - 0.5) * 3;
     } else if (chosenLine === 'leg') {
-      lineOffset = (this.batsmanHand === 'left' ? -9 : +9);
+      lineOffset = (this.batsmanHand === 'left' ? +10 : -10);
     }
 
     this.ball.lineOffset = lineOffset;
@@ -1538,8 +1549,8 @@ export class CricketPhysics {
           }
 
           // 2. Regulation ICC Cricket Wide Ball rule (within pitch strip, but outside extended guidelines)
-          const isWideOff = this.ball.x < (this.cx - 32);
-          const isWideLeg = this.ball.x > (this.cx + 20);
+          const isWideOff = this.batsmanHand === 'left' ? this.ball.x < (this.cx - 32) : this.ball.x > (this.cx + 32);
+          const isWideLeg = this.batsmanHand === 'left' ? this.ball.x > (this.cx + 20) : this.ball.x < (this.cx - 20);
           if (isWideOff || isWideLeg) {
             return {
               event: 'WIDE',

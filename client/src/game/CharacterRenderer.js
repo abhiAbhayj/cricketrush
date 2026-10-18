@@ -1051,8 +1051,8 @@ export const CharacterRenderer = {
       // 6. Realistic Stadium Audience Spectators (Tiered Seating with Animated Individual Fans)
       const fanJerseys = ['#1d4ed8', '#facc15', '#dc2626', '#16a34a', '#ea580c', '#38bdf8', '#ffffff', '#9333ea'];
       const skinTones = ['#fcd34d', '#d97706', '#b45309', '#fbcfe8', '#fef08a'];
-      const tier1Rows = [br + 28, br + 48, br + 68, br + 86];
-      const tier2Rows = [br + 128, br + 152, br + 176, br + 202];
+      const tier1Rows = [br + 32, br + 60];
+      const tier2Rows = [br + 136, br + 168];
 
       const drawCrowdTier = (rows, isUpper) => {
         rows.forEach((rowDist, rIdx) => {
@@ -1070,16 +1070,16 @@ export const CharacterRenderer = {
           ctx.lineWidth = 1.8;
           ctx.stroke();
 
-          // Individual Spectators spaced densely around the circumference
+          // Individual Spectators spaced evenly around the circumference
           const circumference = Math.PI * 2 * rowDist;
-          const spectatorCount = Math.floor(circumference / 14); // ~1 fan every 14px
+          const spectatorCount = Math.floor(circumference / 52); // ~60-70 fans per row (ultra fast & clean)
           const angleStep = (Math.PI * 2) / spectatorCount;
 
           for (let i = 0; i < spectatorCount; i++) {
             const angle = i * angleStep;
             // Skip spectators in aisle gaps
             const aisleCheck = ((angle + Math.PI * 2) % ((Math.PI * 2) / 16));
-            if (aisleCheck < 0.05 || aisleCheck > ((Math.PI * 2) / 16) - 0.05) continue;
+            if (aisleCheck < 0.06 || aisleCheck > ((Math.PI * 2) / 16) - 0.06) continue;
 
             const cosA = Math.cos(angle);
             const sinA = Math.sin(angle);
@@ -1094,9 +1094,9 @@ export const CharacterRenderer = {
             const jerseyColor = fanJerseys[hash % fanJerseys.length];
             const skinTone = skinTones[(hash >> 2) % skinTones.length];
 
-            const cheerBob = isCheering ? Math.sin(now * 0.012 + i * 0.4) * 2.5 : 0;
+            const cheerBob = isCheering ? Math.sin(now * 0.012 + i * 0.5) * 2.5 : 0;
 
-            // Torso (shoulders facing pitch center)
+            // Torso (facing pitch center)
             ctx.fillStyle = jerseyColor;
             ctx.beginPath();
             ctx.arc(sx, sy + cheerBob, 3.8, 0, Math.PI * 2);
@@ -1120,8 +1120,8 @@ export const CharacterRenderer = {
               ctx.stroke();
             }
 
-            // Every 16th fan waves a team flag
-            if (hash % 16 === 0) {
+            // Every 10th fan waves a team flag
+            if (hash % 10 === 0) {
               const flagWave = Math.sin(now * 0.008 + i) * 3;
               const flagColor = (hash % 3 === 0) ? '#ff9933' : (hash % 3 === 1) ? '#facc15' : '#38bdf8';
               ctx.strokeStyle = '#e2e8f0';
@@ -1136,7 +1136,7 @@ export const CharacterRenderer = {
             }
 
             // Twinkling mobile phone camera flashes in the crowd
-            if ((hash + Math.floor(now / 160)) % 53 === 0) {
+            if ((hash + Math.floor(now / 160)) % 37 === 0) {
               ctx.fillStyle = '#ffffff';
               ctx.beginPath();
               ctx.arc(sx, sy - 2, 2.5, 0, Math.PI * 2);

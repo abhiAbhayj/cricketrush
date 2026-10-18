@@ -1405,6 +1405,12 @@ export default function CricketGame({
       engine.innerCircleRadiusY
     );
 
+    // 3. Pitch Strip Dimensions
+    const pw = engine.pitchWidth || 116;
+    const pt = engine.pitchTop || (height * 0.26);
+    const pb = engine.pitchBottom || (height * 0.78);
+    const ph = pb - pt;
+
     // 2.8 Stadium Pavilion Grandstand & Sightscreen Backdrop (Directly visible behind bowler in pitch view)
     const sightscreenY = pt - 76;
     const sightscreenW = Math.max(140, pw + 36);
@@ -1427,7 +1433,7 @@ export default function CricketGame({
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(cx - 176, ry + 2, 352, 4);
 
-      for (let s = -168; s <= 168; s += 14) {
+      for (let s = -168; s <= 168; s += 16) {
         const hash = Math.abs((s * 13 + row * 31)) % 1000;
         const color = grandstandColors[hash % grandstandColors.length];
         const skin = grandstandSkins[(hash >> 2) % grandstandSkins.length];
@@ -1499,10 +1505,6 @@ export default function CricketGame({
     }
 
     // 3. Pitch Strip: Sandy beige turf pitch
-    const pw = engine.pitchWidth;
-    const pt = engine.pitchTop;
-    const pb = engine.pitchBottom;
-    const ph = pb - pt;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
     ctx.fillRect(cx - pw / 2 + 3, pt + 4, pw, ph);
@@ -1539,14 +1541,14 @@ export default function CricketGame({
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     // Off-side wide guideline (32px outside off, extended length)
-    const offWideX = cx - 32;
+    const offWideX = isLeftHanded ? (cx - 32) : (cx + 32);
     ctx.moveTo(offWideX, pb - 68); ctx.lineTo(offWideX, pb - 10);
     // Tick marks on off-side wide line
     ctx.moveTo(offWideX - 3, pb - 68); ctx.lineTo(offWideX + 3, pb - 68);
     ctx.moveTo(offWideX - 3, pb - 10); ctx.lineTo(offWideX + 3, pb - 10);
 
     // Leg-side wide guideline (20px down leg, extended length)
-    const legWideX = cx + 20;
+    const legWideX = isLeftHanded ? (cx + 20) : (cx - 20);
     ctx.moveTo(legWideX, pb - 68); ctx.lineTo(legWideX, pb - 10);
     // Tick marks on leg-side wide line
     ctx.moveTo(legWideX - 3, pb - 68); ctx.lineTo(legWideX + 3, pb - 68);
