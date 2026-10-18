@@ -73,15 +73,15 @@ export class FielderManager {
       const dFineLeg = onBoundary(0.85, 0.75);
 
       targetPlacements = [
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'cover', role: 'Extra Cover', x: cov.x, y: cov.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'point', role: 'Backward Point', x: pt.x, y: pt.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: mWkt.x, y: mWkt.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'longoff', role: 'Deep Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 4.5, zone: 'boundary' }
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'cover', role: 'Extra Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'point', role: 'Backward Point', x: pt.x, y: pt.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: mWkt.x, y: mWkt.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'longoff', role: 'Deep Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' }
       ];
     } else if (preset === 'death_overs') {
       // DEATH OVERS: Exactly 4 Fielders ON the 30-Yard Circle Line, 5 deep on 80m boundary
@@ -96,15 +96,15 @@ export class FielderManager {
       const dThirdMan = onBoundary(2.35, 0.75);
 
       targetPlacements = [
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'deepcover', role: 'Deep Extra Cover', x: dCov.x, y: dCov.y, speed: 4.5, zone: 'boundary' },
-        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 4.5, zone: 'boundary' },
-        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 4.5, zone: 'boundary' }
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'deepcover', role: 'Deep Extra Cover', x: dCov.x, y: dCov.y, speed: 2.8, zone: 'boundary' },
+        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
+        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' }
       ];
     } else if (preset === 'attacking') {
       // Aggressive wicket-taking field: 2 Slips & Gully close, 3 on 30-Yard Circle Line, 3 deep on boundary
@@ -116,15 +116,15 @@ export class FielderManager {
       const dFineLeg = onBoundary(0.85, 0.75);
 
       targetPlacements = [
-        { id: 'slip1', role: '1st Slip', x: cx - 40, y: batsmanY + 36, speed: 3.4, zone: 'slips' },
-        { id: 'slip2', role: '2nd Slip', x: cx - 68, y: batsmanY + 44, speed: 3.4, zone: 'slips' },
-        { id: 'gully', role: 'Gully', x: cx - 110, y: batsmanY + 20, speed: 3.4, zone: 'gully' },
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 4.5, zone: 'boundary' }
+        { id: 'slip1', role: '1st Slip', x: cx - 40, y: batsmanY + 36, speed: 2.4, zone: 'slips' },
+        { id: 'slip2', role: '2nd Slip', x: cx - 68, y: batsmanY + 44, speed: 2.4, zone: 'slips' },
+        { id: 'gully', role: 'Gully', x: cx - 110, y: batsmanY + 20, speed: 2.4, zone: 'gully' },
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' }
       ];
     } else if (preset === 'offside_defensive') {
       // Packed off-side ring: 4 on 30-yard circle line, 5 on 80m boundary
@@ -139,15 +139,15 @@ export class FielderManager {
       const dMidWkt = onBoundary(-0.48, 0.75);
 
       targetPlacements = [
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: mWkt.x, y: mWkt.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 4.5, zone: 'boundary' },
-        { id: 'point', role: 'Deep Point', x: dPoint.x, y: dPoint.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 4.5, zone: 'boundary' },
-        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' }
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midwicket', role: 'Mid-Wicket', x: mWkt.x, y: mWkt.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' },
+        { id: 'point', role: 'Deep Point', x: dPoint.x, y: dPoint.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 2.8, zone: 'boundary' },
+        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' }
       ];
     } else if (preset === 'legside_defensive') {
       // Leg-side trap: 4 on 30-yard circle line, 5 on 80m boundary
@@ -162,15 +162,15 @@ export class FielderManager {
       const dCover = onBoundary(-2.55, 0.75);
 
       targetPlacements = [
-        { id: 'point', role: 'Point', x: pt.x, y: pt.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepsqleg', role: 'Deep Sq Leg', x: dSqLeg.x, y: dSqLeg.y, speed: 4.5, zone: 'boundary' },
-        { id: 'fineleg', role: 'Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 4.5, zone: 'boundary' }
+        { id: 'point', role: 'Point', x: pt.x, y: pt.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepsqleg', role: 'Deep Sq Leg', x: dSqLeg.x, y: dSqLeg.y, speed: 2.8, zone: 'boundary' },
+        { id: 'fineleg', role: 'Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 2.8, zone: 'boundary' }
       ];
     } else {
       // Balanced Standard Cricket Field: 4 ON 30-Yard Circle Line, 5 deep on 80m boundary
@@ -185,15 +185,15 @@ export class FielderManager {
       const dThirdMan = onBoundary(2.35, 0.75);
 
       targetPlacements = [
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 3.4, zone: 'infield_ring' },
-        { id: 'deeppoint', role: 'Deep Point', x: dPt.x, y: dPt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'longoff', role: 'Deep Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 4.5, zone: 'boundary' },
-        { id: 'longon', role: 'Deep Long-On', x: dLongOn.x, y: dLongOn.y, speed: 4.5, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 4.5, zone: 'boundary' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 4.5, zone: 'boundary' }
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
+        { id: 'deeppoint', role: 'Deep Point', x: dPt.x, y: dPt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'longoff', role: 'Deep Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
+        { id: 'longon', role: 'Deep Long-On', x: dLongOn.x, y: dLongOn.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' }
       ];
     }
 
@@ -235,7 +235,9 @@ export class FielderManager {
 
   update(ball, dt = 1, engine = null) {
     if (this.throwTracer) {
-      this.throwTracer.progress += 0.055 * dt;
+      const throwDist = Math.hypot(this.throwTracer.toX - this.throwTracer.fromX, this.throwTracer.toY - this.throwTracer.fromY);
+      const tracerRate = Math.max(0.012, Math.min(0.024, 2.8 / Math.max(80, throwDist)));
+      this.throwTracer.progress += tracerRate * dt;
       if (engine?.running?.throwActive) {
         engine.running.throwProgress = this.throwTracer.progress;
       }
@@ -349,11 +351,11 @@ export class FielderManager {
         const d = Math.hypot(dx, dy) || 1;
 
         // Diving slide trigger when within grasping reach of fast moving ball
-        if (distToBall < 48 && distToBall > 10 && ballSpeed > 2.5 && !ball.isAirborne) {
+        if (distToBall < 30 && distToBall > 8 && ballSpeed > 2.5 && !ball.isAirborne) {
           f.isDiving = true;
         }
 
-        const moveSpeed = f.isDiving ? (f.speed * 1.55) : (f.speed * 1.40);
+        const moveSpeed = f.isDiving ? (f.speed * 1.18) : (f.speed * 1.06);
         if (distToBall > 4) {
           f.vx = (dx / d) * moveSpeed;
           f.vy = (dy / d) * moveSpeed;
@@ -372,8 +374,8 @@ export class FielderManager {
         const d = Math.hypot(dx, dy) || 1;
 
         if (d > 12) {
-          f.vx = (dx / d) * (f.speed * 1.25);
-          f.vy = (dy / d) * (f.speed * 1.25);
+          f.vx = (dx / d) * (f.speed * 1.04);
+          f.vy = (dy / d) * (f.speed * 1.04);
         } else {
           f.vx *= 0.6;
           f.vy *= 0.6;
@@ -386,15 +388,15 @@ export class FielderManager {
           const dx = ball.x - f.x;
           const dy = ball.y - f.y;
           const d = Math.hypot(dx, dy) || 1;
-          f.vx = (dx / d) * (f.speed * 1.10);
-          f.vy = (dy / d) * (f.speed * 1.10);
+          f.vx = (dx / d) * (f.speed * 0.95);
+          f.vy = (dy / d) * (f.speed * 0.95);
         } else {
           // Ball in ring: converge to intercept
           const dx = ball.x - f.x;
           const dy = ball.y - f.y;
           const d = Math.hypot(dx, dy) || 1;
-          f.vx = (dx / d) * (f.speed * 1.20);
-          f.vy = (dy / d) * (f.speed * 1.20);
+          f.vx = (dx / d) * (f.speed * 1.02);
+          f.vy = (dy / d) * (f.speed * 1.02);
         }
         f.x += f.vx;
         f.y += f.vy;
@@ -409,8 +411,8 @@ export class FielderManager {
         const d = Math.hypot(dx, dy) || 1;
 
         if (d > 25) {
-          f.vx = (dx / d) * (f.speed * 0.90);
-          f.vy = (dy / d) * (f.speed * 0.90);
+          f.vx = (dx / d) * (f.speed * 0.82);
+          f.vy = (dy / d) * (f.speed * 0.82);
         } else {
           f.vx *= 0.7;
           f.vy *= 0.7;
@@ -420,11 +422,11 @@ export class FielderManager {
       }
     });
 
-    // Automatic field pickup: if ball has slowed down on turf and ANY fielder reaches it, scoop up & throw immediately!
+    // Realistic field pickup: if ball has slowed down on turf and fielder reaches close reach
     if (ball && ball.state === 'HIT' && !ball.isAirborne && !ball.isStoppedByFielder && !this.throwTracer && !engine?.running?.throwActive) {
       for (let f of this.fielders) {
         const d = Math.hypot(f.x - ball.x, f.y - ball.y);
-        if (d < 40 && ballSpeed < 6.5) {
+        if (d < 18 && ballSpeed < 3.2) {
           ball.isStoppedByFielder = true;
           ball.vx = 0;
           ball.vy = 0;
@@ -446,7 +448,7 @@ export class FielderManager {
       const dist = Math.hypot(ball.x - f.x, ball.y - f.y);
 
       // Catch detection (Airborne ball at catchable height)
-      if (ball.isAirborne && ball.height < 34 && dist < 36) {
+      if (ball.isAirborne && ball.height < 24 && dist < 20) {
         ball.isStoppedByFielder = true;
         ball.vx = 0;
         ball.vy = 0;
@@ -458,11 +460,11 @@ export class FielderManager {
       }
 
       // Ground stop detection along the turf (Fielder stops ball cleanly for 1, 2, 3+ runs)
-      if (!ball.isAirborne && dist < 32 && ballSpeed < 10.5) {
+      if (!ball.isAirborne && dist < 18 && ballSpeed < 4.5) {
         ball.isStoppedByFielder = true;
         ball.vx = 0;
         ball.vy = 0;
-        f.isDiving = dist < 26;
+        f.isDiving = dist < 15;
         this.startThrowTracer(f.x, f.y, engine, f.role);
         return { type: 'STOP', fielder: f.role, distanceTraveled: ball.traveled };
       }

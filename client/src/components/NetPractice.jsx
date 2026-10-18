@@ -1168,27 +1168,30 @@ export default function NetPractice({ onBack, profile, settings }) {
           </div>
         )}
 
-        {/* Real-Time Visual Timing Meter */}
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-56 sm:w-64 max-w-[85vw]">
-          <div className="bg-[#0c1424]/90 border border-slate-700/80 rounded-2xl p-2 sm:p-2.5 shadow-2xl backdrop-blur-md">
+        {/* Unified Sleek Action Center: Real-Time Timing HUD + Swing Bat */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-[290px] sm:max-w-xs px-3 pointer-events-auto flex flex-col gap-1.5 items-center">
+          {/* Real-Time Precision Timing Meter Card */}
+          <div className="w-full bg-[#080e1a]/95 border border-slate-700/80 rounded-2xl p-2 sm:p-2.5 shadow-2xl backdrop-blur-md">
             <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
-              <span className="text-amber-400">Early</span>
-              <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+              <span className="text-amber-400 font-extrabold">Early</span>
+              <span className="text-emerald-400 font-black flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-emerald-400" /> SWEET SPOT
               </span>
-              <span className="text-red-400">Late</span>
+              <span className="text-rose-400 font-extrabold">Late</span>
             </div>
-            <div className="relative w-full h-3 rounded-full bg-slate-900 border border-slate-800 overflow-hidden flex">
-              <div className="w-[35%] h-full bg-amber-500/30 border-r border-amber-500/40" />
-              <div className="w-[30%] h-full bg-emerald-500/60 shadow-inner" />
-              <div className="w-[35%] h-full bg-red-500/30 border-l border-red-500/40" />
+            <div className="relative w-full h-2.5 rounded-full bg-slate-950 border border-slate-800 overflow-hidden flex">
+              <div className="w-[35%] h-full bg-amber-500/25 border-r border-amber-500/40" />
+              <div className="w-[30%] h-full bg-emerald-500/50 shadow-inner" />
+              <div className="w-[35%] h-full bg-rose-500/25 border-l border-rose-500/40" />
               <div
-                className="absolute top-0 bottom-0 w-2.5 bg-white rounded-full shadow-md shadow-white transition-all duration-75"
+                className="absolute top-0 bottom-0 w-2.5 bg-white rounded-full shadow-lg shadow-white transition-all duration-75"
                 style={{ left: `calc(${timingMeterProgress * 100}% - 5px)` }}
               />
             </div>
             <div className="flex justify-between items-center mt-1 text-[10px] font-mono font-bold">
-              <span className="text-emerald-300 uppercase">{lastShotName}</span>
+              <span className="text-emerald-400 uppercase tracking-wide truncate max-w-[140px]">
+                {lastShotName || 'READY'}
+              </span>
               {timingDeltaRecord !== null && (
                 <span className={Math.abs(timingDeltaRecord) <= 38 ? 'text-emerald-400' : 'text-amber-400'}>
                   {timingDeltaRecord > 0 ? `+${timingDeltaRecord}ms` : `${timingDeltaRecord}ms`}
@@ -1196,59 +1199,17 @@ export default function NetPractice({ onBack, profile, settings }) {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Bottom Action Buttons: Footwork Controls + Swing Bat */}
-        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 w-full max-w-xs px-3 pointer-events-auto">
-          {/* Batsman Crease Footwork Controls */}
-          <div className="flex items-center justify-between gap-1 mb-1.5 bg-[#0c1424]/90 p-1 rounded-2xl border border-slate-700/80 shadow-lg backdrop-blur-md">
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.shuffleLeft(); setBatsmanCreasePosition('left'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'left' ? 'bg-amber-500 text-slate-950 font-extrabold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Shuffle Off Side (ArrowLeft / A)"
-            >
-              ◀ Off
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.resetCrease(); setBatsmanCreasePosition('center'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold transition-all active:scale-95 ${
-                batsmanCreasePosition === 'center' ? 'bg-slate-700 text-white font-extrabold' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Reset Crease (ArrowDown / S)"
-            >
-              Crease
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.shuffleRight(); setBatsmanCreasePosition('right'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'right' ? 'bg-amber-500 text-slate-950 font-extrabold shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Shuffle Leg Side (ArrowRight / D)"
-            >
-              Leg ▶
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); engineRef.current?.stepOut(); setBatsmanCreasePosition('step_out'); sound.playClick(); }}
-              className={`flex-1 py-1 px-1 rounded-xl text-[9.5px] font-bold flex items-center justify-center gap-0.5 transition-all active:scale-95 ${
-                batsmanCreasePosition === 'step_out' ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white font-black shadow-md' : 'text-amber-400 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Step Out / Charge Down Pitch (ArrowUp / W) +25% Power!"
-            >
-              ⚡ Charge
-            </button>
-          </div>
-
+          {/* High-Impact Tactical Swing Bat Button */}
           <button
             onClick={(e) => { e.stopPropagation(); handleBatSwing(null); }}
             disabled={engineRef.current?.batsman.isSwinging}
-            className="w-full py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-slate-950 font-display font-black text-sm tracking-wider flex items-center justify-center gap-2 shadow-2xl shadow-emerald-500/30 transition-all border border-emerald-300/40"
+            className="w-full py-2.5 sm:py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-slate-950 font-display font-black text-sm tracking-wider flex items-center justify-center gap-2 shadow-2xl shadow-emerald-500/30 transition-all border border-emerald-300/40"
           >
             <Zap className="w-4 h-4 fill-slate-950" /> SWING BAT
           </button>
-          <div className="text-center mt-1 text-[10px] text-slate-400 font-medium">
-            Tap screen / <kbd className="px-1 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[9px]">Spacebar</kbd> to hit • Arrow Keys / WASD for footwork
+          <div className="text-center text-[9.5px] text-slate-400 font-medium">
+            Tap screen or <kbd className="px-1 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[8.5px]">Spacebar</kbd> to hit
           </div>
         </div>
       </div>
