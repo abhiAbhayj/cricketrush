@@ -326,18 +326,25 @@ export function getJerseyColor(identifier) {
 export function getJerseyData(identifier) {
   if (!identifier) return ALL_JERSEYS[0];
 
-  // If already a kit object with color
-  if (typeof identifier === 'object' && identifier.color) {
-    return {
-      id: identifier.id || 'custom',
-      name: identifier.name || 'Custom Team Kit',
-      code: identifier.code || 'CUSTOM',
-      color: identifier.color,
-      secondaryColor: identifier.secondaryColor || '#ffffff',
-      pantsColor: identifier.pantsColor || identifier.color,
-      stripeColor: identifier.stripeColor || identifier.secondaryColor || '#ffffff',
-      badge: identifier.badge || '🏏'
-    };
+  // If already a kit object or object with identifiers
+  if (typeof identifier === 'object') {
+    if (identifier.color) {
+      return {
+        id: identifier.id || 'custom',
+        name: identifier.name || 'Custom Team Kit',
+        code: identifier.code || 'CUSTOM',
+        color: identifier.color,
+        secondaryColor: identifier.secondaryColor || '#ffffff',
+        pantsColor: identifier.pantsColor || identifier.color,
+        stripeColor: identifier.stripeColor || identifier.secondaryColor || '#ffffff',
+        badge: identifier.badge || '🏏'
+      };
+    }
+    const candidate = identifier.id || identifier.code || identifier.teamCode || identifier.teamJersey || identifier.name;
+    if (candidate) {
+      return getJerseyData(candidate);
+    }
+    return ALL_JERSEYS[0];
   }
 
   const raw = String(identifier).trim();

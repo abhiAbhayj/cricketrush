@@ -732,19 +732,6 @@ export default function CricketGame({
     else if (outcome.event === 'DOT') bigText = 'DOT';
     else if (isWicket) bigText = 'OUT';
 
-    // Signal pitch umpire at bowler's end
-    if (engineRef.current) {
-      if (isWicket) {
-        engineRef.current.signalUmpire('out', 240);
-      } else if (outcome.event === 'SIX') {
-        engineRef.current.signalUmpire('six', 220);
-      } else if (outcome.event === 'FOUR') {
-        engineRef.current.signalUmpire('four', 200);
-      } else if (isWide) {
-        engineRef.current.signalUmpire('wide', 200);
-      }
-    }
-
     setFeedback({
       text: badgeText,
       type: badgeType,
@@ -1376,7 +1363,11 @@ export default function CricketGame({
       ctx.fillStyle = '#ffffff';
       for (let s = -7; s <= 7; s += 7) {
         ctx.beginPath();
-        ctx.roundRect(cx + s - 1.5, stumpY - 15, 3, 15, 1);
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(cx + s - 1.5, stumpY - 15, 3, 15, 1);
+        } else {
+          ctx.rect(cx + s - 1.5, stumpY - 15, 3, 15);
+        }
         ctx.fill();
         ctx.strokeStyle = '#0f172a';
         ctx.lineWidth = 0.8;
@@ -1467,7 +1458,11 @@ export default function CricketGame({
       // Dark background pill
       ctx.fillStyle = 'rgba(10, 16, 28, 0.90)';
       ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      } else {
+        ctx.rect(pillX, pillY, pillW, pillH);
+      }
       ctx.fill();
       ctx.strokeStyle = lengthColor;
       ctx.lineWidth = 1.2;
@@ -1481,10 +1476,12 @@ export default function CricketGame({
       ctx.restore();
     }
 
-    const battingKit = getJerseyData(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind');
-    const fieldingKit = getJerseyData(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa'));
-    const battingJerseyColor = battingKit.color;
-    const fieldingJerseyColor = fieldingKit.color;
+    const defaultBatKit = { color: '#0066b2', secondaryColor: '#ff9933', pantsColor: '#004c85', stripeColor: '#ff9933' };
+    const defaultFieldKit = { color: '#006837', secondaryColor: '#ffc72c', pantsColor: '#004c27', stripeColor: '#ffc72c' };
+    const battingKit = getJerseyData(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind') || defaultBatKit;
+    const fieldingKit = getJerseyData(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa')) || defaultFieldKit;
+    const battingJerseyColor = battingKit?.color || '#0066b2';
+    const fieldingJerseyColor = fieldingKit?.color || '#006837';
 
     // 6 & 8. Batsmen: Either sprinting between wickets or standard stance
     if (engine.running?.active && (engine.running.isCallingRun || engine.running.runsCompleted > 0)) {
@@ -1549,13 +1546,6 @@ export default function CricketGame({
       isFielding: engine.bowler.isFielding,
       hasBall: engine.bowler.hasBall
     });
-
-    // 7b. Regulation Pitch Umpire at Bowler's Crease (matching Reference Screenshot right figure)
-    if (engine.umpire) {
-      CharacterRenderer.drawUmpire(ctx, engine.umpire.x, engine.umpire.y, {
-        signal: engine.umpire.signal || 'idle'
-      });
-    }
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
     CharacterRenderer.drawWicketKeeper(ctx, engine.keeper.x, engine.keeper.y, {

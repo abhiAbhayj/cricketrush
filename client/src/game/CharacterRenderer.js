@@ -5,30 +5,68 @@
 // Runners, Fielders, 80-Meter Stadium Crowd Stands & Regulation 30-Yard Circle
 // ============================================================================
 
-import { getJerseyData } from './TeamData';
-
 /**
- * Helper to resolve kit safely from either a kit object or a string identifier
+ * Helper to resolve kit safely from either a kit object or a color string without external dependencies
  */
-function resolveKit(kitOrColor, fallbackId = 'jersey_ind') {
-  if (kitOrColor && typeof kitOrColor === 'object' && kitOrColor.color) {
+function resolveKit(kitOrColor, fallbackColor = '#0066b2') {
+  if (kitOrColor && typeof kitOrColor === 'object') {
+    const col = kitOrColor.color || (typeof fallbackColor === 'string' && fallbackColor.startsWith('#') ? fallbackColor : '#0066b2');
     return {
-      color: kitOrColor.color,
+      color: col,
       secondaryColor: kitOrColor.secondaryColor || '#ffffff',
-      pantsColor: kitOrColor.pantsColor || kitOrColor.color,
+      pantsColor: kitOrColor.pantsColor || col,
       stripeColor: kitOrColor.stripeColor || kitOrColor.secondaryColor || '#ffffff'
     };
   }
-  return getJerseyData(kitOrColor || fallbackId);
+  let col = '#0066b2';
+  if (typeof kitOrColor === 'string' && kitOrColor.startsWith('#')) {
+    col = kitOrColor;
+  } else if (typeof fallbackColor === 'string' && fallbackColor.startsWith('#')) {
+    col = fallbackColor;
+  } else if (fallbackColor === 'jersey_sa') {
+    col = '#006837';
+  }
+  return {
+    color: col,
+    secondaryColor: '#ffffff',
+    pantsColor: col,
+    stripeColor: '#ffffff'
+  };
 }
 
 /**
- * Helper to draw clean rounded rectangles with stroke
+ * Universal fallback for canvas rounded rectangle
+ */
+function drawRoundRectFallback(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/**
+ * Helper to draw clean rounded rectangles with stroke and 100% crash protection
  */
 function drawRoundRect(ctx, x, y, w, h, radius, fill, stroke = null, lineWidth = 1.5) {
+  if (!ctx || w <= 0 || h <= 0) return;
+  const r = Math.max(0, Math.min(Math.min(w / 2, h / 2), typeof radius === 'number' ? radius : 0));
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, radius);
+  if (typeof ctx.roundRect === 'function') {
+    try {
+      ctx.roundRect(x, y, w, h, r);
+    } catch {
+      drawRoundRectFallback(ctx, x, y, w, h, r);
+    }
+  } else {
+    drawRoundRectFallback(ctx, x, y, w, h, r);
+  }
   if (fill) {
     ctx.fillStyle = fill;
     ctx.fill();
@@ -495,146 +533,6 @@ export const CharacterRenderer = {
       ctx.restore();
     }
 
-    ctx.restore();
-  },
-
-  /**
-   * Draw Regulation Pitch Umpire (matching Reference Screenshot right figure):
-   * Iconic wide-brim white sun-hat with navy band, navy blue coat with dark outline,
-   * white collared shirt & white belt, dark trousers, and dynamic cricket signaling:
-   * 'idle', 'out' (index finger of death), 'wide' (horizontal arms), 'four' (waist wave), 'six' (both arms high).
-   */
-  drawUmpire(ctx, x, y, { signal = 'idle', skinTone = '#c68656' } = {}) {
-    ctx.save();
-    ctx.translate(Math.round(x), Math.round(y));
-
-    // 1. Soft Ground Shadow
-    drawEllipse(ctx, 0, 12, 12, 4.8, 'rgba(0, 0, 0, 0.35)');
-
-    // 2. Dark Formal Trousers & Black Shoes (matching reference screenshot)
-    // Left Leg
-    drawRoundRect(ctx, -5.8, 2, 4.8, 11, 2.2, '#0f172a', '#090e17', 1.3);
-    drawRoundRect(ctx, -6.5, 11.5, 5.8, 3.0, 1.2, '#090e17');
-    drawRoundRect(ctx, -6.5, 13.5, 5.8, 1.0, 0.5, '#475569');
-
-    // Right Leg
-    drawRoundRect(ctx, 1.0, 2, 4.8, 11, 2.2, '#0f172a', '#090e17', 1.3);
-    drawRoundRect(ctx, 0.7, 11.5, 5.8, 3.0, 1.2, '#090e17');
-    drawRoundRect(ctx, 0.7, 13.5, 5.8, 1.0, 0.5, '#475569');
-
-    // 3. Navy Blue Blazer / Coat with White Waist Belt (matching reference screenshot)
-    const torsoY = -8;
-    // Navy Coat Body
-    drawRoundRect(ctx, -7.5, torsoY, 15, 12, 3.2, '#1e3a8a', '#090e17', 1.5);
-
-    // Inner White Collared Shirt V-Neck
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-2.5, torsoY);
-    ctx.lineTo(0, torsoY + 4.5);
-    ctx.lineTo(2.5, torsoY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Red Umpire Tie
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(-0.8, torsoY + 1.2, 1.6, 3.2);
-
-    // Crisp White Waistband / Belt (prominently visible in reference screenshot)
-    drawRoundRect(ctx, -7.0, torsoY + 9.5, 14, 2.4, 0.8, '#f8fafc', '#090e17', 0.8);
-    // Belt Buckle
-    drawRoundRect(ctx, -1.5, torsoY + 9.2, 3.0, 3.0, 0.6, '#e2e8f0', '#090e17', 0.7);
-
-    // 4. Head, Sunglasses & Weathered Skin Tone
-    const headY = -16;
-    drawRoundRect(ctx, -2.0, headY + 6.0, 4.0, 3.0, 1.0, skinTone, '#090e17', 1.0);
-    drawEllipse(ctx, 0, headY + 3.0, 5.4, 4.8, skinTone, '#090e17', 1.3);
-
-    // Dark Sunglasses
-    ctx.fillStyle = '#090e17';
-    ctx.fillRect(-3.0, headY + 2.2, 2.4, 1.6);
-    ctx.fillRect(0.6, headY + 2.2, 2.4, 1.6);
-    ctx.strokeStyle = '#090e17';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(-0.6, headY + 2.8); ctx.lineTo(0.6, headY + 2.8);
-    ctx.stroke();
-
-    // 5. Iconic Wide-Brim White Sun-Hat (matching reference screenshot right figure!)
-    // Wide oval brim with dark outline
-    drawEllipse(ctx, 0, headY + 0.8, 9.2, 3.8, '#f8fafc', '#090e17', 1.5);
-    // Underbrim shadow for depth
-    drawEllipse(ctx, 0, headY + 1.6, 7.8, 2.4, 'rgba(148, 163, 184, 0.45)');
-    // Hat Crown (rounded bucket / bowler crown on top)
-    drawRoundRect(ctx, -5.0, headY - 4.8, 10, 6.0, 2.5, '#ffffff', '#090e17', 1.4);
-    // Dark Hat Band around crown base
-    drawRoundRect(ctx, -5.0, headY - 0.2, 10, 1.6, 0.5, '#0f172a');
-    // Top highlight curve on hat
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.lineWidth = 1.0;
-    ctx.beginPath();
-    ctx.arc(0, headY - 3.8, 3.6, Math.PI, Math.PI * 2);
-    ctx.stroke();
-
-    // 6. Dynamic Arms & Official Cricket Signals
-    ctx.save();
-    ctx.strokeStyle = '#1e3a8a';
-    ctx.lineWidth = 3.2;
-    ctx.lineCap = 'round';
-
-    if (signal === 'out') {
-      // Right arm raised high pointing index finger skyward! (Finger of death)
-      // Left arm resting at side
-      ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-8, 3);
-      ctx.stroke();
-      drawRoundRect(ctx, -9.5, 2, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-
-      // Raised right arm pointing up
-      ctx.beginPath();
-      ctx.moveTo(6, -4); ctx.lineTo(7, -13);
-      ctx.stroke();
-      // White shirt cuff
-      drawRoundRect(ctx, 5.5, -14, 3.0, 2.0, 0.6, '#ffffff');
-      // Pointing index finger
-      drawRoundRect(ctx, 6.0, -18, 2.0, 5.0, 0.8, skinTone, '#090e17', 0.8);
-    } else if (signal === 'wide') {
-      // Both arms outstretched horizontally (T-pose)
-      ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-17, -4);
-      ctx.moveTo(6, -4); ctx.lineTo(17, -4);
-      ctx.stroke();
-      // Hands
-      drawRoundRect(ctx, -19.5, -5.5, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-      drawRoundRect(ctx, 16.5, -5.5, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-    } else if (signal === 'six') {
-      // Both arms raised high straight above head
-      ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-7, -15);
-      ctx.moveTo(6, -4); ctx.lineTo(7, -15);
-      ctx.stroke();
-      drawRoundRect(ctx, -8.5, -18, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-      drawRoundRect(ctx, 5.5, -18, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-    } else if (signal === 'four') {
-      // Sweeping boundary wave across waist
-      const wave = Math.sin(Date.now() * 0.012) * 8;
-      ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-8, 3);
-      ctx.moveTo(6, -4); ctx.lineTo(1 + wave, 2);
-      ctx.stroke();
-      drawRoundRect(ctx, -9.5, 2, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-      drawRoundRect(ctx, wave - 0.5, 1, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
-    } else {
-      // 'idle': Hands resting behind back / in front of waist
-      ctx.beginPath();
-      ctx.moveTo(-6, -4); ctx.lineTo(-3, 3);
-      ctx.moveTo(6, -4); ctx.lineTo(3, 3);
-      ctx.stroke();
-      // Folded hands
-      drawRoundRect(ctx, -3.2, 2.0, 6.4, 3.2, 1.2, skinTone, '#090e17', 0.8);
-    }
-
-    ctx.restore();
     ctx.restore();
   },
 
@@ -1269,13 +1167,7 @@ export const CharacterRenderer = {
       const flY = cy + Math.sin(fAngle) * flDist;
 
       // Steel lattice base
-      ctx.fillStyle = '#1e293b';
-      ctx.beginPath();
-      ctx.roundRect(flX - 12, flY - 12, 24, 24, 4);
-      ctx.fill();
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      drawRoundRect(ctx, flX - 12, flY - 12, 24, 24, 4, '#1e293b', '#475569', 1.5);
 
       // Glowing Lamp Bank
       ctx.fillStyle = '#fef08a';

@@ -602,7 +602,11 @@ export default function NetPractice({ onBack, profile, settings }) {
       // Dark background pill
       ctx.fillStyle = 'rgba(10, 16, 28, 0.90)';
       ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+      } else {
+        ctx.rect(pillX, pillY, pillW, pillH);
+      }
       ctx.fill();
       ctx.strokeStyle = lengthColor;
       ctx.lineWidth = 1.2;
@@ -650,8 +654,8 @@ export default function NetPractice({ onBack, profile, settings }) {
       : bowlerStyle === 'inswing' || bowlerStyle === 'outswing' || bowlerStyle === 'offcutter' || bowlerStyle === 'legcutter' ? 'fast_swing'
       : 'high_arm';
 
-    const playerKit = getJerseyData(userProfile?.equippedJersey || 'jersey_ind');
-    const netBowlerKit = getJerseyData('jersey_sa');
+    const playerKit = getJerseyData(userProfile?.equippedJersey || 'jersey_ind') || { color: '#0066b2', secondaryColor: '#ff9933', pantsColor: '#004c85', stripeColor: '#ff9933' };
+    const netBowlerKit = getJerseyData('jersey_sa') || { color: '#006837', secondaryColor: '#ffc72c', pantsColor: '#004c27', stripeColor: '#ffc72c' };
 
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
       runUpProgress: engine.bowler.runUpProgress,
@@ -662,12 +666,6 @@ export default function NetPractice({ onBack, profile, settings }) {
       skinTone: '#c68656',
       kit: netBowlerKit
     });
-
-    if (engine.umpire) {
-      CharacterRenderer.drawUmpire(ctx, engine.umpire.x, engine.umpire.y, {
-        signal: engine.umpire.signal || 'idle'
-      });
-    }
 
     // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Footwork & Spikes)
     CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
