@@ -1048,36 +1048,106 @@ export const CharacterRenderer = {
         }
       }
 
-      // 6. High-Performance Concentric Seating Rows with Packed Fan Color Clusters
-      const jerseyColors = ['#2563eb', '#dc2626', '#f59e0b', '#ffffff', '#16a34a', '#ea580c', '#38bdf8', '#ef4444'];
-      const tier1Rows = [br + 28, br + 46, br + 64, br + 82];
-      const tier2Rows = [br + 130, br + 155, br + 180, br + 205];
+      // 6. Realistic Stadium Audience Spectators (Tiered Seating with Animated Individual Fans)
+      const fanJerseys = ['#1d4ed8', '#facc15', '#dc2626', '#16a34a', '#ea580c', '#38bdf8', '#ffffff', '#9333ea'];
+      const skinTones = ['#fcd34d', '#d97706', '#b45309', '#fbcfe8', '#fef08a'];
+      const tier1Rows = [br + 28, br + 48, br + 68, br + 86];
+      const tier2Rows = [br + 128, br + 152, br + 176, br + 202];
 
-      const drawFastCrowdRows = (rows, isUpper) => {
+      const drawCrowdTier = (rows, isUpper) => {
         rows.forEach((rowDist, rIdx) => {
-          // Concrete bench line
+          // Concrete stepped bench
           ctx.beginPath();
           ctx.arc(safeCx, safeCy, rowDist, 0, Math.PI * 2);
-          ctx.strokeStyle = isUpper ? '#162235' : '#1c283c';
-          ctx.lineWidth = 5.5;
+          ctx.strokeStyle = isUpper ? '#111b2b' : '#182438';
+          ctx.lineWidth = 14;
           ctx.stroke();
 
-          // Dotted vibrant spectator row
-          ctx.save();
-          ctx.lineWidth = 4.2;
-          ctx.setLineDash([4, 4]);
-          ctx.lineCap = 'round';
-          const col = jerseyColors[(rIdx * 3) % jerseyColors.length];
-          ctx.strokeStyle = col;
+          // Seat backrest rail
           ctx.beginPath();
-          ctx.arc(safeCx, safeCy, rowDist - 0.5, 0, Math.PI * 2);
+          ctx.arc(safeCx, safeCy, rowDist - 4, 0, Math.PI * 2);
+          ctx.strokeStyle = '#0b1320';
+          ctx.lineWidth = 1.8;
           ctx.stroke();
-          ctx.restore();
+
+          // Individual Spectators spaced densely around the circumference
+          const circumference = Math.PI * 2 * rowDist;
+          const spectatorCount = Math.floor(circumference / 14); // ~1 fan every 14px
+          const angleStep = (Math.PI * 2) / spectatorCount;
+
+          for (let i = 0; i < spectatorCount; i++) {
+            const angle = i * angleStep;
+            // Skip spectators in aisle gaps
+            const aisleCheck = ((angle + Math.PI * 2) % ((Math.PI * 2) / 16));
+            if (aisleCheck < 0.05 || aisleCheck > ((Math.PI * 2) / 16) - 0.05) continue;
+
+            const cosA = Math.cos(angle);
+            const sinA = Math.sin(angle);
+            const perpX = -sinA;
+            const perpY = cosA;
+
+            const sx = safeCx + cosA * rowDist;
+            const sy = safeCy + sinA * rowDist;
+
+            // Seeded hash for consistent properties
+            const hash = (i * 37 + rIdx * 101) % 1000;
+            const jerseyColor = fanJerseys[hash % fanJerseys.length];
+            const skinTone = skinTones[(hash >> 2) % skinTones.length];
+
+            const cheerBob = isCheering ? Math.sin(now * 0.012 + i * 0.4) * 2.5 : 0;
+
+            // Torso (shoulders facing pitch center)
+            ctx.fillStyle = jerseyColor;
+            ctx.beginPath();
+            ctx.arc(sx, sy + cheerBob, 3.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head (facing center of the pitch)
+            ctx.fillStyle = skinTone;
+            ctx.beginPath();
+            ctx.arc(sx - cosA * 2.2, sy - sinA * 2.2 + cheerBob, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cheering raised arms
+            if (isCheering) {
+              ctx.strokeStyle = skinTone;
+              ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.moveTo(sx - perpX * 3, sy - perpY * 3);
+              ctx.lineTo(sx - perpX * 4 - cosA * 3.5, sy - perpY * 4 - sinA * 3.5);
+              ctx.moveTo(sx + perpX * 3, sy + perpY * 3);
+              ctx.lineTo(sx + perpX * 4 - cosA * 3.5, sy + perpY * 4 - sinA * 3.5);
+              ctx.stroke();
+            }
+
+            // Every 16th fan waves a team flag
+            if (hash % 16 === 0) {
+              const flagWave = Math.sin(now * 0.008 + i) * 3;
+              const flagColor = (hash % 3 === 0) ? '#ff9933' : (hash % 3 === 1) ? '#facc15' : '#38bdf8';
+              ctx.strokeStyle = '#e2e8f0';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(sx, sy);
+              ctx.lineTo(sx - cosA * 7 + flagWave, sy - sinA * 7);
+              ctx.stroke();
+
+              ctx.fillStyle = flagColor;
+              ctx.fillRect(sx - cosA * 7 + flagWave, sy - sinA * 7 - 3, 5, 3.5);
+            }
+
+            // Twinkling mobile phone camera flashes in the crowd
+            if ((hash + Math.floor(now / 160)) % 53 === 0) {
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(sx, sy - 2, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
         });
       };
 
-      drawFastCrowdRows(tier1Rows, false);
-      drawFastCrowdRows(tier2Rows, true);
+      drawCrowdTier(tier1Rows, false);
+      drawCrowdTier(tier2Rows, true);
 
       // 7. Corner Stadium Floodlight Towers
       const floodlightAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];

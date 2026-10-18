@@ -31,9 +31,9 @@ export class CricketPhysics {
     const isPortrait = this.height > this.width;
 
     if (isPortrait) {
-      // Authentic portrait cricket field matching reference screenshot (Image 2):
-      // Centered pitch strip with clean grass margins on all sides
-      this.pitchWidth = Math.min(88, Math.max(72, this.width * 0.22));
+      // Authentic portrait cricket field matching reference screenshot:
+      // Wider pitch strip with generous crease width and expanded 30-yard circle
+      this.pitchWidth = Math.min(124, Math.max(104, this.width * 0.29));
       this.pitchTop = this.height * 0.26;
       this.pitchBottom = this.height * 0.78;
       this.pitchLength = this.pitchBottom - this.pitchTop;
@@ -42,12 +42,12 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      // 80-Meter Long Lengthy International Stadium Ground & Expansive 30-Yard Circle
-      this.boundaryRadius = Math.max(720, Math.min(880, Math.max(this.width * 1.35, this.height * 0.90)));
-      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.36);
-      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.41);
+      // Scaled International Stadium Ground & Expanded 30-Yard Circle (50% Ground Radius)
+      this.boundaryRadius = Math.max(560, Math.min(680, Math.max(this.width * 1.25, this.height * 0.78)));
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.50);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.53);
     } else {
-      this.pitchWidth = Math.min(110, Math.max(90, this.width * 0.28));
+      this.pitchWidth = Math.min(136, Math.max(116, this.width * 0.32));
       this.pitchTop = this.height * 0.26;
       this.pitchBottom = this.height * 0.78;
       this.pitchLength = this.pitchBottom - this.pitchTop;
@@ -56,10 +56,10 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 38;
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
-      // 80-Meter Long Lengthy International Stadium Ground & Expansive 30-Yard Circle
-      this.boundaryRadius = Math.max(780, Math.min(940, Math.max(this.width * 0.85, this.height * 1.15)));
-      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.35);
-      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.40);
+      // Scaled International Stadium Ground & Expanded 30-Yard Circle (50% Ground Radius)
+      this.boundaryRadius = Math.max(600, Math.min(720, Math.max(this.width * 0.85, this.height * 0.85)));
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.50);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.53);
     }
   }
 
@@ -1265,7 +1265,9 @@ export class CricketPhysics {
       this.screenShake = 7;
       this.createSparks(this.ball.x, this.ball.y, '#f59e0b', 36);
       this.createRocketSmoke(this.ball.x, this.ball.y);
-      this.ball.distanceMeters = Math.round(98 + power * 26 + Math.random() * 14);
+      // Smallest six is strictly 80m, largest is strictly 110m based on timing power [0.0 - 1.0]
+      const clampedPower = Math.min(1.0, Math.max(0, power));
+      this.ball.distanceMeters = Math.min(110, Math.max(80, Math.round(80 + clampedPower * 30)));
       this.running.active = false;
     } else {
       this.ball.isRocketSix = false;
@@ -1522,9 +1524,9 @@ export class CricketPhysics {
           this.ball.state = 'DEAD';
 
           // 1. MCC Regulation Law 21.7: Ball pitching off the pitch strip or outside return crease is a NO BALL!
-          const halfPitch = (this.pitchWidth || 100) / 2;
+          const halfPitch = (this.pitchWidth || 116) / 2;
           const pitchedOffPitch = this.ball.hasBounced && this.ball.bounceImpactX && Math.abs(this.ball.bounceImpactX - this.cx) > (halfPitch - 2);
-          const wayOffPitch = Math.abs(this.ball.x - this.cx) > (halfPitch + 6);
+          const wayOffPitch = Math.abs(this.ball.x - this.cx) > (halfPitch + 8);
 
           if (pitchedOffPitch || wayOffPitch) {
             return {
@@ -1535,9 +1537,9 @@ export class CricketPhysics {
             };
           }
 
-          // 2. Regulation ICC Cricket Wide Ball rule (within pitch strip, but outside guidelines)
-          const isWideOff = this.ball.x < (this.cx - 25);
-          const isWideLeg = this.ball.x > (this.cx + 16);
+          // 2. Regulation ICC Cricket Wide Ball rule (within pitch strip, but outside extended guidelines)
+          const isWideOff = this.ball.x < (this.cx - 32);
+          const isWideLeg = this.ball.x > (this.cx + 20);
           if (isWideOff || isWideLeg) {
             return {
               event: 'WIDE',
@@ -1671,7 +1673,7 @@ export class CricketPhysics {
             event: 'SIX',
             runs: 6,
             isRocketSix: true,
-            distanceMeters: this.ball.distanceMeters || 104,
+            distanceMeters: Math.min(110, Math.max(80, this.ball.distanceMeters || 95)),
             landingX: this.ball.x,
             landingY: this.ball.y,
             crowdCheering: true
@@ -1694,7 +1696,7 @@ export class CricketPhysics {
           fourType: !isSix ? (this.ball.isFourInGap ? 'gap' : this.ball.isAerialFour ? 'air' : 'standard') : undefined,
           shotStyle: this.batsman.shotStyle,
           edgeType: this.ball.edgeType,
-          distanceMeters: this.ball.distanceMeters || (isSix ? 96 : 68),
+          distanceMeters: isSix ? Math.min(110, Math.max(80, this.ball.distanceMeters || 92)) : (this.ball.distanceMeters || 68),
           landingX: isSix ? this.ball.x : undefined,
           landingY: isSix ? this.ball.y : undefined,
           crowdCheering: true

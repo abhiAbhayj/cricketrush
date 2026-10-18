@@ -41,8 +41,8 @@ export class FielderManager {
     const pitchH = this.height * 0.46;
     const batsmanY = cy + pitchH * 0.38;
     const br = this.boundaryRadius;
-    const rx = this.innerCircleRadiusX || Math.round(br * 0.36);
-    const ry = this.innerCircleRadiusY || Math.round(br * 0.41);
+    const rx = this.innerCircleRadiusX || Math.round(br * 0.50);
+    const ry = this.innerCircleRadiusY || Math.round(br * 0.53);
 
     this.throwTracer = null;
     this.primaryChaserId = null;

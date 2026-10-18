@@ -452,11 +452,11 @@ export default function CricketGame({
             cam.targetZoom = 0.94;
           } else if (engine.ball.state === 'HIT') {
             if (engine.ball.isRocketSix) {
-              // Angle 4: SIX_SKYCAM - broadcast tracking camera for soaring six into crowd stands (matching Reference Screenshot)
+              // Angle 4: SIX_SKYCAM - broadcast tracking camera for soaring six into crowd stands
               cam.mode = 'SIX_SKYCAM';
-              cam.targetX = engine.ball.x * 0.72 + cx * 0.28;
-              cam.targetY = engine.ball.y * 0.72 + cy * 0.28;
-              cam.targetZoom = 0.82; // Perfectly balanced broadcast framing showing both pitch and grandstand!
+              cam.targetX = engine.ball.x * 0.88 + cx * 0.12;
+              cam.targetY = engine.ball.y * 0.88 + cy * 0.12;
+              cam.targetZoom = 0.74; // Perfectly balanced broadcast framing showing ball landing in crowd stands!
             } else if (engine.running?.active && engine.running?.isCallingRun) {
               // Angle 3: RUNNING_PITCH - wide broadcast view showing BOTH pitch runners AND active outfield chasers!
               cam.mode = 'RUNNING_PITCH';
@@ -1405,6 +1405,99 @@ export default function CricketGame({
       engine.innerCircleRadiusY
     );
 
+    // 2.8 Stadium Pavilion Grandstand & Sightscreen Backdrop (Directly visible behind bowler in pitch view)
+    const sightscreenY = pt - 76;
+    const sightscreenW = Math.max(140, pw + 36);
+    const sightscreenH = 44;
+    const isCheeringNow = isCrowdCheering || celebrationOverlay?.type === 'six' || celebrationOverlay?.type === 'four';
+
+    // A. Pavilion Tiered Stands above sightscreen
+    const standTopY = sightscreenY - 60;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(cx - 180, standTopY, 360, 58);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - 180, standTopY, 360, 58);
+
+    // Grandstand Seating Rows & Packed Spectators
+    const grandstandColors = ['#1d4ed8', '#facc15', '#dc2626', '#16a34a', '#ea580c', '#38bdf8', '#ffffff'];
+    const grandstandSkins = ['#fcd34d', '#d97706', '#b45309', '#fbcfe8', '#fef08a'];
+    for (let row = 0; row < 3; row++) {
+      const ry = standTopY + 12 + row * 16;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(cx - 176, ry + 2, 352, 4);
+
+      for (let s = -168; s <= 168; s += 14) {
+        const hash = Math.abs((s * 13 + row * 31)) % 1000;
+        const color = grandstandColors[hash % grandstandColors.length];
+        const skin = grandstandSkins[(hash >> 2) % grandstandSkins.length];
+        const bob = isCheeringNow ? Math.sin(Date.now() * 0.012 + s * 0.1) * 2.5 : 0;
+
+        // Fan Torso
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx + s, ry + bob, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fan Head
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.arc(cx + s, ry - 3.2 + bob, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cheering Arms
+        if (isCheeringNow) {
+          ctx.strokeStyle = skin;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx + s - 3, ry); ctx.lineTo(cx + s - 4.5, ry - 6 + bob);
+          ctx.moveTo(cx + s + 3, ry); ctx.lineTo(cx + s + 4.5, ry - 6 + bob);
+          ctx.stroke();
+        }
+
+        // Camera Flashes in the pavilion
+        if ((hash + Math.floor(Date.now() / 150)) % 47 === 0) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(cx + s, ry - 2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // B. LED Electronic Ribbon Banner atop sightscreen
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(cx - 180, sightscreenY - 6, 360, 10);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx - 180, sightscreenY - 6, 360, 10);
+
+    // Sponsor badges on LED board
+    const sponsors = ['TATA IPL', 'CRICKET RUSH', 'CEAT TYRES', 'DREAM11', 'ANTIGRAVITY'];
+    ctx.font = '900 6.5px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    sponsors.forEach((sp, idx) => {
+      ctx.fillStyle = idx % 2 === 0 ? '#38bdf8' : '#facc15';
+      ctx.fillText(sp, cx - 140 + idx * 70, sightscreenY + 1.5);
+    });
+
+    // C. White Sightscreen (Slatted ICC regulation)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(cx - sightscreenW / 2, sightscreenY + 5, sightscreenW, sightscreenH);
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - sightscreenW / 2, sightscreenY + 5, sightscreenW, sightscreenH);
+
+    // Sightscreen Vertical Slats
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    for (let sx = cx - sightscreenW / 2 + 6; sx < cx + sightscreenW / 2; sx += 7) {
+      ctx.beginPath();
+      ctx.moveTo(sx, sightscreenY + 6);
+      ctx.lineTo(sx, sightscreenY + 5 + sightscreenH - 1);
+      ctx.stroke();
+    }
+
     // 3. Pitch Strip: Sandy beige turf pitch
     const pw = engine.pitchWidth;
     const pt = engine.pitchTop;
@@ -1423,25 +1516,46 @@ export default function CricketGame({
     ctx.fillRect(cx - pw / 2 + pw * 0.40, pt + ph * 0.52, pw * 0.40, 22);
     ctx.fillRect(cx - pw / 2 + pw * 0.20, pt + ph * 0.68, pw * 0.50, 16);
 
-    // Crease lines (White)
+    // Crease lines (White) - Increased width extending beyond pitch turf
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(cx - pw / 2 + 6, pt + 10, pw - 12, 36);
-    ctx.strokeRect(cx - pw / 2 + 6, pb - 46, pw - 12, 36);
+    ctx.lineWidth = 2.2;
 
-    // Official ICC Wide Guidelines (Crisp white lines on batting popping crease)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 1.5;
+    // Batting Popping Crease (extends beyond sandy pitch edges)
     ctx.beginPath();
-    // Off-side wide guideline (24px outside off)
-    ctx.moveTo(cx - 24, pb - 46); ctx.lineTo(cx - 24, pb - 10);
-    // Leg-side wide guideline (15px down leg)
-    ctx.moveTo(cx + 15, pb - 46); ctx.lineTo(cx + 15, pb - 10);
+    ctx.moveTo(cx - pw / 2 - 8, pb - 46);
+    ctx.lineTo(cx + pw / 2 + 8, pb - 46);
+    // Bowling Popping Crease
+    ctx.moveTo(cx - pw / 2 - 8, pt + 46);
+    ctx.lineTo(cx + pw / 2 + 8, pt + 46);
+    ctx.stroke();
+
+    // Crease boxes & side return creases
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(cx - pw / 2 + 2, pt + 10, pw - 4, 36);
+    ctx.strokeRect(cx - pw / 2 + 2, pb - 46, pw - 4, 36);
+
+    // Official ICC Wide Guidelines (Crisp white lines with extended length & tick marks)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    // Off-side wide guideline (32px outside off, extended length)
+    const offWideX = cx - 32;
+    ctx.moveTo(offWideX, pb - 68); ctx.lineTo(offWideX, pb - 10);
+    // Tick marks on off-side wide line
+    ctx.moveTo(offWideX - 3, pb - 68); ctx.lineTo(offWideX + 3, pb - 68);
+    ctx.moveTo(offWideX - 3, pb - 10); ctx.lineTo(offWideX + 3, pb - 10);
+
+    // Leg-side wide guideline (20px down leg, extended length)
+    const legWideX = cx + 20;
+    ctx.moveTo(legWideX, pb - 68); ctx.lineTo(legWideX, pb - 10);
+    // Tick marks on leg-side wide line
+    ctx.moveTo(legWideX - 3, pb - 68); ctx.lineTo(legWideX + 3, pb - 68);
+    ctx.moveTo(legWideX - 3, pb - 10); ctx.lineTo(legWideX + 3, pb - 10);
     ctx.stroke();
 
     // Batsman Crease Footwork Marker (Clear visual indicator of current foot stance)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.fillRect(engine.batsman.x - 10, engine.batsmanCreaseY + 6, 20, 2.5);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.fillRect(engine.batsman.x - 12, engine.batsmanCreaseY + 6, 24, 2.8);
 
     // 4. Stumps & Bails (3 Crisp White Stumps with 3 Bright RED Bails matching Reference Screenshot)
     const renderWicketSet = (stumpY) => {
@@ -2120,8 +2234,8 @@ export default function CricketGame({
           {/* Radar Mini-Map (Image 2, 3, 4) */}
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#0c1424] border border-slate-700/90 p-1.5 shadow-2xl relative flex items-center justify-center overflow-hidden">
             <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
-              {/* Inner 30-Yard Circle (Calibrated to 36% ground diameter) */}
-              <div className="w-[36%] h-[36%] rounded-full border border-dashed border-white/50 pointer-events-none" />
+              {/* Inner 30-Yard Circle (Calibrated to 50% ground diameter) */}
+              <div className="w-[50%] h-[50%] rounded-full border border-dashed border-white/60 pointer-events-none" />
               {/* Center Pitch Turf */}
               <div className="w-2 h-5 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
 

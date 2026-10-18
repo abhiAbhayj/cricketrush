@@ -458,18 +458,39 @@ export default function NetPractice({ onBack, profile, settings }) {
     ctx.fillStyle = '#059669'; // High-grip synthetic practice turf
     ctx.fillRect(cx - pw / 2, pt, pw, ph);
 
-    // Crease lines
+    // Crease lines (White) - Increased width extending beyond pitch turf
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(cx - pw / 2 + 6, pt + 10, pw - 12, 36);
-    ctx.strokeRect(cx - pw / 2 + 6, pb - 46, pw - 12, 36);
+    ctx.lineWidth = 2.2;
 
-    // Official ICC Wide Guidelines (White guidelines on batting crease)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 1.5;
+    // Batting Popping Crease (extends beyond synthetic turf edges)
     ctx.beginPath();
-    ctx.moveTo(cx - 24, pb - 46); ctx.lineTo(cx - 24, pb - 10);
-    ctx.moveTo(cx + 15, pb - 46); ctx.lineTo(cx + 15, pb - 10);
+    ctx.moveTo(cx - pw / 2 - 8, pb - 46);
+    ctx.lineTo(cx + pw / 2 + 8, pb - 46);
+    // Bowling Popping Crease
+    ctx.moveTo(cx - pw / 2 - 8, pt + 46);
+    ctx.lineTo(cx + pw / 2 + 8, pt + 46);
+    ctx.stroke();
+
+    // Crease boxes & side return creases
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(cx - pw / 2 + 2, pt + 10, pw - 4, 36);
+    ctx.strokeRect(cx - pw / 2 + 2, pb - 46, pw - 4, 36);
+
+    // Official ICC Wide Guidelines (Crisp white lines with extended length & tick marks)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    // Off-side wide guideline (32px outside off, extended length)
+    const offWideX = cx - 32;
+    ctx.moveTo(offWideX, pb - 68); ctx.lineTo(offWideX, pb - 10);
+    ctx.moveTo(offWideX - 3, pb - 68); ctx.lineTo(offWideX + 3, pb - 68);
+    ctx.moveTo(offWideX - 3, pb - 10); ctx.lineTo(offWideX + 3, pb - 10);
+
+    // Leg-side wide guideline (20px down leg, extended length)
+    const legWideX = cx + 20;
+    ctx.moveTo(legWideX, pb - 68); ctx.lineTo(legWideX, pb - 10);
+    ctx.moveTo(legWideX - 3, pb - 68); ctx.lineTo(legWideX + 3, pb - 68);
+    ctx.moveTo(legWideX - 3, pb - 10); ctx.lineTo(legWideX + 3, pb - 10);
     ctx.stroke();
 
     // ------------------------------------------------------------------------
