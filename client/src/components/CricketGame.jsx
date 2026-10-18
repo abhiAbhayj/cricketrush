@@ -41,7 +41,7 @@ const SHOT_TYPES = [
   { id: 'scoop', label: 'Scoop Ramp', key: 'D', aim: 'straight', icon: '🎯', desc: 'Ramps over keeper' }
 ];
 
-import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, TEAMS, isPlayerLeftHanded } from '../game/TeamData';
+import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, getJerseyData, TEAMS, isPlayerLeftHanded } from '../game/TeamData';
 
 export const WORLD_BOWLERS = GLOBAL_WORLD_BOWLERS;
 export const DEFAULT_BATSMEN_LINEUP = GLOBAL_BATSMEN_LINEUP;
@@ -731,6 +731,19 @@ export default function CricketGame({
     else if (outcome.event === 'FOUR') bigText = 'FOUR';
     else if (outcome.event === 'DOT') bigText = 'DOT';
     else if (isWicket) bigText = 'OUT';
+
+    // Signal pitch umpire at bowler's end
+    if (engineRef.current) {
+      if (isWicket) {
+        engineRef.current.signalUmpire('out', 240);
+      } else if (outcome.event === 'SIX') {
+        engineRef.current.signalUmpire('six', 220);
+      } else if (outcome.event === 'FOUR') {
+        engineRef.current.signalUmpire('four', 200);
+      } else if (isWide) {
+        engineRef.current.signalUmpire('wide', 200);
+      }
+    }
 
     setFeedback({
       text: badgeText,
@@ -1468,8 +1481,10 @@ export default function CricketGame({
       ctx.restore();
     }
 
-    const battingJerseyColor = getJerseyColor(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind');
-    const fieldingJerseyColor = getJerseyColor(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa'));
+    const battingKit = getJerseyData(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind');
+    const fieldingKit = getJerseyData(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa'));
+    const battingJerseyColor = battingKit.color;
+    const fieldingJerseyColor = fieldingKit.color;
 
     // 6 & 8. Batsmen: Either sprinting between wickets or standard stance
     if (engine.running?.active && (engine.running.isCallingRun || engine.running.runsCompleted > 0)) {
@@ -1480,7 +1495,8 @@ export default function CricketGame({
         runProgress: engine.running.progress,
         runDirection: engine.running.direction,
         isSliding: engine.running.isSliding,
-        jerseyColor: battingJerseyColor
+        jerseyColor: battingJerseyColor,
+        kit: battingKit
       });
 
       // Non-Striker Runner
@@ -1489,12 +1505,14 @@ export default function CricketGame({
         runProgress: engine.running.progress,
         runDirection: -engine.running.direction,
         isSliding: engine.running.isSliding,
-        jerseyColor: battingJerseyColor
+        jerseyColor: battingJerseyColor,
+        kit: battingKit
       });
     } else {
       // 6. Realistic Humanoid Non-Striker (Top Crease Right Side)
       CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y, {
-        jerseyColor: battingJerseyColor
+        jerseyColor: battingJerseyColor,
+        kit: battingKit
       });
 
       // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Helmet, Facial Texture & Living Footwork)
@@ -1511,6 +1529,7 @@ export default function CricketGame({
         isLeftHanded,
         batSkin: userProfile?.equippedBat,
         jerseyColor: battingJerseyColor,
+        kit: battingKit,
         faceStyle: 'beard',
         skinTone: '#d49b70'
       });
@@ -1526,18 +1545,27 @@ export default function CricketGame({
       faceStyle: engine.bowler.faceStyle || 'afro',
       skinTone: engine.bowler.skinTone || '#c68656',
       jerseyColor: fieldingJerseyColor,
+      kit: fieldingKit,
       isFielding: engine.bowler.isFielding,
       hasBall: engine.bowler.hasBall
     });
 
+    // 7b. Regulation Pitch Umpire at Bowler's Crease (matching Reference Screenshot right figure)
+    if (engine.umpire) {
+      CharacterRenderer.drawUmpire(ctx, engine.umpire.x, engine.umpire.y, {
+        signal: engine.umpire.signal || 'idle'
+      });
+    }
+
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
     CharacterRenderer.drawWicketKeeper(ctx, engine.keeper.x, engine.keeper.y, {
       isStumping: engine.keeper.isStumping,
-      jerseyColor: fieldingJerseyColor
+      jerseyColor: fieldingJerseyColor,
+      kit: fieldingKit
     });
 
     // 9. Realistic Humanoid Fielders (with Diving Slides & Throw Tracers)
-    fielders.draw(ctx, fieldingJerseyColor);
+    fielders.draw(ctx, fieldingKit);
 
     // 10. Cricket Ball (with 2.5D height, shadow scaling & rotating seam)
     if (engine.ball.inPlay) {

@@ -560,7 +560,7 @@ export class FielderManager {
         f.catchTimer--;
         if (f.catchTimer <= 0) f.isCatching = false;
       }
-      CharacterRenderer.drawFielder(ctx, f.x, f.y, f.role, jerseyColor, f.isDiving, f.isCatching, f.vx, f.vy, f.isFielding);
+      CharacterRenderer.drawFielder(ctx, f.x, f.y, f.role, jerseyColor, f.isDiving, f.isCatching, f.vx, f.vy, f.isFielding, typeof jerseyColor === 'object' ? jerseyColor : null);
     });
   }
 

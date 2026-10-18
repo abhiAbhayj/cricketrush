@@ -23,6 +23,9 @@ export class CricketPhysics {
     if (this.nonStriker) {
       this.nonStriker.x = this.batsmanHand === 'left' ? this.cx + 44 : this.cx - 44;
     }
+    if (this.umpire) {
+      this.umpire.x = this.batsmanHand === 'left' ? this.cx - 42 : this.cx + 42;
+    }
   }
 
   initDimensions() {
@@ -149,6 +152,14 @@ export class CricketPhysics {
     this.nonStriker = {
       x: isLHB ? this.cx + 44 : this.cx - 44,
       y: this.bowlerCreaseY + 6
+    };
+
+    // Regulation Pitch Umpire at bowler crease opposite non-striker
+    this.umpire = {
+      x: isLHB ? this.cx - 42 : this.cx + 42,
+      y: this.bowlerCreaseY + 6,
+      signal: 'idle', // 'idle', 'out', 'wide', 'four', 'six', 'noball'
+      signalTimer: 0
     };
 
     // Wicket Keeper directly behind bottom stumps
@@ -1311,6 +1322,14 @@ export class CricketPhysics {
       this.screenShake = Math.max(0, this.screenShake - 0.4 * dt);
     }
 
+    // Umpire signal countdown
+    if (this.umpire && this.umpire.signalTimer > 0) {
+      this.umpire.signalTimer -= dt;
+      if (this.umpire.signalTimer <= 0) {
+        this.umpire.signal = 'idle';
+      }
+    }
+
     // 1. Bowler run-up progression
     if (this.bowler.isBowling && this.ball.state === 'RUN_UP') {
       this.bowler.runUpProgress += 0.035 * dt;
@@ -1757,4 +1776,11 @@ export class CricketPhysics {
 
     return null;
   }
+
+  signalUmpire(signalType, duration = 180) {
+    if (!this.umpire) return;
+    this.umpire.signal = signalType;
+    this.umpire.signalTimer = duration;
+  }
 }
+

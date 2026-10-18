@@ -5,6 +5,23 @@
 // Runners, Fielders, 80-Meter Stadium Crowd Stands & Regulation 30-Yard Circle
 // ============================================================================
 
+import { getJerseyData } from './TeamData';
+
+/**
+ * Helper to resolve kit safely from either a kit object or a string identifier
+ */
+function resolveKit(kitOrColor, fallbackId = 'jersey_ind') {
+  if (kitOrColor && typeof kitOrColor === 'object' && kitOrColor.color) {
+    return {
+      color: kitOrColor.color,
+      secondaryColor: kitOrColor.secondaryColor || '#ffffff',
+      pantsColor: kitOrColor.pantsColor || kitOrColor.color,
+      stripeColor: kitOrColor.stripeColor || kitOrColor.secondaryColor || '#ffffff'
+    };
+  }
+  return getJerseyData(kitOrColor || fallbackId);
+}
+
 /**
  * Helper to draw clean rounded rectangles with stroke
  */
@@ -46,7 +63,7 @@ function drawEllipse(ctx, cx, cy, rx, ry, fill, stroke = null, lineWidth = 1.5) 
 /**
  * Helper to draw an authentic cricket batting pad with knee roll & straps
  */
-function drawBattingPad(ctx, x, y, isFrontFoot = false) {
+function drawBattingPad(ctx, x, y, isFrontFoot = false, strapColor = '#2563eb') {
   // Pad Body: Clean white rounded shin guard matching reference screenshot
   drawRoundRect(ctx, x, y, 7.0, 13.5, 2.5, '#ffffff', '#090e17', 1.4);
   // Vertical cane spine shadow for 3D depth
@@ -56,7 +73,7 @@ function drawBattingPad(ctx, x, y, isFrontFoot = false) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(x + 0.8, y + 3.8, 5.4, 0.9);
   // Team Accent Pad Straps
-  ctx.strokeStyle = '#2563eb';
+  ctx.strokeStyle = strapColor;
   ctx.lineWidth = 1.0;
   ctx.beginPath();
   ctx.moveTo(x + 0.5, y + 7.8); ctx.lineTo(x + 6.5, y + 7.8);
@@ -87,9 +104,16 @@ export const CharacterRenderer = {
     isLeftHanded = false,
     batSkin = 'willow',
     jerseyColor = '#0066b2',
+    kit = null,
     skinTone = '#f5d0b0'
   }) {
     ctx.save();
+
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
+    const topColor = resolvedKit.color;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const pantsCol = resolvedKit.pantsColor || topColor;
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
     const visualX = Math.round(x + (isSwinging ? 0 : weightShiftX));
     const visualY = Math.round(y - (isSteppingOut ? stepOutOffset : 0));
@@ -103,7 +127,7 @@ export const CharacterRenderer = {
     // 1. Soft Ground Shadow
     drawEllipse(ctx, 0, 13, 13, 5, 'rgba(0, 0, 0, 0.35)');
 
-    // 2. Batting Leg Pads & Spikes (Rounded white pads with knee rolls & blue straps)
+    // 2. Batting Leg Pads & Spikes (Rounded white pads with knee rolls & team-colored straps)
     let leftPadX = -6.8;
     let rightPadX = 2.0;
     let leftPadY = 1;
@@ -119,11 +143,11 @@ export const CharacterRenderer = {
       leftPadY += triggerTap * 0.35;
     }
 
-    // Left Batting Pad (Front foot)
-    drawBattingPad(ctx, leftPadX, leftPadY, true);
+    // Left Batting Pad (Front foot) with Team Accent Straps
+    drawBattingPad(ctx, leftPadX, leftPadY, true, stripeCol);
 
-    // Right Batting Pad (Back foot)
-    drawBattingPad(ctx, rightPadX, rightPadY, false);
+    // Right Batting Pad (Back foot) with Team Accent Straps
+    drawBattingPad(ctx, rightPadX, rightPadY, false, stripeCol);
 
     // 3. Torso in Team Jersey
     ctx.save();
@@ -135,12 +159,12 @@ export const CharacterRenderer = {
     ctx.rotate(bodyRotation);
 
     // Clean Jersey Body with Dark Outline
-    drawRoundRect(ctx, -7.5, -9, 15, 12, 3.5, jerseyColor, '#090e17', 1.5);
-    // Darker team shading on flanks
-    drawRoundRect(ctx, 5.2, -8, 1.8, 10, 0.8, 'rgba(0,0,0,0.22)');
-    drawRoundRect(ctx, -7.0, -8, 1.8, 10, 0.8, 'rgba(0,0,0,0.22)');
-    // White V-collar
-    ctx.fillStyle = '#ffffff';
+    drawRoundRect(ctx, -7.5, -9, 15, 12, 3.5, topColor, '#090e17', 1.5);
+    // Team contrast accents on flanks
+    drawRoundRect(ctx, 5.2, -8, 1.8, 10, 0.8, secColor);
+    drawRoundRect(ctx, -7.0, -8, 1.8, 10, 0.8, secColor);
+    // Team V-neck collar & button placket
+    ctx.fillStyle = secColor;
     ctx.beginPath();
     ctx.moveTo(-3, -9);
     ctx.lineTo(0, -5.5);
@@ -157,6 +181,8 @@ export const CharacterRenderer = {
 
     // Rounded White Helmet Dome (Top-Down view)
     drawEllipse(ctx, 0, headY + 2.5, 6.8, 6.4, '#ffffff', '#090e17', 1.5);
+    // Team Helmet Trim Crest
+    drawRoundRect(ctx, -2.5, headY - 0.5, 5.0, 2.0, 0.8, topColor);
     // Glossy White highlight curve on top of helmet
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 1.2;
@@ -219,7 +245,7 @@ export const CharacterRenderer = {
     }
 
     // Arms in jersey sleeves
-    ctx.strokeStyle = jerseyColor;
+    ctx.strokeStyle = topColor;
     ctx.lineWidth = 3.2;
     ctx.lineCap = 'round';
     // Back arm
@@ -233,9 +259,11 @@ export const CharacterRenderer = {
     ctx.lineTo(reachX - 2, reachY - 2);
     ctx.stroke();
 
-    // White Batting Gloves with dark border
+    // White Batting Gloves with team trim border
     drawRoundRect(ctx, reachX - 4.2, reachY - 4.0, 4.8, 4.8, 1.8, '#ffffff', '#090e17', 1.2);
+    drawRoundRect(ctx, reachX - 3.8, reachY - 3.6, 2.0, 3.8, 0.6, secColor);
     drawRoundRect(ctx, reachX - 0.5, reachY - 1.2, 4.8, 4.8, 1.8, '#ffffff', '#090e17', 1.2);
+    drawRoundRect(ctx, reachX - 0.1, reachY - 0.8, 2.0, 3.8, 0.6, secColor);
 
     // Cricket Bat with Bright Red Grip & Blonde Willow Blade
     ctx.translate(reachX, reachY);
@@ -274,9 +302,9 @@ export const CharacterRenderer = {
   },
 
   /**
-   * Draw Bowler with High-Arm Action & Stylized Hair (matching Reference Screenshot):
-   * Dark curly hair, team jersey, trousers with crisp white outer racing stripes,
-   * athletic spikes, high-arm overhead delivery & active fielding sprint!
+   * Draw Bowler with High-Arm Action, Authentic Afro Hairstyle with signature Red Temple Bead,
+   * Team-specific Jersey & Trousers with outer racing stripes (matching Reference Screenshot left player):
+   * Supports team-to-team kit colors (CSK yellow/black, SA green/gold, IND blue/orange, etc.).
    */
   drawBowler(ctx, x, y, {
     runUpProgress = 0,
@@ -286,28 +314,36 @@ export const CharacterRenderer = {
     armSide = 'right',
     skinTone = '#c68656',
     faceStyle = 'afro',
-    jerseyColor = '#0066b2',
-    isFielding = false
+    jerseyColor = '#006837',
+    kit = null,
+    isFielding = false,
+    hasBall = false
   }) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_sa');
+    const topColor = resolvedKit.color;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const pantsCol = resolvedKit.pantsColor || topColor;
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
+
     // 1. Soft Ground Shadow
     drawEllipse(ctx, 0, 12, 12, 5, 'rgba(0, 0, 0, 0.35)');
 
-    // 2. Athletic Stride & Trousers
+    // 2. Athletic Stride & Team Trousers with Outer Racing Stripes
     const isRunning = runUpProgress > 0 && runUpProgress < 1.0;
     const stride = isRunning ? Math.sin(runUpProgress * Math.PI * 8) * 5.0 : (isFielding ? Math.sin(Date.now() * 0.015) * 5.0 : 0);
     const isFollowingThrough = followThroughProgress > 0;
     const leanY = isFollowingThrough ? followThroughProgress * 3 : (isFielding ? 2 : 0);
 
-    // Left Leg
+    // Left Leg in Team Pants Color
     ctx.save();
     const leftLegY = 2 - stride + leanY;
-    drawRoundRect(ctx, -6.5, leftLegY, 5.5, 11, 2.5, jerseyColor, '#090e17', 1.4);
-    // White racing stripe down outer seam
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.3;
+    drawRoundRect(ctx, -6.5, leftLegY, 5.5, 11, 2.5, pantsCol, '#090e17', 1.4);
+    // Outer racing stripe down leg seam (matching reference screenshot)
+    ctx.strokeStyle = stripeCol;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-5.8, leftLegY + 1); ctx.lineTo(-5.8, leftLegY + 10);
     ctx.stroke();
@@ -316,13 +352,13 @@ export const CharacterRenderer = {
     drawRoundRect(ctx, -7.0, leftLegY + 12, 6.5, 1.2, 0.8, '#ffffff');
     ctx.restore();
 
-    // Right Leg
+    // Right Leg in Team Pants Color
     ctx.save();
     const rightLegY = 2 + stride + leanY * 0.5;
-    drawRoundRect(ctx, 1.2, rightLegY, 5.5, 11, 2.5, jerseyColor, '#090e17', 1.4);
-    // White racing stripe down outer seam
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.3;
+    drawRoundRect(ctx, 1.2, rightLegY, 5.5, 11, 2.5, pantsCol, '#090e17', 1.4);
+    // Outer racing stripe down leg seam (matching reference screenshot)
+    ctx.strokeStyle = stripeCol;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(6.0, rightLegY + 1); ctx.lineTo(6.0, rightLegY + 10);
     ctx.stroke();
@@ -334,22 +370,25 @@ export const CharacterRenderer = {
     // 3. Team Jersey Torso
     ctx.save();
     const torsoY = -8 + leanY;
-    drawRoundRect(ctx, -7.5, torsoY, 15, 12, 3.5, jerseyColor, '#090e17', 1.5);
-    // White V-neck collar & shoulder trim
-    ctx.fillStyle = '#ffffff';
+    drawRoundRect(ctx, -7.5, torsoY, 15, 12, 3.5, topColor, '#090e17', 1.5);
+    // Team secondary contrast accents on flanks
+    drawRoundRect(ctx, 5.2, torsoY + 1, 1.8, 10, 0.8, secColor);
+    drawRoundRect(ctx, -7.0, torsoY + 1, 1.8, 10, 0.8, secColor);
+    // Team V-neck collar & button placket
+    ctx.fillStyle = secColor;
     ctx.beginPath();
-    ctx.moveTo(-3, torsoY); ctx.lineTo(0, torsoY + 3.5); ctx.lineTo(3, torsoY);
+    ctx.moveTo(-3, torsoY); ctx.lineTo(0, torsoY + 3.8); ctx.lineTo(3, torsoY);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
-    // 4. Head, Face & Stylized Hair Dome
+    // 4. Head, Focused Face & Afro Hairstyle with Signature Red Temple Bead
     ctx.save();
     const headY = -16 + leanY;
     // Neck
     drawRoundRect(ctx, -2.2, headY + 6.5, 4.4, 3.2, 1.2, skinTone, '#090e17', 1.1);
 
-    // Rounded Head/Face
+    // Rounded Face
     drawEllipse(ctx, 0, headY + 3.0, 5.8, 5.2, skinTone, '#090e17', 1.4);
 
     // Focused Eyes looking down the pitch
@@ -357,13 +396,22 @@ export const CharacterRenderer = {
     ctx.fillRect(-2.8, headY + 2.5, 1.8, 1.5);
     ctx.fillRect(1.0, headY + 2.5, 1.8, 1.5);
 
-    // Clean Afro/Hair Dome on top
-    drawEllipse(ctx, 0, headY - 0.5, 6.5, 5.0, '#111827', '#090e17', 1.4);
-    // Subtle curl highlight
-    ctx.fillStyle = '#1f2937';
+    // Textured Curly Afro Dome on top (matching reference screenshot left player)
+    drawEllipse(ctx, 0, headY - 0.5, 6.8, 5.4, '#111827', '#090e17', 1.5);
+    // Textured curl nubs on crown for 3D depth
+    ctx.fillStyle = '#1e293b';
     ctx.beginPath();
-    ctx.arc(-1.5, headY - 1.5, 3.2, 0, Math.PI * 2);
+    ctx.arc(-3.5, headY - 1.2, 2.2, 0, Math.PI * 2);
+    ctx.arc(3.5, headY - 1.2, 2.2, 0, Math.PI * 2);
+    ctx.arc(0, headY - 3.2, 2.4, 0, Math.PI * 2);
+    ctx.arc(-2.0, headY - 2.8, 2.0, 0, Math.PI * 2);
+    ctx.arc(2.0, headY - 2.8, 2.0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Signature Red Accessory Bead on temple (prominent in reference screenshot)
+    drawEllipse(ctx, -5.2, headY + 1.0, 1.6, 1.6, '#ef4444', '#090e17', 0.9);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-5.6, headY + 0.6, 0.8, 0.8);
     ctx.restore();
 
     // 5. Arms with High-Arm Bowling Action or Fielding Reach
@@ -379,7 +427,7 @@ export const CharacterRenderer = {
     } else {
       // Non-Bowling Arm (Left Arm):
       ctx.save();
-      ctx.strokeStyle = jerseyColor;
+      ctx.strokeStyle = topColor;
       ctx.lineWidth = 3.0;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -417,8 +465,8 @@ export const CharacterRenderer = {
 
       ctx.rotate(effectiveAngle);
 
-      // Upper arm
-      ctx.strokeStyle = jerseyColor;
+      // Upper arm in team jersey color
+      ctx.strokeStyle = topColor;
       ctx.lineWidth = 3.2;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -451,23 +499,168 @@ export const CharacterRenderer = {
   },
 
   /**
-   * Draw Wicket-Keeper in crouching stance directly behind stumps (matching Reference Screenshot)
+   * Draw Regulation Pitch Umpire (matching Reference Screenshot right figure):
+   * Iconic wide-brim white sun-hat with navy band, navy blue coat with dark outline,
+   * white collared shirt & white belt, dark trousers, and dynamic cricket signaling:
+   * 'idle', 'out' (index finger of death), 'wide' (horizontal arms), 'four' (waist wave), 'six' (both arms high).
    */
-  drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false, jerseyColor = '#0066b2' } = {}) {
+  drawUmpire(ctx, x, y, { signal = 'idle', skinTone = '#c68656' } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
+
+    // 1. Soft Ground Shadow
+    drawEllipse(ctx, 0, 12, 12, 4.8, 'rgba(0, 0, 0, 0.35)');
+
+    // 2. Dark Formal Trousers & Black Shoes (matching reference screenshot)
+    // Left Leg
+    drawRoundRect(ctx, -5.8, 2, 4.8, 11, 2.2, '#0f172a', '#090e17', 1.3);
+    drawRoundRect(ctx, -6.5, 11.5, 5.8, 3.0, 1.2, '#090e17');
+    drawRoundRect(ctx, -6.5, 13.5, 5.8, 1.0, 0.5, '#475569');
+
+    // Right Leg
+    drawRoundRect(ctx, 1.0, 2, 4.8, 11, 2.2, '#0f172a', '#090e17', 1.3);
+    drawRoundRect(ctx, 0.7, 11.5, 5.8, 3.0, 1.2, '#090e17');
+    drawRoundRect(ctx, 0.7, 13.5, 5.8, 1.0, 0.5, '#475569');
+
+    // 3. Navy Blue Blazer / Coat with White Waist Belt (matching reference screenshot)
+    const torsoY = -8;
+    // Navy Coat Body
+    drawRoundRect(ctx, -7.5, torsoY, 15, 12, 3.2, '#1e3a8a', '#090e17', 1.5);
+
+    // Inner White Collared Shirt V-Neck
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-2.5, torsoY);
+    ctx.lineTo(0, torsoY + 4.5);
+    ctx.lineTo(2.5, torsoY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Red Umpire Tie
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-0.8, torsoY + 1.2, 1.6, 3.2);
+
+    // Crisp White Waistband / Belt (prominently visible in reference screenshot)
+    drawRoundRect(ctx, -7.0, torsoY + 9.5, 14, 2.4, 0.8, '#f8fafc', '#090e17', 0.8);
+    // Belt Buckle
+    drawRoundRect(ctx, -1.5, torsoY + 9.2, 3.0, 3.0, 0.6, '#e2e8f0', '#090e17', 0.7);
+
+    // 4. Head, Sunglasses & Weathered Skin Tone
+    const headY = -16;
+    drawRoundRect(ctx, -2.0, headY + 6.0, 4.0, 3.0, 1.0, skinTone, '#090e17', 1.0);
+    drawEllipse(ctx, 0, headY + 3.0, 5.4, 4.8, skinTone, '#090e17', 1.3);
+
+    // Dark Sunglasses
+    ctx.fillStyle = '#090e17';
+    ctx.fillRect(-3.0, headY + 2.2, 2.4, 1.6);
+    ctx.fillRect(0.6, headY + 2.2, 2.4, 1.6);
+    ctx.strokeStyle = '#090e17';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-0.6, headY + 2.8); ctx.lineTo(0.6, headY + 2.8);
+    ctx.stroke();
+
+    // 5. Iconic Wide-Brim White Sun-Hat (matching reference screenshot right figure!)
+    // Wide oval brim with dark outline
+    drawEllipse(ctx, 0, headY + 0.8, 9.2, 3.8, '#f8fafc', '#090e17', 1.5);
+    // Underbrim shadow for depth
+    drawEllipse(ctx, 0, headY + 1.6, 7.8, 2.4, 'rgba(148, 163, 184, 0.45)');
+    // Hat Crown (rounded bucket / bowler crown on top)
+    drawRoundRect(ctx, -5.0, headY - 4.8, 10, 6.0, 2.5, '#ffffff', '#090e17', 1.4);
+    // Dark Hat Band around crown base
+    drawRoundRect(ctx, -5.0, headY - 0.2, 10, 1.6, 0.5, '#0f172a');
+    // Top highlight curve on hat
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.arc(0, headY - 3.8, 3.6, Math.PI, Math.PI * 2);
+    ctx.stroke();
+
+    // 6. Dynamic Arms & Official Cricket Signals
+    ctx.save();
+    ctx.strokeStyle = '#1e3a8a';
+    ctx.lineWidth = 3.2;
+    ctx.lineCap = 'round';
+
+    if (signal === 'out') {
+      // Right arm raised high pointing index finger skyward! (Finger of death)
+      // Left arm resting at side
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-8, 3);
+      ctx.stroke();
+      drawRoundRect(ctx, -9.5, 2, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+
+      // Raised right arm pointing up
+      ctx.beginPath();
+      ctx.moveTo(6, -4); ctx.lineTo(7, -13);
+      ctx.stroke();
+      // White shirt cuff
+      drawRoundRect(ctx, 5.5, -14, 3.0, 2.0, 0.6, '#ffffff');
+      // Pointing index finger
+      drawRoundRect(ctx, 6.0, -18, 2.0, 5.0, 0.8, skinTone, '#090e17', 0.8);
+    } else if (signal === 'wide') {
+      // Both arms outstretched horizontally (T-pose)
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-17, -4);
+      ctx.moveTo(6, -4); ctx.lineTo(17, -4);
+      ctx.stroke();
+      // Hands
+      drawRoundRect(ctx, -19.5, -5.5, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+      drawRoundRect(ctx, 16.5, -5.5, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+    } else if (signal === 'six') {
+      // Both arms raised high straight above head
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-7, -15);
+      ctx.moveTo(6, -4); ctx.lineTo(7, -15);
+      ctx.stroke();
+      drawRoundRect(ctx, -8.5, -18, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+      drawRoundRect(ctx, 5.5, -18, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+    } else if (signal === 'four') {
+      // Sweeping boundary wave across waist
+      const wave = Math.sin(Date.now() * 0.012) * 8;
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-8, 3);
+      ctx.moveTo(6, -4); ctx.lineTo(1 + wave, 2);
+      ctx.stroke();
+      drawRoundRect(ctx, -9.5, 2, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+      drawRoundRect(ctx, wave - 0.5, 1, 3.2, 3.2, 1.0, skinTone, '#090e17', 0.8);
+    } else {
+      // 'idle': Hands resting behind back / in front of waist
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-3, 3);
+      ctx.moveTo(6, -4); ctx.lineTo(3, 3);
+      ctx.stroke();
+      // Folded hands
+      drawRoundRect(ctx, -3.2, 2.0, 6.4, 3.2, 1.2, skinTone, '#090e17', 0.8);
+    }
+
+    ctx.restore();
+    ctx.restore();
+  },
+
+  /**
+   * Draw Wicket-Keeper in crouching stance directly behind stumps (matching Reference Screenshot)
+   */
+  drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false, jerseyColor = '#0066b2', kit = null } = {}) {
+    ctx.save();
+    ctx.translate(Math.round(x), Math.round(y));
+
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_sa');
+    const topColor = resolvedKit.color;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
     // Ground Shadow
     drawEllipse(ctx, 0, 12, 13, 5, 'rgba(0, 0, 0, 0.35)');
 
-    // Crouched Bent Legs & White Keeper Pads
-    drawBattingPad(ctx, -8.0, 0);
-    drawBattingPad(ctx, 1.5, 0);
+    // Crouched Bent Legs & White Keeper Pads with team-colored straps
+    drawBattingPad(ctx, -8.0, 0, false, stripeCol);
+    drawBattingPad(ctx, 1.5, 0, false, stripeCol);
 
     // Torso in Fielding Team Jersey
     const torsoY = isStumping ? -13 : -9;
-    drawRoundRect(ctx, -7.5, torsoY, 15, 11, 3.2, jerseyColor, '#090e17', 1.4);
-    ctx.fillStyle = '#ffffff';
+    drawRoundRect(ctx, -7.5, torsoY, 15, 11, 3.2, topColor, '#090e17', 1.4);
+    ctx.fillStyle = secColor;
     ctx.beginPath();
     ctx.moveTo(-2.5, torsoY); ctx.lineTo(0, torsoY + 3); ctx.lineTo(2.5, torsoY);
     ctx.closePath();
@@ -480,15 +673,15 @@ export const CharacterRenderer = {
     ctx.fillStyle = skinTone;
     ctx.fillRect(-2.5, headY + 4.0, 5.0, 1.8);
 
-    // Wicket-Keeping Gloves with Royal Blue & Yellow Webbing
+    // Wicket-Keeping Gloves with Team Trim Webbing
     const gloveY = isStumping ? -21 : -11;
     // Left Glove
     drawRoundRect(ctx, -12, gloveY, 6.0, 5.5, 1.8, '#1d4ed8', '#090e17', 1.2);
-    drawRoundRect(ctx, -13, gloveY + 1.2, 2.2, 3.0, 0.8, '#f59e0b');
+    drawRoundRect(ctx, -13, gloveY + 1.2, 2.2, 3.0, 0.8, secColor);
     // Right Glove (reaching forward on stumping)
     const rGloveX = isStumping ? 1 : 6;
     drawRoundRect(ctx, rGloveX, gloveY, 6.0, 5.5, 1.8, '#1d4ed8', '#090e17', 1.2);
-    drawRoundRect(ctx, rGloveX + 4.0, gloveY + 1.2, 2.2, 3.0, 0.8, '#f59e0b');
+    drawRoundRect(ctx, rGloveX + 4.0, gloveY + 1.2, 2.2, 3.0, 0.8, secColor);
 
     ctx.restore();
   },
@@ -496,20 +689,25 @@ export const CharacterRenderer = {
   /**
    * Draw Non-Striker Batsman standing on opposite side of bowler's end stumps (matching Reference Screenshot)
    */
-  drawNonStriker(ctx, x, y, { skinTone = '#f5d0b0', jerseyColor = '#0066b2' } = {}) {
+  drawNonStriker(ctx, x, y, { skinTone = '#f5d0b0', jerseyColor = '#0066b2', kit = null } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
+
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
+    const topColor = resolvedKit.color;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
     // Ground Shadow
     drawEllipse(ctx, 0, 12, 11, 4.8, 'rgba(0, 0, 0, 0.35)');
 
-    // White Batting Pads
-    drawBattingPad(ctx, -6.0, 1);
-    drawBattingPad(ctx, 1.2, 2);
+    // White Batting Pads with team straps
+    drawBattingPad(ctx, -6.0, 1, false, stripeCol);
+    drawBattingPad(ctx, 1.2, 2, false, stripeCol);
 
     // Batting Team Jersey Torso
-    drawRoundRect(ctx, -7.5, -9, 15, 11, 3.2, jerseyColor, '#090e17', 1.5);
-    ctx.fillStyle = '#ffffff';
+    drawRoundRect(ctx, -7.5, -9, 15, 11, 3.2, topColor, '#090e17', 1.5);
+    ctx.fillStyle = secColor;
     ctx.beginPath();
     ctx.moveTo(-2.5, -9); ctx.lineTo(0, -6); ctx.lineTo(2.5, -9);
     ctx.closePath();
@@ -541,10 +739,15 @@ export const CharacterRenderer = {
     runDirection = 1,
     isSliding = false,
     jerseyColor = '#0066b2',
+    kit = null,
     skinTone = '#f5d0b0'
   } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
+
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
+    const topColor = resolvedKit.color;
+    const stripeCol = resolvedKit.stripeColor || '#ffffff';
 
     // Sprint lean angle
     const leanAngle = runDirection > 0 ? -0.20 : 0.20;
@@ -555,11 +758,11 @@ export const CharacterRenderer = {
 
     // Alternating Running Legs with White Batting Pads
     const stride = Math.sin(runProgress * Math.PI * 10) * 6.0;
-    drawBattingPad(ctx, -6.5, 1 - stride);
-    drawBattingPad(ctx, 1.2, 1 + stride);
+    drawBattingPad(ctx, -6.5, 1 - stride, false, stripeCol);
+    drawBattingPad(ctx, 1.2, 1 + stride, false, stripeCol);
 
     // Jersey Torso
-    drawRoundRect(ctx, -7.5, -9, 15, 11, 3.2, jerseyColor, '#090e17', 1.5);
+    drawRoundRect(ctx, -7.5, -9, 15, 11, 3.2, topColor, '#090e17', 1.5);
 
     // White Helmet
     const headY = -16;
@@ -573,7 +776,7 @@ export const CharacterRenderer = {
     const batAngle = runDirection > 0 ? (isSliding ? -Math.PI / 2 - 0.2 : -Math.PI / 2 + 0.3) : (isSliding ? Math.PI / 2 + 0.2 : Math.PI / 2 - 0.3);
 
     // Pumping arm
-    ctx.strokeStyle = jerseyColor;
+    ctx.strokeStyle = topColor;
     ctx.lineWidth = 3.0;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -602,20 +805,27 @@ export const CharacterRenderer = {
 
   /**
    * Draw Fielder in Vector-Arcade style (alert posture, diving slide, or leaping catch)
+   * Full support for team-specific jersey color, pants color, and outer racing stripes.
    */
-  drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false, vx = 0, vy = 0, isFielding = false) {
+  drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false, vx = 0, vy = 0, isFielding = false, kit = null) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
+
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_sa');
+    const topColor = resolvedKit.color;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const pantsCol = resolvedKit.pantsColor || topColor;
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
     if (isCatching) {
       // Leaping Catch
       drawEllipse(ctx, 0, 16, 12, 4, 'rgba(0, 0, 0, 0.28)');
       ctx.translate(0, -9);
-      // Legs
-      drawRoundRect(ctx, -5.5, 2, 4.8, 9, 2, jerseyColor, '#090e17', 1.2);
-      drawRoundRect(ctx, 1.2, 2, 4.8, 9, 2, jerseyColor, '#090e17', 1.2);
-      // Torso
-      drawRoundRect(ctx, -7.5, -8, 15, 11, 3, jerseyColor, '#090e17', 1.4);
+      // Legs in pants color
+      drawRoundRect(ctx, -5.5, 2, 4.8, 9, 2, pantsCol, '#090e17', 1.2);
+      drawRoundRect(ctx, 1.2, 2, 4.8, 9, 2, pantsCol, '#090e17', 1.2);
+      // Torso in team jersey
+      drawRoundRect(ctx, -7.5, -8, 15, 11, 3, topColor, '#090e17', 1.4);
       // Head
       drawEllipse(ctx, 0, -14, 5.5, 5.0, '#c68656', '#090e17', 1.2);
       drawRoundRect(ctx, -4.5, -16.5, 9, 3.0, 1.2, '#090e17');
@@ -636,8 +846,8 @@ export const CharacterRenderer = {
       // Diving slide along grass with turf spray
       drawEllipse(ctx, 0, 4, 18, 5, 'rgba(0, 0, 0, 0.35)');
       ctx.rotate(0.30);
-      drawRoundRect(ctx, -11, 1, 9, 4.8, 1.8, jerseyColor, '#090e17', 1.2);
-      drawRoundRect(ctx, -5.5, -4, 15, 8.5, 2.8, jerseyColor, '#090e17', 1.4);
+      drawRoundRect(ctx, -11, 1, 9, 4.8, 1.8, pantsCol, '#090e17', 1.2);
+      drawRoundRect(ctx, -5.5, -4, 15, 8.5, 2.8, topColor, '#090e17', 1.4);
       ctx.strokeStyle = '#c68656';
       ctx.lineWidth = 2.8;
       ctx.beginPath();
@@ -660,12 +870,12 @@ export const CharacterRenderer = {
         ctx.rotate(Math.max(-0.25, Math.min(0.25, (vx / (moveSpeed || 1)) * 0.22)));
       }
 
-      // Athletic legs & trousers with white outer racing stripes
-      drawRoundRect(ctx, -6.0, 2 - stride, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
-      drawRoundRect(ctx, 1.2, 2 + stride, 5.0, 10.5, 2.2, jerseyColor, '#090e17', 1.3);
+      // Athletic legs & trousers with outer racing stripes
+      drawRoundRect(ctx, -6.0, 2 - stride, 5.0, 10.5, 2.2, pantsCol, '#090e17', 1.3);
+      drawRoundRect(ctx, 1.2, 2 + stride, 5.0, 10.5, 2.2, pantsCol, '#090e17', 1.3);
 
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = stripeCol;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(-5.4, 3 - stride); ctx.lineTo(-5.4, 11 - stride);
       ctx.moveTo(5.6, 3 + stride); ctx.lineTo(5.6, 11 + stride);
@@ -675,18 +885,18 @@ export const CharacterRenderer = {
       drawRoundRect(ctx, -6.0, 11.5 - stride, 5.0, 2.8, 1, '#090e17');
       drawRoundRect(ctx, 1.2, 11.5 + stride, 5.0, 2.8, 1, '#090e17');
 
-      // Torso / Jersey
-      drawRoundRect(ctx, -7.5, -8, 15, 11, 3.2, jerseyColor, '#090e17', 1.4);
+      // Torso / Team Jersey
+      drawRoundRect(ctx, -7.5, -8, 15, 11, 3.2, topColor, '#090e17', 1.4);
 
-      // White collar
-      ctx.fillStyle = '#ffffff';
+      // Team secondary color collar
+      ctx.fillStyle = secColor;
       ctx.beginPath();
       ctx.moveTo(-2.5, -8); ctx.lineTo(0, -5); ctx.lineTo(2.5, -8);
       ctx.closePath();
       ctx.fill();
 
       // Dynamic arms (swinging athletically when sprinting or bent ready crouch)
-      ctx.strokeStyle = jerseyColor;
+      ctx.strokeStyle = topColor;
       ctx.lineWidth = 3.0;
       ctx.lineCap = 'round';
       ctx.beginPath();

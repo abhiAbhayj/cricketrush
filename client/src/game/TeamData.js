@@ -13,6 +13,7 @@ export const ALL_JERSEYS = [
     color: '#0066b2',
     secondaryColor: '#ff9933',
     pantsColor: '#004c85',
+    stripeColor: '#ff9933',
     price: 0,
     desc: 'The iconic deep blue & saffron tricolor kit worn by champions Rohit, Virat & Abhishek.'
   },
@@ -25,6 +26,7 @@ export const ALL_JERSEYS = [
     color: '#006837',
     secondaryColor: '#ffc72c',
     pantsColor: '#004c27',
+    stripeColor: '#ffc72c',
     price: 350,
     desc: 'Lush forest green with radiant gold trim as worn by Markram, Rickelton & Klaasen.'
   },
@@ -37,6 +39,7 @@ export const ALL_JERSEYS = [
     color: '#ffcd00',
     secondaryColor: '#00573d',
     pantsColor: '#004225',
+    stripeColor: '#00573d',
     price: 400,
     desc: 'Electric canary yellow with dark green trim as powered by Travis Head & Maxwell.'
   },
@@ -49,6 +52,7 @@ export const ALL_JERSEYS = [
     color: '#d0103a',
     secondaryColor: '#00205b',
     pantsColor: '#001a4d',
+    stripeColor: '#ffffff',
     price: 400,
     desc: 'Bold crimson red and royal navy match kit of Buttler, Salt & Brook.'
   },
@@ -61,6 +65,7 @@ export const ALL_JERSEYS = [
     color: '#01411c',
     secondaryColor: '#00ff88',
     pantsColor: '#002811',
+    stripeColor: '#00ff88',
     price: 350,
     desc: 'Deep emerald green with high-voltage neon mint angles of Babar & Shaheen.'
   },
@@ -73,6 +78,7 @@ export const ALL_JERSEYS = [
     color: '#7b1113',
     secondaryColor: '#f59e0b',
     pantsColor: '#4a0b0c',
+    stripeColor: '#f59e0b',
     price: 450,
     desc: 'Calypso rhythm maroon and sunshine gold worn by boundary demolishers Pooran & Russell.'
   },
@@ -85,6 +91,7 @@ export const ALL_JERSEYS = [
     color: '#111827',
     secondaryColor: '#06b6d4',
     pantsColor: '#030712',
+    stripeColor: '#06b6d4',
     price: 450,
     desc: 'Midnight matte black with glacial cyan accents worn by Finn Allen & Boult.'
   },
@@ -97,6 +104,7 @@ export const ALL_JERSEYS = [
     color: '#0055a5',
     secondaryColor: '#d52b1e',
     pantsColor: '#003366',
+    stripeColor: '#d52b1e',
     price: 350,
     desc: 'Vibrant cobalt blue with Afghan red & black stripes worn by Rashid & Gurbaz.'
   },
@@ -109,6 +117,7 @@ export const ALL_JERSEYS = [
     color: '#002b7f',
     secondaryColor: '#f59e0b',
     pantsColor: '#001a4d',
+    stripeColor: '#f59e0b',
     price: 350,
     desc: 'Royal ocean blue with golden lion flare as featured by Nissanka & Pathirana.'
   },
@@ -124,7 +133,8 @@ export const ALL_JERSEYS = [
     code: 'CSK',
     color: '#f9cd05',
     secondaryColor: '#005fa2',
-    pantsColor: '#005fa2',
+    pantsColor: '#f9cd05',
+    stripeColor: '#090e17',
     price: 500,
     desc: 'The iconic roaring canary yellow & royal blue stripes of Thala Dhoni & Ruturaj.'
   },
@@ -137,6 +147,7 @@ export const ALL_JERSEYS = [
     color: '#004ba0',
     secondaryColor: '#d1ab3e',
     pantsColor: '#003366',
+    stripeColor: '#d1ab3e',
     price: 500,
     desc: 'Paltan electric blue with shimmering metallic gold stripes of Rohit, Surya & Bumrah.'
   },
@@ -149,6 +160,7 @@ export const ALL_JERSEYS = [
     color: '#d71920',
     secondaryColor: '#0f172a',
     pantsColor: '#001a4d',
+    stripeColor: '#d71920',
     price: 550,
     desc: 'Fiery crimson red and midnight navy royal armor worn by King Kohli.'
   },
@@ -161,6 +173,7 @@ export const ALL_JERSEYS = [
     color: '#3a225d',
     secondaryColor: '#f7d54e',
     pantsColor: '#231538',
+    stripeColor: '#f7d54e',
     price: 500,
     desc: 'Imperial royal purple with glittering gold trim of champions Russell, Salt & Narine.'
   },
@@ -173,6 +186,7 @@ export const ALL_JERSEYS = [
     color: '#f26522',
     secondaryColor: '#18181b',
     pantsColor: '#09090b',
+    stripeColor: '#f26522',
     price: 500,
     desc: 'Blazing volcanic orange & coal black worn by powerplay destroyers Abhishek Sharma & Head.'
   },
@@ -185,6 +199,7 @@ export const ALL_JERSEYS = [
     color: '#eb1a73',
     secondaryColor: '#001d48',
     pantsColor: '#001d48',
+    stripeColor: '#eb1a73',
     price: 450,
     desc: 'Vibrant Jaipur royal pink with navy blue shoulders worn by Samson & Jaiswal.'
   },
@@ -197,6 +212,7 @@ export const ALL_JERSEYS = [
     color: '#00b4d8',
     secondaryColor: '#03045e',
     pantsColor: '#03045e',
+    stripeColor: '#00b4d8',
     price: 450,
     desc: 'Dynamic aqua cyan & deep navy blue worn by Nicholas Pooran & Mayank Yadav.'
   },
@@ -209,6 +225,7 @@ export const ALL_JERSEYS = [
     color: '#004c97',
     secondaryColor: '#d71920',
     pantsColor: '#002855',
+    stripeColor: '#d71920',
     price: 450,
     desc: 'Aggressive electric blue and fiery crimson red worn by Rishabh Pant & Stubbs.'
   },
@@ -221,6 +238,7 @@ export const ALL_JERSEYS = [
     color: '#1b2133',
     secondaryColor: '#e5a823',
     pantsColor: '#0d111a',
+    stripeColor: '#e5a823',
     price: 450,
     desc: 'Deep titanium navy blue with geometric gold prism accents of Shubman Gill & Rashid.'
   },
@@ -233,6 +251,7 @@ export const ALL_JERSEYS = [
     color: '#ed1b24',
     secondaryColor: '#d4af37',
     pantsColor: '#8a0f14',
+    stripeColor: '#d4af37',
     price: 450,
     desc: 'Passionate crimson red with regal gold stripes worn by Shashank & Arshdeep.'
   },
@@ -249,6 +268,7 @@ export const ALL_JERSEYS = [
     color: '#f97316',
     secondaryColor: '#3b82f6',
     pantsColor: '#0284c7',
+    stripeColor: '#ffffff',
     price: 800,
     desc: 'Legendary rainbow-shouldered vintage classic kit celebrating cricket heritage.'
   },
@@ -261,6 +281,7 @@ export const ALL_JERSEYS = [
     color: '#0f172a',
     secondaryColor: '#eab308',
     pantsColor: '#020617',
+    stripeColor: '#eab308',
     price: 900,
     desc: 'Ultra-dark carbon fiber weave with subtle gold neon accents for nocturnal chases.'
   },
@@ -273,6 +294,7 @@ export const ALL_JERSEYS = [
     color: '#06b6d4',
     secondaryColor: '#a855f7',
     pantsColor: '#3b0764',
+    stripeColor: '#06b6d4',
     price: 850,
     desc: 'Electrified high-visibility neon cyan & ultraviolet laser kit for arcade masters.'
   },
@@ -285,33 +307,69 @@ export const ALL_JERSEYS = [
     color: '#f8fafc',
     secondaryColor: '#1e3a8a',
     pantsColor: '#f1f5f9',
+    stripeColor: '#1e3a8a',
     price: 500,
     desc: 'Pristine traditional cream-white kit honoring the timeless Home of Cricket.'
   }
 ];
 
-// Helper to look up jersey color with fallback
-export function getJerseyColor(jerseyId) {
-  if (!jerseyId) return '#0066b2';
-  // Legacy aliases
-  if (jerseyId === 'blue') return '#0066b2';
-  if (jerseyId === 'gold') return '#ffcd00';
-  if (jerseyId === 'crimson') return '#d0103a';
-  if (jerseyId === 'emerald') return '#006837';
-  if (jerseyId === 'maroon') return '#7b1113';
-  if (jerseyId === 'stealth') return '#0f172a';
-  if (jerseyId === 'retro') return '#f97316';
-  if (jerseyId === 'cyber') return '#06b6d4';
-
-  const found = ALL_JERSEYS.find(j => j.id === jerseyId);
-  return found ? found.color : '#0066b2';
+// Helper to look up jersey color with smart fallback across all formats
+export function getJerseyColor(identifier) {
+  const kit = getJerseyData(identifier);
+  return kit ? kit.color : '#0066b2';
 }
 
-export function getJerseyData(jerseyId) {
-  if (!jerseyId) return ALL_JERSEYS[0];
-  if (jerseyId === 'blue') return ALL_JERSEYS[0];
-  const found = ALL_JERSEYS.find(j => j.id === jerseyId);
-  return found || ALL_JERSEYS[0];
+/**
+ * Robust Jersey Kit Resolver: Accepts jersey ID, team code ('IND', 'SA', 'CSK', 'MI'),
+ * legacy alias ('blue', 'gold', etc.), or full kit object.
+ */
+export function getJerseyData(identifier) {
+  if (!identifier) return ALL_JERSEYS[0];
+
+  // If already a kit object with color
+  if (typeof identifier === 'object' && identifier.color) {
+    return {
+      id: identifier.id || 'custom',
+      name: identifier.name || 'Custom Team Kit',
+      code: identifier.code || 'CUSTOM',
+      color: identifier.color,
+      secondaryColor: identifier.secondaryColor || '#ffffff',
+      pantsColor: identifier.pantsColor || identifier.color,
+      stripeColor: identifier.stripeColor || identifier.secondaryColor || '#ffffff',
+      badge: identifier.badge || '🏏'
+    };
+  }
+
+  const raw = String(identifier).trim();
+  const key = raw.toLowerCase();
+
+  // 1. Direct ID match (e.g. 'jersey_csk')
+  let found = ALL_JERSEYS.find(j => j.id.toLowerCase() === key);
+  if (found) return found;
+
+  // 2. Prefixed ID match (e.g. key is 'csk' -> matches 'jersey_csk')
+  found = ALL_JERSEYS.find(j => j.id.toLowerCase() === `jersey_${key}`);
+  if (found) return found;
+
+  // 3. Team Code match (e.g. key is 'csk' or 'sa' -> matches code 'CSK' or 'SA')
+  found = ALL_JERSEYS.find(j => j.code && j.code.toLowerCase() === key);
+  if (found) return found;
+
+  // 4. Team Name match
+  found = ALL_JERSEYS.find(j => j.name.toLowerCase().includes(key));
+  if (found) return found;
+
+  // 5. Legacy aliases
+  if (key === 'blue' || key === 'bleed blue') return ALL_JERSEYS.find(j => j.id === 'jersey_ind') || ALL_JERSEYS[0];
+  if (key === 'gold' || key === 'yellow') return ALL_JERSEYS.find(j => j.id === 'jersey_csk') || ALL_JERSEYS[2];
+  if (key === 'crimson' || key === 'red') return ALL_JERSEYS.find(j => j.id === 'jersey_rcb') || ALL_JERSEYS[3];
+  if (key === 'emerald' || key === 'green') return ALL_JERSEYS.find(j => j.id === 'jersey_sa') || ALL_JERSEYS[1];
+  if (key === 'maroon') return ALL_JERSEYS.find(j => j.id === 'jersey_wi') || ALL_JERSEYS[5];
+  if (key === 'stealth' || key === 'black') return ALL_JERSEYS.find(j => j.id === 'jersey_nz') || ALL_JERSEYS[6];
+  if (key === 'retro' || key === 'orange') return ALL_JERSEYS.find(j => j.id === 'jersey_srh') || ALL_JERSEYS[14];
+  if (key === 'cyber' || key === 'cyan') return ALL_JERSEYS.find(j => j.id === 'jersey_lsg') || ALL_JERSEYS[16];
+
+  return ALL_JERSEYS[0];
 }
 
 // ============================================================================

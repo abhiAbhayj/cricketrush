@@ -3,6 +3,7 @@ import { CricketPhysics } from '../game/PhysicsEngine';
 import { CharacterRenderer } from '../game/CharacterRenderer';
 import { sound } from '../game/SoundEffects';
 import { haptics } from '../services/haptics';
+import { getJerseyData } from '../game/TeamData';
 import {
   ArrowLeft,
   RotateCcw,
@@ -649,14 +650,24 @@ export default function NetPractice({ onBack, profile, settings }) {
       : bowlerStyle === 'inswing' || bowlerStyle === 'outswing' || bowlerStyle === 'offcutter' || bowlerStyle === 'legcutter' ? 'fast_swing'
       : 'high_arm';
 
+    const playerKit = getJerseyData(userProfile?.equippedJersey || 'jersey_ind');
+    const netBowlerKit = getJerseyData('jersey_sa');
+
     CharacterRenderer.drawBowler(ctx, engine.bowler.x, engine.bowler.y, {
       runUpProgress: engine.bowler.runUpProgress,
       bowlingArmAngle: engine.bowler.bowlingArmAngle,
       armSide: engine.bowler.armSide,
       actionType: bowlerAction,
-      faceStyle: 'headband',
-      skinTone: '#c68656'
+      faceStyle: 'afro',
+      skinTone: '#c68656',
+      kit: netBowlerKit
     });
+
+    if (engine.umpire) {
+      CharacterRenderer.drawUmpire(ctx, engine.umpire.x, engine.umpire.y, {
+        signal: engine.umpire.signal || 'idle'
+      });
+    }
 
     // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Footwork & Spikes)
     CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
@@ -671,14 +682,16 @@ export default function NetPractice({ onBack, profile, settings }) {
       footworkState: batsmanCreasePosition === 'left' ? 'shuffling_left' : batsmanCreasePosition === 'right' ? 'shuffling_right' : batsmanCreasePosition === 'step_out' ? 'stepping_out' : 'stance',
       isLeftHanded,
       batSkin: userProfile?.equippedBat,
-      jerseyColor: userProfile?.equippedJersey === 'gold' ? '#eab308' : '#2563eb',
+      kit: playerKit,
+      jerseyColor: playerKit.color,
       faceStyle: 'beard',
       skinTone: '#d49b70'
     });
 
     // 9. Realistic Crouched Wicket-Keeper (Behind Stumps)
     CharacterRenderer.drawWicketKeeper(ctx, engine.keeper.x, engine.keeper.y, {
-      isStumping: engine.keeper.isStumping
+      isStumping: engine.keeper.isStumping,
+      kit: netBowlerKit
     });
 
     // 10. Cricket Ball (with 2.5D height, shadow scaling & rotating seam)
