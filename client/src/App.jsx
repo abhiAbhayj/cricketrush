@@ -10,6 +10,7 @@ import ShopModal from './components/ShopModal';
 import LeaderboardModal from './components/LeaderboardModal';
 import SettingsModal from './components/SettingsModal';
 import GameOverModal from './components/GameOverModal';
+import ErrorBoundary from './components/ErrorBoundary';
 import { storageService } from './services/storage';
 import { api } from './services/api';
 import { sound } from './game/SoundEffects';
@@ -176,7 +177,22 @@ export default function App() {
   };
 
   const startMatch = (config) => {
-    setActiveMatchConfig(config);
+    const fullConfig = {
+      strikerName: 'Rohit Sharma',
+      nonStrikerName: 'Virat Kohli',
+      battingLineup: GLOBAL_BATSMEN_LINEUP,
+      bowlerList: GLOBAL_WORLD_BOWLERS,
+      teamCode: 'IND',
+      teamJersey: 'jersey_ind',
+      bowlingTeamCode: 'SA',
+      bowlingJersey: 'jersey_sa',
+      teamScoreBase: 0,
+      teamWicketsBase: 0,
+      initialBalls: 0,
+      stadiumKey: 'colosseum',
+      ...config
+    };
+    setActiveMatchConfig(fullConfig);
     setLastMatchResult(null);
     setCurrentScreen('GAME');
   };
@@ -307,13 +323,18 @@ export default function App() {
       )}
 
       {currentScreen === 'GAME' && (
-        <CricketGame
-          matchConfig={activeMatchConfig}
-          onGameOver={handleGameOver}
-          onBackToMenu={() => setCurrentScreen('MENU')}
-          profile={profile}
-          settings={settings}
-        />
+        <ErrorBoundary
+          onRetry={() => setActiveMatchConfig(prev => ({ ...prev }))}
+          onHome={() => setCurrentScreen('MENU')}
+        >
+          <CricketGame
+            matchConfig={activeMatchConfig}
+            onGameOver={handleGameOver}
+            onBackToMenu={() => setCurrentScreen('MENU')}
+            profile={profile}
+            settings={settings}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Game Over Modal Overlay */}

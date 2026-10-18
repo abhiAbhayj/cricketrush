@@ -73,6 +73,7 @@ export default function CricketGame({
   const [teamCode] = useState(matchConfig?.teamCode || 'BEB');
   const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 124);
   const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
+  const isDeathOvers = (totalBalls <= 12);
 
   const isSpinType = (t) => ['legspin', 'offspin', 'leftarm_chinaman', 'leftarm_orthodox', 'spin', 'wrist_spin', 'finger_spin'].includes(t);
 
@@ -1338,8 +1339,7 @@ export default function CricketGame({
   // Initial delivery
   useEffect(() => {
     if (fieldersRef.current) {
-      const isDeathOvers = (totalBalls <= 12);
-      fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'powerplay');
+      fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'powerplay', true, isLeftHanded);
     }
     const timer = setTimeout(() => {
       triggerNextDelivery();
@@ -1359,7 +1359,8 @@ export default function CricketGame({
     const cam = cameraRef.current;
 
     ctx.save();
-    ctx.clearRect(0, 0, width, height);
+    try {
+      ctx.clearRect(0, 0, width, height);
 
     // Dynamic Multi-Angle Broadcast Camera Matrix (Pan & Zoom)
     const safeZoom = (Number.isFinite(cam.zoom) && cam.zoom > 0.1) ? cam.zoom : 1.0;
@@ -1877,16 +1878,19 @@ export default function CricketGame({
     }
 
     // 11. Particles (Grass spray, dust & boundary sparks)
-    engine.particles.forEach(p => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.life;
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
-    });
-
-    ctx.restore();
+      engine.particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
+    } catch (e) {
+      console.error("Error drawing scene:", e);
+    } finally {
+      ctx.restore();
+    }
   };
 
   const totalTeamScore = teamScoreBase + currentRunsScored;

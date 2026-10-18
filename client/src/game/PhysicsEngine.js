@@ -737,7 +737,7 @@ export class CricketPhysics {
       label: this.ball.variationLabel || bType,
       speedKmh: this.ball.speedKmh,
       length: finalLength,
-      line: finalLine,
+      line: chosenLine,
       bowlingArm: chosenArm,
       bowlingAngle: chosenAngle
     };
