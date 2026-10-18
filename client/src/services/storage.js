@@ -41,7 +41,12 @@ export const storageService = {
   getProfile: () => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      return data ? { ...DEFAULT_PROFILE, ...JSON.parse(data) } : DEFAULT_PROFILE;
+      const parsed = data ? { ...DEFAULT_PROFILE, ...JSON.parse(data) } : DEFAULT_PROFILE;
+      if (parsed.playerName && (parsed.playerName.toLowerCase().includes('abhay') || parsed.playerName.toLowerCase().includes('abhi'))) {
+        parsed.playerName = 'Cricket Fan';
+        localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(parsed));
+      }
+      return parsed;
     } catch {
       return DEFAULT_PROFILE;
     }

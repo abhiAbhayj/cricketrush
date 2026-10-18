@@ -33,8 +33,9 @@ export class FielderManager {
    * Infielders are mathematically stationed directly ON the 30-yard circle line,
    * while boundary sweepers protect the 80-meter boundary perimeter.
    */
-  applyFieldPreset(preset = 'balanced', snap = false) {
+  applyFieldPreset(preset = 'balanced', snap = false, isLeftHanded = false) {
     this.currentPreset = preset;
+    this.currentIsLeftHanded = isLeftHanded;
     const cx = this.width / 2;
     const cy = this.height * 0.52;
     const pitchH = this.height * 0.46;
@@ -53,47 +54,24 @@ export class FielderManager {
       y: cy + Math.sin(angleRad) * ry
     });
 
-    const onBoundary = (angleRad, distRatio = 0.75) => ({
+    const onBoundary = (angleRad, distRatio = 0.88) => ({
       x: cx + Math.cos(angleRad) * (br * distRatio),
       y: cy + Math.sin(angleRad) * (br * distRatio)
     });
 
     let targetPlacements = [];
 
-    if (preset === 'powerplay') {
-      // POWERPLAY: Exactly 6 Fielders stationed ON the 30-Yard Circle Line, 3 deep on 80m boundary
-      const mOff = onCircle(-1.95);
-      const mOn = onCircle(-1.19);
-      const cov = onCircle(-2.65);
-      const pt = onCircle(2.88);
-      const mWkt = onCircle(-0.48);
-      const sqL = onCircle(0.25);
-      const dLongOff = onBoundary(-1.95, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
-      const dFineLeg = onBoundary(0.85, 0.75);
-
-      targetPlacements = [
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'cover', role: 'Extra Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'point', role: 'Backward Point', x: pt.x, y: pt.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midwicket', role: 'Mid-Wicket', x: mWkt.x, y: mWkt.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'longoff', role: 'Deep Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' }
-      ];
-    } else if (preset === 'death_overs') {
+    if (preset === 'death_overs') {
       // DEATH OVERS: Exactly 4 Fielders ON the 30-Yard Circle Line, 5 deep on 80m boundary
       const cov = onCircle(-2.55);
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
       const sqL = onCircle(0.25);
-      const dCov = onBoundary(-2.55, 0.75);
-      const dLongOff = onBoundary(-1.95, 0.75);
-      const dLongOn = onBoundary(-1.19, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
-      const dThirdMan = onBoundary(2.35, 0.75);
+      const dCov = onBoundary(-2.55, 0.88);
+      const dLongOff = onBoundary(-1.95, 0.88);
+      const dLongOn = onBoundary(-1.19, 0.88);
+      const dMidWkt = onBoundary(-0.48, 0.88);
+      const dThirdMan = onBoundary(2.35, 0.88);
 
       targetPlacements = [
         { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
@@ -107,22 +85,24 @@ export class FielderManager {
         { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' }
       ];
     } else if (preset === 'attacking') {
-      // Aggressive wicket-taking field: 2 Slips & Gully close, 3 on 30-Yard Circle Line, 3 deep on boundary
+      // Aggressive wicket-taking field: 1 Slip, 3 on Ring, 5 Deep on 80m boundary
       const cov = onCircle(-2.55);
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
-      const dThirdMan = onBoundary(2.35, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
-      const dFineLeg = onBoundary(0.85, 0.75);
+      const dThirdMan = onBoundary(2.35, 0.88);
+      const dPoint = onBoundary(2.95, 0.88);
+      const dCover = onBoundary(-2.55, 0.88);
+      const dMidWkt = onBoundary(-0.48, 0.88);
+      const dFineLeg = onBoundary(0.85, 0.88);
 
       targetPlacements = [
-        { id: 'slip1', role: '1st Slip', x: cx - 40, y: batsmanY + 36, speed: 2.4, zone: 'slips' },
-        { id: 'slip2', role: '2nd Slip', x: cx - 68, y: batsmanY + 44, speed: 2.4, zone: 'slips' },
-        { id: 'gully', role: 'Gully', x: cx - 110, y: batsmanY + 20, speed: 2.4, zone: 'gully' },
+        { id: 'slip1', role: '1st Slip', x: cx - 42, y: batsmanY + 36, speed: 2.4, zone: 'slips' },
         { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
         { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
         { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
         { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' },
+        { id: 'point', role: 'Deep Point', x: dPoint.x, y: dPoint.y, speed: 2.8, zone: 'boundary' },
+        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 2.8, zone: 'boundary' },
         { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
         { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' }
       ];
@@ -132,11 +112,11 @@ export class FielderManager {
       const mOn = onCircle(-1.19);
       const mWkt = onCircle(-0.48);
       const sqL = onCircle(0.25);
-      const dThirdMan = onBoundary(2.35, 0.75);
-      const dPoint = onBoundary(2.95, 0.75);
-      const dCover = onBoundary(-2.55, 0.75);
-      const dLongOff = onBoundary(-1.95, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
+      const dThirdMan = onBoundary(2.35, 0.88);
+      const dPoint = onBoundary(2.95, 0.88);
+      const dCover = onBoundary(-2.55, 0.88);
+      const dLongOff = onBoundary(-1.95, 0.88);
+      const dMidWkt = onBoundary(-0.48, 0.88);
 
       targetPlacements = [
         { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
@@ -155,11 +135,11 @@ export class FielderManager {
       const cov = onCircle(-2.55);
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
-      const dLongOn = onBoundary(-1.19, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
-      const dSqLeg = onBoundary(0.35, 0.75);
-      const dFineLeg = onBoundary(0.85, 0.75);
-      const dCover = onBoundary(-2.55, 0.75);
+      const dLongOn = onBoundary(-1.19, 0.88);
+      const dMidWkt = onBoundary(-0.48, 0.88);
+      const dSqLeg = onBoundary(0.35, 0.88);
+      const dFineLeg = onBoundary(0.85, 0.88);
+      const dCover = onBoundary(-2.55, 0.88);
 
       targetPlacements = [
         { id: 'point', role: 'Point', x: pt.x, y: pt.y, speed: 2.4, zone: 'infield_ring' },
@@ -178,11 +158,11 @@ export class FielderManager {
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
       const sqL = onCircle(0.25);
-      const dPt = onBoundary(2.95, 0.75);
-      const dLongOff = onBoundary(-1.95, 0.75);
-      const dLongOn = onBoundary(-1.19, 0.75);
-      const dMidWkt = onBoundary(-0.48, 0.75);
-      const dThirdMan = onBoundary(2.35, 0.75);
+      const dPt = onBoundary(2.95, 0.88);
+      const dLongOff = onBoundary(-1.95, 0.88);
+      const dLongOn = onBoundary(-1.19, 0.88);
+      const dMidWkt = onBoundary(-0.48, 0.88);
+      const dThirdMan = onBoundary(2.35, 0.88);
 
       targetPlacements = [
         { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
@@ -195,6 +175,13 @@ export class FielderManager {
         { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
         { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' }
       ];
+    }
+
+    // Mirror laterally for Left-Handed Batsman
+    if (isLeftHanded) {
+      targetPlacements.forEach(t => {
+        t.x = cx - (t.x - cx);
+      });
     }
 
     if (snap || this.fielders.length === 0) {

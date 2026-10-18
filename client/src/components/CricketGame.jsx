@@ -103,8 +103,8 @@ export default function CricketGame({
     ? matchConfig.initialBalls
     : (totalBalls < 120 && teamScoreBase > 0 ? 120 - totalBalls : 0);
 
-  const initialStrikerName = profile?.playerName || matchConfig?.strikerName || (teamWicketsBase >= 7 ? 'D. Salunkhe' : battingLineup[teamWicketsBase] || battingLineup[0]);
-  const initialNonStrikerName = matchConfig?.nonStrikerName || (teamWicketsBase >= 7 ? 'K. Wintersgill' : battingLineup[teamWicketsBase + 1] || battingLineup[1]);
+  const initialStrikerName = matchConfig?.strikerName || (teamWicketsBase >= 7 ? (battingLineup[6] || 'Rohit Sharma') : battingLineup[teamWicketsBase] || battingLineup[0] || 'Rohit Sharma');
+  const initialNonStrikerName = matchConfig?.nonStrikerName || (teamWicketsBase >= 7 ? (battingLineup[7] || 'Virat Kohli') : battingLineup[teamWicketsBase + 1] || battingLineup[1] || 'Virat Kohli');
   const initialNonStrikerRuns = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 14 : 0);
   const initialNonStrikerBalls = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 6 : 0);
 
@@ -368,7 +368,7 @@ export default function CricketGame({
           engineRef.current.innerCircleRadiusX,
           engineRef.current.innerCircleRadiusY
         );
-        fieldersRef.current.applyFieldPreset('powerplay', true);
+        fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'balanced', true, isLeftHanded);
       } else {
         engineRef.current.resize(width, height);
         engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
@@ -1042,6 +1042,15 @@ export default function CricketGame({
         nonStrikerRef.current = prevS;
         setStriker(prevNS);
         setNonStriker(prevS);
+
+        // Check if handedness changed and flip field accordingly
+        const prevHandedness = isPlayerLeftHanded(prevS.name);
+        const nextHandedness = isPlayerLeftHanded(prevNS.name);
+        if (fieldersRef.current && prevHandedness !== nextHandedness) {
+          fieldersRef.current.applyFieldPreset(fieldersRef.current.currentPreset || 'death_overs', false, nextHandedness);
+          setFieldChangeNotice(`FIELD CHANGE: FIELD FLIPPED FOR ${nextHandedness ? 'LEFT-HANDER (LHB)' : 'RIGHT-HANDER (RHB)'} 🔄`);
+          setTimeout(() => setFieldChangeNotice(null), 3000);
+        }
       }, 700);
     }
 
@@ -1052,36 +1061,58 @@ export default function CricketGame({
       ]);
     }
 
-    // Automatic Match Fielding Adjustment Intelligence
+    // Dynamic Regular Fielding Placement Updates (Constantly adapting tactics)
     if (!isWide && fieldersRef.current) {
+      const currentStrikerLeft = isLeftHanded;
       if (outcome.event === 'SIX' || outcome.event === 'FOUR') {
         setConsecutiveDots(0);
         if (selectedShot === 'cover_drive' || selectedShot === 'upper_cut' || selectedShot === 'reverse_sweep' || aimDirection === 'off') {
-          fieldersRef.current.applyFieldPreset('offside_defensive');
-          setFieldChangeNotice('FIELD CHANGE: DEEP EXTRA COVER BACK 🛡️');
+          fieldersRef.current.applyFieldPreset('offside_defensive', false, currentStrikerLeft);
+          setFieldChangeNotice('FIELD CHANGE: OFF-SIDE BOUNDARY PROTECTED 🛡️');
           setTimeout(() => setFieldChangeNotice(null), 3000);
         } else if (selectedShot === 'pull' || selectedShot === 'flick' || aimDirection === 'leg') {
-          fieldersRef.current.applyFieldPreset('legside_defensive');
-          setFieldChangeNotice('FIELD CHANGE: DEEP MID-WICKET TO BOUNDARY 🛡️');
+          fieldersRef.current.applyFieldPreset('legside_defensive', false, currentStrikerLeft);
+          setFieldChangeNotice('FIELD CHANGE: DEEP MID-WICKET & SQ LEG ON FENCE 🛡️');
+          setTimeout(() => setFieldChangeNotice(null), 3000);
+        } else {
+          fieldersRef.current.applyFieldPreset('death_overs', false, currentStrikerLeft);
+          setFieldChangeNotice('FIELD CHANGE: LONG-OFF & LONG-ON DEEP TO PREVENT BOUNDARY 🛡️');
           setTimeout(() => setFieldChangeNotice(null), 3000);
         }
       } else if (isWicket) {
         setConsecutiveDots(0);
-        fieldersRef.current.applyFieldPreset('attacking');
-        setFieldChangeNotice('FIELD CHANGE: 2 SLIPS BROUGHT IN! ATTACKING FIELD ⚡');
+        fieldersRef.current.applyFieldPreset('attacking', false, currentStrikerLeft);
+        setFieldChangeNotice('FIELD CHANGE: SLIP BROUGHT IN! ATTACKING FIELD ⚡');
         setTimeout(() => setFieldChangeNotice(null), 3000);
       } else if (outcome.event === 'DOT') {
         setConsecutiveDots(prev => {
           const next = prev + 1;
           if (next >= 2) {
-            fieldersRef.current.applyFieldPreset('attacking');
-            setFieldChangeNotice('FIELD CHANGE: DOT BALL PRESSURE! RING BROUGHT UP ⚡');
+            fieldersRef.current.applyFieldPreset('attacking', false, currentStrikerLeft);
+            setFieldChangeNotice('FIELD CHANGE: DOT BALL PRESSURE! RING INFIELDERS CREEPING UP ⚡');
             setTimeout(() => setFieldChangeNotice(null), 3000);
+          } else {
+            // Subtle shift between balanced and death_overs
+            const altPreset = fieldersRef.current.currentPreset === 'death_overs' ? 'balanced' : 'death_overs';
+            fieldersRef.current.applyFieldPreset(altPreset, false, currentStrikerLeft);
           }
           return next;
         });
       } else {
+        // Singles / Twos: Regular tactical fielder rotation
         setConsecutiveDots(0);
+        const regularCycle = ['death_overs', 'balanced', 'offside_defensive', 'legside_defensive'];
+        const currentIdx = regularCycle.indexOf(fieldersRef.current.currentPreset);
+        const nextPreset = regularCycle[(currentIdx + 1) % regularCycle.length];
+        fieldersRef.current.applyFieldPreset(nextPreset, false, currentStrikerLeft);
+        if (Math.random() > 0.45) {
+          const label = nextPreset === 'death_overs' ? '5 DEEP BOUNDARY SWEEPERS SPREAD'
+            : nextPreset === 'offside_defensive' ? 'DEEP COVER & THIRD MAN POSTED'
+            : nextPreset === 'legside_defensive' ? 'MID-WICKET & FINE LEG ON THE ROPE'
+            : 'BALANCED RING & BOUNDARY COVER';
+          setFieldChangeNotice(`FIELD UPDATE: ${label} 🛡️`);
+          setTimeout(() => setFieldChangeNotice(null), 2500);
+        }
       }
     }
 
@@ -1234,7 +1265,7 @@ export default function CricketGame({
     setWagonWheelShots([]);
     setConsecutiveDots(0);
     setFieldChangeNotice(null);
-    setStriker({ name: profile?.playerName || 'M. Sarkhel', runs: 0, balls: 0, fiftiesClaimed: false, centuriesClaimed: false });
+    setStriker({ name: matchConfig?.strikerName || battingLineup[0] || 'Rohit Sharma', runs: 0, balls: 0, fiftiesClaimed: false, centuriesClaimed: false });
     setBowler(prev => ({ ...prev, wickets: 0, runsConceded: 0, overs: '0.0' }));
     setGameState('READY');
     triggerNextDelivery();
@@ -2089,14 +2120,14 @@ export default function CricketGame({
           {/* Radar Mini-Map (Image 2, 3, 4) */}
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#0c1424] border border-slate-700/90 p-1.5 shadow-2xl relative flex items-center justify-center overflow-hidden">
             <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
-              {/* Inner 30-Yard Circle */}
-              <div className="w-[58%] h-[58%] rounded-full border border-dashed border-white/40 pointer-events-none" />
+              {/* Inner 30-Yard Circle (Calibrated to 36% ground diameter) */}
+              <div className="w-[36%] h-[36%] rounded-full border border-dashed border-white/50 pointer-events-none" />
               {/* Center Pitch Turf */}
               <div className="w-2 h-5 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
 
               {/* 9 Fielders on Radar (Red Dots) */}
               {fieldersRef.current?.fielders.map((f, idx) => {
-                const radarRadius = 32;
+                const radarRadius = 38;
                 const engine = engineRef.current;
                 const rx = engine ? ((f.x - engine.cx) / engine.boundaryRadius) * radarRadius : 0;
                 const ry = engine ? ((f.y - engine.cy) / engine.boundaryRadius) * radarRadius : 0;
@@ -2114,9 +2145,9 @@ export default function CricketGame({
                 className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-sm pointer-events-none"
                 style={{
                   transform: `translate(${
-                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32 : 0
+                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 38 : 0
                   }px, ${
-                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32 : 0
+                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 38 : 0
                   }px)`
                 }}
               />
@@ -2127,9 +2158,9 @@ export default function CricketGame({
                   className="w-1.5 h-1.5 rounded-full bg-[#facc15] absolute shadow-md shadow-yellow-400 pointer-events-none animate-ping"
                   style={{
                     transform: `translate(${
-                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32
+                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 38
                     }px, ${
-                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32
+                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 38
                     }px)`
                   }}
                 />
@@ -2143,9 +2174,9 @@ export default function CricketGame({
                     width: `${Math.min(48, Math.max(18, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 64))}px`,
                     height: `${Math.min(48, Math.max(18, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 64))}px`,
                     transform: `translate(${
-                      (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 32
+                      (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 38
                     }px, ${
-                      (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 32
+                      (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 38
                     }px)`
                   }}
                 />

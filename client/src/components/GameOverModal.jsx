@@ -89,7 +89,7 @@ export default function GameOverModal({
   const battingLineup = matchResult.battingScorecard && matchResult.battingScorecard.length > 0
     ? matchResult.battingScorecard
     : (matchResult.battingLineup || [
-        { name: profile?.playerName || 'D. Salunkhe', dismissal: '*', r: matchResult.runsScored || 0, b: matchResult.ballsFaced || 0, fours: matchResult.fours || 0, sixes: matchResult.sixes || 0, notOut: true }
+        { name: matchConfig?.strikerName || matchResult.strikerName || 'Rohit Sharma', dismissal: '*', r: matchResult.runsScored || 0, b: matchResult.ballsFaced || 0, fours: matchResult.fours || 0, sixes: matchResult.sixes || 0, notOut: true }
       ]);
 
   // Bowling stats: Dynamically populated from match statistics

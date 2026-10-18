@@ -15,7 +15,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#004c85',
     stripeColor: '#ff9933',
     price: 0,
-    desc: 'The iconic deep blue & saffron tricolor kit worn by champions Rohit, Virat & Abhishek.'
+    desc: 'The iconic deep blue & saffron tricolor kit worn by champions Rohit, Virat & Bumrah.'
   },
   {
     id: 'jersey_sa',
@@ -188,7 +188,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#09090b',
     stripeColor: '#f26522',
     price: 500,
-    desc: 'Blazing volcanic orange & coal black worn by powerplay destroyers Abhishek Sharma & Head.'
+    desc: 'Blazing volcanic orange & coal black worn by powerplay destroyers Travis Head & Klaasen.'
   },
   {
     id: 'jersey_rr',
@@ -385,7 +385,6 @@ export function getJerseyData(identifier) {
 // ============================================================================
 export const LEFT_HANDED_BATSMEN = new Set([
   'ryan rickelton',
-  'abhishek sharma',
   'travis head',
   'quinton de kock',
   'david miller',
@@ -475,18 +474,18 @@ export const TEAMS = {
     type: 'international',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_ind'),
     batsmen: [
-      'Abhishek Sharma',
       'Rohit Sharma',
       'Virat Kohli',
+      'Yashasvi Jaiswal',
       'Suryakumar Yadav',
       'Hardik Pandya',
       'Sanju Samson',
       'Rinku Singh',
       'Rishabh Pant',
-      'Yashasvi Jaiswal',
       'Tilak Varma',
       'Axar Patel',
-      'Shivam Dube'
+      'Shivam Dube',
+      'Ravindra Jadeja'
     ],
     bowlers: [
       { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard' },
@@ -867,7 +866,6 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_srh'),
     batsmen: [
-      'Abhishek Sharma',
       'Travis Head',
       'Heinrich Klaasen',
       'Aiden Markram',
@@ -875,6 +873,7 @@ export const TEAMS = {
       'Abdul Samad',
       'Shahbaz Ahmed',
       'Rahul Tripathi',
+      'Glenn Phillips',
       'Anmolpreet Singh',
       'Sanvir Singh'
     ],
@@ -1046,9 +1045,9 @@ export const GLOBAL_WORLD_BOWLERS = [
 
 // Global consolidated list of batsmen across all countries
 export const GLOBAL_BATSMEN_LINEUP = [
-  'Abhishek Sharma',
   'Rohit Sharma',
   'Virat Kohli',
+  'Yashasvi Jaiswal',
   'Suryakumar Yadav',
   'Ryan Rickelton',
   'Aiden Markram',

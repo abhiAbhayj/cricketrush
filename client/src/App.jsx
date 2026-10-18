@@ -136,13 +136,12 @@ export default function App() {
       initialBalls = 90;
     }
 
-    // Striker batsman: if profile name is customized (not default 'Cricket Fan'), lead with profile name; else lead with star batsman (e.g. Abhishek Sharma)
-    const hasCustomName = profile?.playerName && profile.playerName !== 'Cricket Fan';
-    const primaryStriker = hasCustomName ? profile.playerName : BATSMEN_LINEUP[0];
-    const secondaryStriker = BATSMEN_LINEUP[1] || 'Rohit Sharma';
+    // Striker and non-striker: strictly authentic international cricketers from team roster
+    const primaryStriker = BATSMEN_LINEUP[0] || 'Rohit Sharma';
+    const secondaryStriker = BATSMEN_LINEUP[1] || 'Virat Kohli';
 
     const strikerName = teamWicketsBase >= 7
-      ? (hasCustomName ? profile.playerName : (BATSMEN_LINEUP[6] || BATSMEN_LINEUP[0]))
+      ? (BATSMEN_LINEUP[6] || BATSMEN_LINEUP[0])
       : (BATSMEN_LINEUP[teamWicketsBase] || primaryStriker);
 
     const nonStrikerName = teamWicketsBase >= 7
