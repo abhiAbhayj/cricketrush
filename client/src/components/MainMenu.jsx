@@ -18,8 +18,8 @@ import {
   Check,
   X,
   Shuffle,
-  Globe,
-  Users
+  Users,
+  Plus
 } from 'lucide-react';
 import { TEAMS } from '../game/TeamData';
 
@@ -31,6 +31,54 @@ const RIVALRIES = [
   { bat: 'SRH', bowl: 'KKR', label: 'SRH vs KKR', badge: '🧡 v 💜' },
   { bat: 'RCB', bowl: 'RR', label: 'RCB vs RR', badge: '❤️ v 🩷' }
 ];
+
+const CHASE_FORMATS = {
+  18: {
+    tag: 'DEATH OVER',
+    author: 'u/Informal_Wrap2297',
+    authorRole: 'Century maker',
+    runs: 55,
+    balls: 18,
+    rrr: '18.33',
+    score: '101-0 · 17.0 ov'
+  },
+  6: {
+    tag: 'SUPER OVER',
+    author: 'u/SuperStriker',
+    authorRole: 'Clutch Finisher',
+    runs: 22,
+    balls: 6,
+    rrr: '22.00',
+    score: '0-0 · 0.0 ov'
+  },
+  12: {
+    tag: 'THRILLER',
+    author: 'u/BoundaryHunter',
+    authorRole: 'Six Machine',
+    runs: 28,
+    balls: 12,
+    rrr: '14.00',
+    score: '167-7 · 18.0 ov'
+  },
+  24: {
+    tag: 'MATCH PLAY',
+    author: 'u/MasterChaser',
+    authorRole: 'Anchor',
+    runs: 54,
+    balls: 24,
+    rrr: '13.50',
+    score: '95-2 · 16.0 ov'
+  },
+  30: {
+    tag: 'T5 CUP',
+    author: 'u/CaptainClutch',
+    authorRole: 'World Champ',
+    runs: 68,
+    balls: 30,
+    rrr: '13.60',
+    score: '80-2 · 15.0 ov'
+  }
+};
 
 export default function MainMenu({
   profile,
@@ -44,11 +92,12 @@ export default function MainMenu({
   onOpenLeaderboard,
   onOpenSettings
 }) {
-  const currentXpInLevel = profile.xp % 100;
-
-  // Selected Batting and Bowling Teams for Quick Play
+  // Selected Batting and Bowling Teams for Quick Play / Chase
   const [battingTeamKey, setBattingTeamKey] = useState('IND');
   const [bowlingTeamKey, setBowlingTeamKey] = useState('SA');
+
+  // Selected format for the featured Chase Card (default 18 balls matching Reference Image 2)
+  const [selectedBalls, setSelectedBalls] = useState(18);
 
   // Team Selector Modal State
   const [showTeamModal, setShowTeamModal] = useState(false);
@@ -57,6 +106,7 @@ export default function MainMenu({
 
   const currentBattingTeam = TEAMS[battingTeamKey] || TEAMS.IND;
   const currentBowlingTeam = TEAMS[bowlingTeamKey] || TEAMS.SA;
+  const currentFormat = CHASE_FORMATS[selectedBalls] || CHASE_FORMATS[18];
 
   const teamList = Object.values(TEAMS);
   const filteredTeams = teamCategoryFilter === 'all'
@@ -77,355 +127,329 @@ export default function MainMenu({
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-cricket-dark text-slate-100 overflow-y-auto safe-p-top safe-p-bottom px-4 py-4 sm:py-6">
-      <div className="max-w-xl mx-auto w-full flex-1 flex flex-col justify-between">
-        {/* Top Profile & Header Bar */}
-        <div className="glass-panel rounded-3xl p-3.5 sm:p-4 mb-4 flex items-center justify-between border border-slate-800">
-          {/* Player avatar & level */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-green-400 p-0.5 shadow-md shadow-emerald-500/20">
-                <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center font-display font-extrabold text-xl text-emerald-400">
-                  {profile.playerName.slice(0, 1).toUpperCase()}
-                </div>
-              </div>
-              <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 bg-amber-500 text-slate-950 font-display font-extrabold text-[10px] rounded-md shadow">
-                LVL {profile.level}
-              </span>
-            </div>
+    <div className="relative w-full h-full flex flex-col bg-[#07130a] text-slate-100 overflow-y-auto safe-p-top safe-p-bottom select-none">
+      {/* ==================================================================== */}
+      {/* AUTHENTIC CRICKET OUTFIELD BACKGROUND (Exact Replica of Image 2)     */}
+      {/* ==================================================================== */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Alternating vertical striped lawn-mower grass bands */}
+        <div className="absolute inset-0 opacity-45 bg-[repeating-linear-gradient(90deg,#0a1c11_0px,#0a1c11_44px,#0f2a1a_44px,#0f2a1a_88px)]" />
 
-            <div>
-              <h2 className="font-display font-extrabold text-lg text-white leading-tight">
-                {profile.playerName}
-              </h2>
-              {/* Level XP Bar */}
-              <div className="w-28 sm:w-36 h-2 rounded-full bg-slate-800 mt-1 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full"
-                  style={{ width: `${currentXpInLevel}%` }}
-                />
-              </div>
-            </div>
-          </div>
+        {/* 30-Yard Fielding Circle Curve (White Dashed Arc) */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" preserveAspectRatio="none">
+          <ellipse
+            cx="50%"
+            cy="36%"
+            rx="56%"
+            ry="42%"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1.8"
+            strokeDasharray="7 7"
+          />
+        </svg>
 
-          {/* Streak, Coins & Settings */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-400 font-bold text-xs shadow-sm">
-              <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
-              <span>{profile?.dailyStreak || 2} Streak</span>
-            </div>
-
-            <div
-              onClick={() => { sound.playClick(); onOpenShop(); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-900 border border-amber-500/30 text-amber-300 font-bold text-xs cursor-pointer hover:bg-slate-800 transition-colors"
-            >
-              <Coins className="w-4 h-4 text-amber-400" />
-              <span>{profile.coins}</span>
-            </div>
-
-            <button
-              onClick={() => { sound.playClick(); onOpenSettings(); }}
-              className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+        {/* Fielder standing near 30-yard ring line with aiming trace (Image 2) */}
+        <div className="absolute top-[34%] left-[49%] -translate-x-1/2 pointer-events-none flex flex-col items-center opacity-75">
+          {/* Subtle throw guide ray pointing down-right */}
+          <div className="w-[1px] h-20 bg-gradient-to-b from-amber-400/50 via-amber-400/20 to-transparent rotate-[28deg] origin-top mt-2" />
+          <div className="absolute top-0 w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center shadow-lg">
+            <div className="w-2 h-2 rounded-full bg-red-600" />
           </div>
         </div>
 
-        {/* Hero Title & Branding */}
-        <div className="text-center my-2 sm:my-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold tracking-wider uppercase mb-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            T20 World & IPL Edition
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-black tracking-tight text-white uppercase italic">
-            CRICKET <span className="text-emerald-400 text-glow-green">RUSH</span>
-          </h1>
-          <p className="text-xs text-slate-400 font-medium">
-            Master the timing. Smash boundaries. Defend & Chase!
-          </p>
+        {/* Deep boundary fielder in distance (top-left) */}
+        <div className="absolute top-[16%] left-[8%] pointer-events-none opacity-40">
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
         </div>
 
-        {/* Action Modes Grid */}
-        <div className="space-y-3 my-2">
-          {/* Quick Play Action Card with Interactive Matchup Selection & Formats */}
-          <div className="w-full relative overflow-hidden rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 text-slate-950 shadow-xl shadow-emerald-500/25">
-            <div
-              onClick={() => { sound.playClick(); onStartQuickPlay(null, battingTeamKey, bowlingTeamKey); }}
-              className="flex items-center justify-between cursor-pointer group"
-            >
-              <div className="text-left z-10">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900/80 block">
-                  Instant Match • {currentBattingTeam.code} vs {currentBowlingTeam.code}
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-display font-black uppercase tracking-wide text-slate-950 flex items-center gap-2">
-                  QUICK PLAY
-                  <Play className="w-5 h-5 fill-slate-950" />
-                </h3>
-                <p className="text-xs text-slate-900/90 font-semibold">
-                  Tap to play or choose teams & ball format below:
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-slate-950 z-10 group-hover:scale-110 transition-transform">
-                <Zap className="w-6 h-6 fill-slate-950" />
-              </div>
-            </div>
+        {/* Ambient Dark Edge Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/85" />
+      </div>
 
-            {/* Matchup Team Selector Bar */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                sound.playClick();
-                setShowTeamModal(true);
-              }}
-              className="mt-3 p-2.5 sm:px-3 sm:py-2 rounded-2xl bg-slate-950/90 hover:bg-slate-950 text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer transition-all shadow-md group"
-            >
-              <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 flex-1 min-w-0">
-                {/* Batting Team */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-base sm:text-lg border border-white/20 shadow-sm flex-shrink-0"
-                    style={{
-                      background: currentBattingTeam.jersey?.color || '#2563eb'
-                    }}
-                  >
-                    {currentBattingTeam.badge}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1">
-                      <span className="text-amber-300 font-display font-black text-xs sm:text-sm">
-                        {currentBattingTeam.code}
-                      </span>
-                      <span className="text-[9px] font-bold px-1 rounded bg-amber-400/20 text-amber-300">
-                        BAT
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-300 font-medium truncate block max-w-[100px] sm:max-w-[140px]">
-                      {currentBattingTeam.batsmen?.[0]}
-                    </span>
-                  </div>
-                </div>
+      {/* ==================================================================== */}
+      {/* TOP HEADER BAR (Exact Replica of Image 2)                           */}
+      {/* ==================================================================== */}
+      <div className="relative z-10 w-full max-w-md mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+        <h1 className="font-display font-black text-2xl sm:text-3xl tracking-tight text-[#fef9c3] uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          CRICKET RUSH
+        </h1>
 
-                {/* VS Badge */}
-                <div className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-black text-slate-300 uppercase tracking-tighter">
-                  VS
-                </div>
-
-                {/* Bowling Team */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-base sm:text-lg border border-white/20 shadow-sm flex-shrink-0"
-                    style={{
-                      background: currentBowlingTeam.jersey?.color || '#059669'
-                    }}
-                  >
-                    {currentBowlingTeam.badge}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1">
-                      <span className="text-cyan-300 font-display font-black text-xs sm:text-sm">
-                        {currentBowlingTeam.code}
-                      </span>
-                      <span className="text-[9px] font-bold px-1 rounded bg-cyan-400/20 text-cyan-300">
-                        BOWL
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-300 font-medium truncate block max-w-[100px] sm:max-w-[140px]">
-                      {currentBowlingTeam.bowlers?.[0]?.name}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Change Button */}
-              <div className="flex items-center justify-center sm:justify-end gap-1 text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300 py-1 sm:py-0 border-t sm:border-t-0 border-slate-800">
-                <span>Change Teams</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Quick Rivalry Shortcuts */}
-            <div className="mt-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/75 whitespace-nowrap mr-0.5">
-                Rivals:
-              </span>
-              {RIVALRIES.map(r => (
-                <button
-                  key={r.label}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    sound.playClick();
-                    setBattingTeamKey(r.bat);
-                    setBowlingTeamKey(r.bowl);
-                  }}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 ${
-                    battingTeamKey === r.bat && bowlingTeamKey === r.bowl
-                      ? 'bg-slate-950 text-amber-300 shadow font-black ring-1 ring-amber-400'
-                      : 'bg-slate-950/30 hover:bg-slate-950/60 text-slate-950 font-bold'
-                  }`}
-                >
-                  {r.badge} {r.label}
-                </button>
-              ))}
-
-              <button
-                onClick={handleRandomizeRivalry}
-                className="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-950/30 hover:bg-slate-950 text-slate-950 hover:text-white transition-all flex items-center gap-1 whitespace-nowrap active:scale-95"
-                title="Random Rivalry"
-              >
-                <Shuffle className="w-3 h-3" />
-                <span>Random</span>
-              </button>
-            </div>
-
-            {/* Ball Formats Bar */}
-            <div className="mt-2 pt-2 border-t border-slate-950/15 flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-950/75 whitespace-nowrap mr-1">
-                Overs:
-              </span>
-              {[
-                { balls: 6, label: '6B (1 Over)' },
-                { balls: 12, label: '12B (2 Ov)' },
-                { balls: 18, label: '18B (3 Ov)' },
-                { balls: 24, label: '24B (4 Ov)' },
-                { balls: 30, label: '30B (5 Ov)' }
-              ].map(({ balls, label }) => (
-                <button
-                  key={balls}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    sound.playClick();
-                    onStartQuickPlay(balls, battingTeamKey, bowlingTeamKey);
-                  }}
-                  className="px-2.5 py-1 rounded-xl bg-slate-950/85 hover:bg-slate-950 text-white font-mono font-bold text-xs shadow hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
-                  title={`Play ${balls} ball match with ${currentBattingTeam.code} vs ${currentBowlingTeam.code}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* NET PRACTICE CARD */}
+        <div className="flex items-center gap-2">
+          {/* Plus Button: Opens Custom Challenge Creator */}
           <button
-            onClick={() => { sound.playClick(); onOpenPractice(); }}
-            className="w-full group relative overflow-hidden rounded-3xl p-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 hover:from-cyan-500 hover:to-blue-500 text-white shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-between border border-blue-400/30"
+            onClick={() => { sound.playClick(); onOpenCreator(); }}
+            className="w-9 h-9 rounded-full bg-[#132117]/95 hover:bg-[#1c3022] active:scale-95 border border-white/10 flex items-center justify-center text-white shadow-xl transition-all cursor-pointer"
+            title="Create Custom Challenge (+)"
           >
-            <div className="text-left z-10">
-              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-200 block">
-                Training Facility
-              </span>
-              <h3 className="text-xl sm:text-2xl font-display font-black uppercase tracking-wide text-white flex items-center gap-2">
-                NET PRACTICE & TRAINER
-                <Gauge className="w-5 h-5 text-cyan-300" />
-              </h3>
-              <p className="text-xs text-blue-100 font-medium">
-                Pace, swing, leg-spin, bouncer, yorker, slot & full toss variations!
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white z-10 group-hover:scale-110 transition-transform">
-              <span className="text-2xl">🏏</span>
-            </div>
+            <Plus className="w-4 h-4 text-white stroke-[2.5]" />
+          </button>
+
+          {/* Profile / Status Button: Opens Settings & Profile */}
+          <button
+            onClick={() => { sound.playClick(); onOpenSettings(); }}
+            className="w-9 h-9 rounded-full bg-[#132117]/95 hover:bg-[#1c3022] active:scale-95 border border-white/10 flex items-center justify-center text-slate-300 shadow-xl transition-all cursor-pointer relative"
+            title="Settings & Level"
+          >
+            <div className="w-4 h-4 rounded-full border-2 border-slate-400 bg-slate-600" />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900" />
           </button>
         </div>
+      </div>
 
-        {/* Secondary Game Modes Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+      {/* ==================================================================== */}
+      {/* MAIN CONTAINER: FEATURE CHASE CARD + MODES SHELF                     */}
+      {/* ==================================================================== */}
+      <div className="relative z-10 w-full max-w-md mx-auto px-4 flex-1 flex flex-col justify-end pb-3 space-y-3">
+        {/* ================================================================== */}
+        {/* HERO CHASE CARD (Exact 1:1 Pixel Match of Image 2)                 */}
+        {/* ================================================================== */}
+        <div className="w-full bg-[#0b140e]/95 border border-white/10 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-md">
+          {/* Tag Badge */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="bg-[#facc15] text-slate-950 font-display font-black text-xs px-2.5 py-0.5 rounded tracking-wider uppercase shadow-sm">
+              {currentFormat.tag}
+            </span>
+          </div>
+
+          {/* Creator Attribution */}
+          <div className="text-xs text-slate-300 font-medium mb-3">
+            Set by <span className="font-bold text-white">{currentFormat.author}</span>
+            <span className="text-amber-400 font-bold ml-2">{currentFormat.authorRole}</span>
+          </div>
+
+          {/* Team Matchup Pills & Score/Overs */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div
+              onClick={() => { sound.playClick(); setShowTeamModal(true); }}
+              className="flex items-center gap-1.5 cursor-pointer hover:opacity-90 active:scale-95 transition-all group"
+              title="Click to Choose Teams"
+            >
+              <span
+                className="px-2.5 py-0.5 rounded font-display font-black text-xs text-white uppercase tracking-wider shadow-sm flex items-center gap-1"
+                style={{ background: currentBattingTeam.jersey?.color || '#0284c7' }}
+              >
+                {currentBattingTeam.code}
+              </span>
+              <span className="text-[11px] font-bold italic text-slate-400">vs</span>
+              <span
+                className="px-2.5 py-0.5 rounded font-display font-black text-xs text-white uppercase tracking-wider shadow-sm flex items-center gap-1"
+                style={{ background: currentBowlingTeam.jersey?.color || '#ea580c' }}
+              >
+                {currentBowlingTeam.code}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+            </div>
+
+            <div className="text-xs font-mono font-bold text-slate-300 tracking-tight">
+              {currentFormat.score}
+            </div>
+          </div>
+
+          {/* Big Target Equation: Runs Needed off Balls */}
+          <div className="flex items-end justify-between gap-3 my-2">
+            <div className="flex items-baseline gap-2.5">
+              <span className="font-display font-black text-5xl sm:text-6xl text-white tracking-tight leading-none drop-shadow-md">
+                {currentFormat.runs}
+              </span>
+              <div className="flex flex-col text-left leading-tight">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">runs</span>
+                <span className="text-xs text-slate-300">
+                  off <span className="font-black text-white text-sm">{selectedBalls}</span> balls
+                </span>
+              </div>
+            </div>
+
+            <div className="px-3 py-1.5 rounded-lg bg-[#ef4444] text-white font-display font-black text-xs tracking-wider shadow-md whitespace-nowrap">
+              RRR {currentFormat.rrr}
+            </div>
+          </div>
+
+          {/* Action Buttons: ▶ PLAY THE CHASE + ◎ Nets */}
+          <div className="flex items-center gap-2 mt-4">
+            <button
+              onClick={() => {
+                sound.playClick();
+                onStartQuickPlay(selectedBalls, battingTeamKey, bowlingTeamKey);
+              }}
+              className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#f95738] via-[#fa4f33] to-[#ef4444] hover:brightness-110 active:scale-98 text-white font-display font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 shadow-xl shadow-orange-600/30 transition-all cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-white" /> PLAY THE CHASE
+            </button>
+
+            <button
+              onClick={() => { sound.playClick(); onOpenPractice(); }}
+              className="py-3.5 px-4 rounded-2xl bg-[#121c16]/95 hover:bg-[#1a2920] active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 border border-white/10 shadow-lg transition-all cursor-pointer"
+              title="Practice in Nets"
+            >
+              <Target className="w-4 h-4 text-emerald-400" /> Nets
+            </button>
+          </div>
+
+          {/* Leaderboard / Winner Ticker Pill */}
+          <div
+            onClick={() => { sound.playClick(); onOpenLeaderboard(); }}
+            className="mt-3 bg-[#08110b]/90 border border-white/5 hover:border-white/10 rounded-xl px-3 py-2 flex items-center justify-between text-xs cursor-pointer transition-all active:scale-98 group"
+          >
+            <div className="flex items-center min-w-0">
+              <span className="w-5 h-5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] flex items-center justify-center mr-2 flex-shrink-0">
+                1
+              </span>
+              <span className="font-bold text-white truncate max-w-[110px] sm:max-w-none">
+                Ouagadogou
+              </span>
+              <span className="text-emerald-400 font-semibold ml-2 text-[11px] truncate">
+                Won · 7 balls left
+              </span>
+            </div>
+            <span className="text-amber-400 font-bold group-hover:text-amber-300 flex items-center gap-0.5 ml-2 flex-shrink-0">
+              All ›
+            </span>
+          </div>
+        </div>
+
+        {/* ================================================================== */}
+        {/* QUICK FORMAT & OVERS CHIPS (6B, 12B, 18B, 24B, 30B)                */}
+        {/* ================================================================== */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+          {[
+            { balls: 18, label: '18B Death Over' },
+            { balls: 6, label: '6B Super Over' },
+            { balls: 12, label: '12B Thriller' },
+            { balls: 24, label: '24B Match Play' },
+            { balls: 30, label: '30B T5 Cup' }
+          ].map(fmt => (
+            <button
+              key={fmt.balls}
+              onClick={() => { sound.playClick(); setSelectedBalls(fmt.balls); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer ${
+                selectedBalls === fmt.balls
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/20'
+                  : 'bg-[#0f1c14]/90 hover:bg-[#172b1e] text-slate-300 border border-white/5'
+              }`}
+            >
+              {fmt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ================================================================== */}
+        {/* ALL GAME MODES SHELF (Quick, Challenges, Campaign, Nets, etc.)      */}
+        {/* ================================================================== */}
+        <div className="grid grid-cols-2 gap-2">
           {/* Challenge Arena */}
           <button
             onClick={() => { sound.playClick(); onOpenChallenges(); }}
-            className="glass-panel hover:border-emerald-500/40 rounded-3xl p-3.5 text-left flex items-center justify-between group active:scale-[0.98] transition-all"
+            className="bg-[#0b140e]/90 hover:bg-[#122016] border border-white/5 hover:border-emerald-500/30 p-2.5 rounded-2xl text-left flex items-center justify-between group active:scale-95 transition-all cursor-pointer"
           >
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400 mb-0.5">
-                <Flame className="w-3.5 h-3.5" />
-                COMMUNITY & PRESET
+              <div className="flex items-center gap-1 text-[10px] font-bold text-amber-400">
+                <Flame className="w-3 h-3 text-amber-400" /> SCENARIOS
               </div>
-              <h4 className="text-base font-display font-extrabold text-white">
-                CHALLENGE ARENA
+              <h4 className="text-xs sm:text-sm font-display font-extrabold text-white">
+                CHALLENGES
               </h4>
-              <p className="text-[11px] text-slate-400">Play curated & friend scenarios</p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
-              <Flame className="w-4 h-4" />
-            </div>
-          </button>
-
-          {/* Create Challenge */}
-          <button
-            onClick={() => { sound.playClick(); onOpenCreator(); }}
-            className="glass-panel hover:border-emerald-500/40 rounded-3xl p-3.5 text-left flex items-center justify-between group active:scale-[0.98] transition-all"
-          >
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 mb-0.5">
-                <PlusCircle className="w-3.5 h-3.5" />
-                CUSTOM BUILDER
-              </div>
-              <h4 className="text-base font-display font-extrabold text-white">
-                CREATE CHALLENGE
-              </h4>
-              <p className="text-[11px] text-slate-400">Build & share your scenario code</p>
-            </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-              <PlusCircle className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+              <Flame className="w-3.5 h-3.5" />
             </div>
           </button>
 
           {/* Stadium Campaign */}
           <button
             onClick={() => { sound.playClick(); onOpenCampaign(); }}
-            className="sm:col-span-2 glass-panel hover:border-emerald-500/40 rounded-3xl p-3.5 text-left flex items-center justify-between group active:scale-[0.98] transition-all"
+            className="bg-[#0b140e]/90 hover:bg-[#122016] border border-white/5 hover:border-purple-500/30 p-2.5 rounded-2xl text-left flex items-center justify-between group active:scale-95 transition-all cursor-pointer"
           >
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-400 mb-0.5">
-                <Trophy className="w-3.5 h-3.5" />
-                CAREER PROGRESSION
+              <div className="flex items-center gap-1 text-[10px] font-bold text-purple-400">
+                <Trophy className="w-3 h-3 text-purple-400" /> CAREER TOUR
               </div>
-              <h4 className="text-base font-display font-extrabold text-white">
-                STADIUM CAMPAIGN TOUR
+              <h4 className="text-xs sm:text-sm font-display font-extrabold text-white">
+                STADIUM TOUR
               </h4>
-              <p className="text-[11px] text-slate-400">Melbourne • Eden Gardens • Sharjah • Lord's Pavilion</p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
-              <Trophy className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+              <Trophy className="w-3.5 h-3.5" />
             </div>
           </button>
         </div>
 
-        {/* Bottom Utility Bar (Quests, Shop, Leaderboard) */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
+        {/* Rivalries Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+          <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 whitespace-nowrap mr-0.5">
+            Rivals:
+          </span>
+          {RIVALRIES.map(r => (
+            <button
+              key={r.label}
+              onClick={(e) => {
+                e.stopPropagation();
+                sound.playClick();
+                setBattingTeamKey(r.bat);
+                setBowlingTeamKey(r.bowl);
+              }}
+              className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer ${
+                battingTeamKey === r.bat && bowlingTeamKey === r.bowl
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
+                  : 'bg-[#101e14]/90 hover:bg-[#172c1e] text-slate-300 border border-white/5'
+              }`}
+            >
+              {r.badge} {r.label}
+            </button>
+          ))}
+          <button
+            onClick={handleRandomizeRivalry}
+            className="px-2 py-0.5 rounded-lg text-[10.5px] font-bold bg-[#101e14]/90 hover:bg-[#172c1e] text-slate-300 border border-white/5 flex items-center gap-1 whitespace-nowrap active:scale-95 cursor-pointer"
+            title="Random Matchup"
+          >
+            <Shuffle className="w-3 h-3 text-amber-400" />
+            <span>Random</span>
+          </button>
+        </div>
+
+        {/* ================================================================== */}
+        {/* BOTTOM UTILITY DOCK (Quests, Shop, Leaderboard, Settings)           */}
+        {/* ================================================================== */}
+        <div className="grid grid-cols-4 gap-1.5 pt-1">
           <button
             onClick={() => { sound.playClick(); onOpenQuests(); }}
-            className="glass-panel hover:border-slate-700 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 text-slate-300 hover:text-white transition-all active:scale-95"
+            className="bg-[#0b140e]/90 hover:bg-[#132317] border border-white/5 p-2 rounded-xl flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer"
           >
             <div className="relative">
               <Target className="w-4 h-4 text-emerald-400" />
-              <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping" />
             </div>
-            <span className="text-[11px] font-bold">Quests</span>
+            <span className="text-[10px] font-bold">Quests</span>
           </button>
 
           <button
             onClick={() => { sound.playClick(); onOpenShop(); }}
-            className="glass-panel hover:border-slate-700 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 text-slate-300 hover:text-white transition-all active:scale-95"
+            className="bg-[#0b140e]/90 hover:bg-[#132317] border border-white/5 p-2 rounded-xl flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer"
           >
             <ShoppingBag className="w-4 h-4 text-amber-400" />
-            <span className="text-[11px] font-bold">Gear Shop</span>
+            <span className="text-[10px] font-bold">Shop</span>
           </button>
 
           <button
             onClick={() => { sound.playClick(); onOpenLeaderboard(); }}
-            className="glass-panel hover:border-slate-700 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 text-slate-300 hover:text-white transition-all active:scale-95"
+            className="bg-[#0b140e]/90 hover:bg-[#132317] border border-white/5 p-2 rounded-xl flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer"
           >
             <Trophy className="w-4 h-4 text-blue-400" />
-            <span className="text-[11px] font-bold">Hall of Fame</span>
+            <span className="text-[10px] font-bold">Fame</span>
+          </button>
+
+          <button
+            onClick={() => { sound.playClick(); onOpenSettings(); }}
+            className="bg-[#0b140e]/90 hover:bg-[#132317] border border-white/5 p-2 rounded-xl flex flex-col items-center justify-center gap-0.5 text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer"
+          >
+            <Settings className="w-4 h-4 text-slate-400" />
+            <span className="text-[10px] font-bold">Settings</span>
           </button>
         </div>
       </div>
 
       {/* ==================================================================== */}
-      {/* Interactive Team Selector Modal (All Countries & IPL Teams) */}
+      {/* Choose Matchup Teams Modal (All Countries & IPL Teams)               */}
       {/* ==================================================================== */}
       {showTeamModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4">
@@ -438,7 +462,7 @@ export default function MainMenu({
                   CHOOSE MATCHUP TEAMS
                 </h3>
                 <p className="text-[11px] sm:text-xs text-slate-400">
-                  Select your batting lineup and bowling opponent
+                  Select batting lineup and bowling opponent
                 </p>
               </div>
               <button
@@ -524,7 +548,6 @@ export default function MainMenu({
                       sound.playClick();
                       if (teamModalTab === 'batting') {
                         setBattingTeamKey(team.code);
-                        // If bowling team matches new batting team, auto-swap to rival
                         if (bowlingTeamKey === team.code) {
                           setBowlingTeamKey(team.code === 'SA' ? 'IND' : 'SA');
                         }

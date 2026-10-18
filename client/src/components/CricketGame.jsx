@@ -2155,66 +2155,68 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
-        {/* 6. BOTTOM-RIGHT RUNNING WIDGET (Exact Match of Image 2, 3, 4)      */}
+        {/* 6. BOTTOM-RIGHT RUNNING WIDGET (Shown ONLY when Batsmen Run)       */}
         {/* ================================================================== */}
-        <div className="absolute bottom-4 right-4 z-30 pointer-events-auto">
-          <div className="w-20 sm:w-24 bg-[#0c1424] border-2 border-[#ef4444] rounded-lg p-2 flex flex-col items-center shadow-2xl">
-            <div className="text-[10px] font-black uppercase text-white tracking-widest text-center leading-tight">
-              <div className="text-base font-black text-white">{runningState?.runsCompleted || 0}</div>
-              <div className="text-[9px] text-slate-300">RUNS</div>
-            </div>
-
-            {/* Mini top-down vertical pitch strip */}
-            <div className="w-14 h-28 bg-[#a8c99c] rounded relative flex flex-col justify-between items-center py-2 px-1 border border-slate-700/60 overflow-hidden my-1">
-              {/* Top Stumps */}
-              <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
-              {/* Bottom Stumps */}
-              <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
-
-              {/* Striker Token */}
-              <div
-                className={`absolute w-3.5 h-3.5 rounded-full bg-blue-500 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
-                  runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
-                }`}
-                style={{
-                  top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '76%',
-                  left: '20%'
-                }}
-                title="Striker"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+        {runningState?.active && (
+          <div className="absolute bottom-4 right-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-right-4 duration-200">
+            <div className="w-20 sm:w-24 bg-[#0c1424] border-2 border-[#ef4444] rounded-lg p-2 flex flex-col items-center shadow-2xl">
+              <div className="text-[10px] font-black uppercase text-white tracking-widest text-center leading-tight">
+                <div className="text-base font-black text-white">{runningState?.runsCompleted || 0}</div>
+                <div className="text-[9px] text-slate-300">RUNS</div>
               </div>
 
-              {/* Non-Striker Token */}
-              <div
-                className={`absolute w-3.5 h-3.5 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
-                  runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
-                }`}
-                style={{
-                  top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '76%' : '12%',
-                  right: '20%'
-                }}
-                title="Non-Striker"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-              </div>
-            </div>
+              {/* Mini top-down vertical pitch strip */}
+              <div className="w-14 h-28 bg-[#a8c99c] rounded relative flex flex-col justify-between items-center py-2 px-1 border border-slate-700/60 overflow-hidden my-1">
+                {/* Top Stumps */}
+                <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
+                {/* Bottom Stumps */}
+                <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
 
-            {/* Action button: SPC:RUN */}
-            <button
-              onClick={() => {
-                const called = engineRef.current?.commandRun();
-                if (called) {
-                  sound.playRunning();
-                  if (hapticsEnabled) haptics.light();
-                }
-              }}
-              className="w-full py-1 bg-[#1e293b] hover:bg-emerald-600 active:scale-95 text-[#facc15] hover:text-white font-mono font-black text-[10px] uppercase text-center rounded transition-colors cursor-pointer border border-slate-700"
-            >
-              SPC:RUN
-            </button>
+                {/* Striker Token */}
+                <div
+                  className={`absolute w-3.5 h-3.5 rounded-full bg-blue-500 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
+                    runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
+                  }`}
+                  style={{
+                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '76%',
+                    left: '20%'
+                  }}
+                  title="Striker"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                </div>
+
+                {/* Non-Striker Token */}
+                <div
+                  className={`absolute w-3.5 h-3.5 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
+                    runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
+                  }`}
+                  style={{
+                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '76%' : '12%',
+                    right: '20%'
+                  }}
+                  title="Non-Striker"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                </div>
+              </div>
+
+              {/* Action button: SPC:RUN */}
+              <button
+                onClick={() => {
+                  const called = engineRef.current?.commandRun();
+                  if (called) {
+                    sound.playRunning();
+                    if (hapticsEnabled) haptics.light();
+                  }
+                }}
+                className="w-full py-1 bg-[#1e293b] hover:bg-emerald-600 active:scale-95 text-[#facc15] hover:text-white font-mono font-black text-[10px] uppercase text-center rounded transition-colors cursor-pointer border border-slate-700"
+              >
+                SPC:RUN
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ================================================================== */}
         {/* 7. IN-GAME PAUSE MODAL                                             */}
