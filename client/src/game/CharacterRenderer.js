@@ -80,12 +80,23 @@ function drawRoundRect(ctx, x, y, w, h, radius, fill, stroke = null, lineWidth =
 }
 
 /**
- * Helper to draw clean ellipses with stroke
+ * Helper to draw clean ellipses with stroke and 100% crash protection
  */
 function drawEllipse(ctx, cx, cy, rx, ry, fill, stroke = null, lineWidth = 1.5) {
+  if (!ctx || !Number.isFinite(cx) || !Number.isFinite(cy)) return;
+  const safeRx = Math.max(0.1, Math.abs(typeof rx === 'number' && Number.isFinite(rx) ? rx : 1));
+  const safeRy = Math.max(0.1, Math.abs(typeof ry === 'number' && Number.isFinite(ry) ? ry : 1));
   ctx.save();
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  if (typeof ctx.ellipse === 'function') {
+    try {
+      ctx.ellipse(cx, cy, safeRx, safeRy, 0, 0, Math.PI * 2);
+    } catch {
+      ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
+    }
+  } else {
+    ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
+  }
   if (fill) {
     ctx.fillStyle = fill;
     ctx.fill();
@@ -824,389 +835,289 @@ export const CharacterRenderer = {
    * subtle inner turf highlight tint, high-contrast dashed ring & turf typography
    */
   draw30YardCircle(ctx, cx, cy, rx = 270, ry = 310) {
-    ctx.save();
+    if (!ctx) return;
+    try {
+      const safeRx = Math.max(10, Math.abs(typeof rx === 'number' && Number.isFinite(rx) ? rx : 270));
+      const safeRy = Math.max(10, Math.abs(typeof ry === 'number' && Number.isFinite(ry) ? ry : 310));
+      ctx.save();
 
-    // 1. Subtle Inner Turf Tint (distinguishes infield restriction area from outfield)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
+      // 1. Subtle Inner Turf Tint
+      drawEllipse(ctx, cx, cy, safeRx, safeRy, 'rgba(255, 255, 255, 0.035)');
 
-    // 2. High-Contrast Dashed White Line
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-    ctx.lineWidth = 2.2;
-    ctx.setLineDash([9, 9]);
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
+      // 2. High-Contrast Dashed White Line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([9, 9]);
+      ctx.beginPath();
+      if (typeof ctx.ellipse === 'function') {
+        try {
+          ctx.ellipse(cx, cy, safeRx, safeRy, 0, 0, Math.PI * 2);
+        } catch {
+          ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
+        }
+      } else {
+        ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
+      }
+      ctx.stroke();
+      ctx.restore();
 
-    // 3. 32 Regulation White Marker Discs spaced evenly along the 30-yard ring
-    const numDiscs = 32;
-    for (let d = 0; d < numDiscs; d++) {
-      const angle = (d / numDiscs) * Math.PI * 2;
-      const dx = cx + Math.cos(angle) * rx;
-      const dy = cy + Math.sin(angle) * ry;
+      // 3. Regulation White Marker Discs spaced evenly along the 30-yard ring
+      const numDiscs = 24;
+      for (let d = 0; d < numDiscs; d++) {
+        const angle = (d / numDiscs) * Math.PI * 2;
+        const dx = cx + Math.cos(angle) * safeRx;
+        const dy = cy + Math.sin(angle) * safeRy;
 
-      // Dark shadow pip
-      drawEllipse(ctx, dx, dy + 1, 3.2, 2.2, 'rgba(0, 0, 0, 0.45)');
-      // Regulation white disc
-      drawEllipse(ctx, dx, dy, 3.0, 2.2, '#ffffff', '#0f172a', 1.0);
+        drawEllipse(ctx, dx, dy + 1, 3.2, 2.2, 'rgba(0, 0, 0, 0.45)');
+        drawEllipse(ctx, dx, dy, 3.0, 2.2, '#ffffff', '#0f172a', 1.0);
+      }
+
+      // 4. Stamped Turf Lettering
+      ctx.font = 'bold 10px "Inter", sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.textAlign = 'center';
+      ctx.fillText('• 30 YARDS INFIELD CIRCLE •', cx, cy - safeRy + 18);
+      ctx.fillText('• 30 YARDS INFIELD CIRCLE •', cx, cy + safeRy - 12);
+      ctx.restore();
+    } catch {
+      ctx.restore();
     }
-
-    // 4. Stamped Turf Lettering (Cardinal directions)
-    ctx.font = 'bold 10px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.textAlign = 'center';
-    ctx.fillText('• 30 YARDS INFIELD CIRCLE •', cx, cy - ry + 18);
-    ctx.fillText('• 30 YARDS INFIELD CIRCLE •', cx, cy + ry - 12);
-    ctx.restore();
   },
 
   /**
-   * Draw Realistic Stadium Crowd Stands & Tiered Spectators along the 80m boundary (matching Reference Screenshot):
+   * Draw Realistic Stadium Crowd Stands & Tiered Spectators along the boundary (matching Reference Screenshot):
    * White boundary rope, green grass run-off apron, cyan glowing LED advertising ribbon with white sponsor logos & tunnel gate,
    * Tier 1 lower seating bowl divided by bright yellow aisle staircases with horizontal ladder rungs,
    * concourse promenade deck with double safety railings, Tier 2 upper grandstand, and packed colorful spectators!
    */
   drawStadiumCrowdStands(ctx, cx, cy, boundaryRadius, width, height, crowdState = {}) {
-    ctx.save();
-    const isCheering = crowdState.isCheering || crowdState.isRocketSix;
-    const landing = crowdState.sixLanding || null;
-    const now = Date.now();
-
-    // 1. Boundary Rope (Crisp white curved boundary line matching screenshot)
-    ctx.beginPath();
-    ctx.arc(cx, cy, boundaryRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.4;
-    ctx.stroke();
-
-    // 2. Green Turf Run-Off Margin behind boundary rope
-    ctx.beginPath();
-    ctx.arc(cx, cy, boundaryRadius + 6, 0, Math.PI * 2);
-    ctx.strokeStyle = '#225325';
-    ctx.lineWidth = 10;
-    ctx.stroke();
-
-    // 3. Electronic LED Advertising Ribbon Board (Curved Cyan/Blue glow with Sponsor Logos)
-    // Board Base Ribbon
-    ctx.beginPath();
-    ctx.arc(cx, cy, boundaryRadius + 14, 0, Math.PI * 2);
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 6;
-    ctx.stroke();
-
-    // Glowing Cyan Top Edge (Signature illuminated board rim seen in screenshot)
-    ctx.beginPath();
-    ctx.arc(cx, cy, boundaryRadius + 11.5, 0, Math.PI * 2);
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2.2;
-    ctx.stroke();
-
-    // White Illuminated Electronic Sponsor Logos & Brand Boxes spaced along the LED ribbon
-    const numSponsorBanners = 36;
-    for (let b = 0; b < numSponsorBanners; b++) {
-      const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.0003);
-      const bx = cx + Math.cos(bAngle) * (boundaryRadius + 14);
-      const by = cy + Math.sin(bAngle) * (boundaryRadius + 14);
-
+    if (!ctx) return;
+    try {
       ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(bAngle + Math.PI / 2);
-      if (b % 4 === 0) {
-        // White logo block
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-8, -2, 16, 4);
-        ctx.fillStyle = '#0284c7';
-        ctx.fillRect(-6, -1.2, 12, 2.4);
-      } else if (b % 4 === 2) {
-        // Glowing cyan pill banner
-        ctx.fillStyle = '#0284c7';
-        ctx.fillRect(-9, -2, 18, 4);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-7, -1, 14, 2);
+      const br = Math.max(100, Number.isFinite(boundaryRadius) ? boundaryRadius : 780);
+      const safeCx = Number.isFinite(cx) ? cx : (width ? width / 2 : 200);
+      const safeCy = Number.isFinite(cy) ? cy : (height ? height * 0.52 : 300);
+      const isCheering = !!(crowdState.isCheering || crowdState.isRocketSix);
+      const landing = crowdState.sixLanding || null;
+      const now = Date.now();
+
+      // 1. Boundary Rope
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // 2. Green Turf Run-Off Margin behind boundary rope
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = '#225325';
+      ctx.lineWidth = 10;
+      ctx.stroke();
+
+      // 3. Electronic LED Advertising Ribbon Board (Cyan / Blue rim)
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br + 14, 0, Math.PI * 2);
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br + 11.5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      // Sponsor Logo Banners
+      const numSponsorBanners = 24;
+      for (let b = 0; b < numSponsorBanners; b++) {
+        const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.0003);
+        const bx = safeCx + Math.cos(bAngle) * (br + 14);
+        const by = safeCy + Math.sin(bAngle) * (br + 14);
+
+        ctx.save();
+        ctx.translate(bx, by);
+        ctx.rotate(bAngle + Math.PI / 2);
+        if (b % 2 === 0) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-8, -2, 16, 4);
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(-6, -1.2, 12, 2.4);
+        } else {
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(-9, -2, 18, 4);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-7, -1, 14, 2);
+        }
+        ctx.restore();
       }
+
+      // White Tunnel Entrance Gate cutout
+      const gateAngle = Math.PI * 0.98;
+      const gx = safeCx + Math.cos(gateAngle) * (br + 13);
+      const gy = safeCy + Math.sin(gateAngle) * (br + 13);
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.rotate(gateAngle + Math.PI / 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-10, -3.5, 20, 7);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-8, -2.5, 16, 5);
       ctx.restore();
-    }
 
-    // White Tunnel Entrance Gate cutout on the boundary (seen in screenshot!)
-    const gateAngle = Math.PI * 0.98;
-    const gx = cx + Math.cos(gateAngle) * (boundaryRadius + 13);
-    const gy = cy + Math.sin(gateAngle) * (boundaryRadius + 13);
-    ctx.save();
-    ctx.translate(gx, gy);
-    ctx.rotate(gateAngle + Math.PI / 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-10, -3.5, 20, 7);
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(-8, -2.5, 16, 5);
-    ctx.restore();
+      // 4. Stadium Grandstand Dimensions
+      const r1_in = br + 18;
+      const r1_out = br + 96;
+      const r_conc_in = br + 96;
+      const r_conc_out = br + 118;
+      const r2_in = br + 118;
+      const r2_out = br + 230;
 
-    // 4. Stadium Grandstand Dimensions
-    const r1_in = boundaryRadius + 18;
-    const r1_out = boundaryRadius + 96;
-    const r_conc_in = boundaryRadius + 96;
-    const r_conc_out = boundaryRadius + 118;
-    const r2_in = boundaryRadius + 118;
-    const r2_out = boundaryRadius + 230;
-
-    // TIER 1 (Lower Grandstand) Base Concrete Bowl
-    ctx.beginPath();
-    ctx.arc(cx, cy, (r1_in + r1_out) / 2, 0, Math.PI * 2);
-    ctx.strokeStyle = '#141e2e';
-    ctx.lineWidth = r1_out - r1_in;
-    ctx.stroke();
-
-    // CONCOURSE PROMENADE (Between Tier 1 & Tier 2)
-    ctx.beginPath();
-    ctx.arc(cx, cy, (r_conc_in + r_conc_out) / 2, 0, Math.PI * 2);
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = r_conc_out - r_conc_in;
-    ctx.stroke();
-
-    // Inner Safety Steel Handrail on Concourse
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_conc_in + 1, 0, Math.PI * 2);
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    // Outer Safety Steel Handrail on Concourse
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_conc_out - 1, 0, Math.PI * 2);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    // TIER 2 (Upper Grandstand) Base Concrete Bowl
-    ctx.beginPath();
-    ctx.arc(cx, cy, (r2_in + r2_out) / 2, 0, Math.PI * 2);
-    ctx.strokeStyle = '#0d1522';
-    ctx.lineWidth = r2_out - r2_in;
-    ctx.stroke();
-
-    // 5. BRIGHT YELLOW AISLE STAIRCASES (The defining signature visual in screenshot!)
-    // 20 Gangways / Staircases dividing Tier 1 & Tier 2 into neat bays
-    const numAisles = 20;
-    const dTheta = 0.034; // ~1.95 degrees wide aisle
-
-    for (let a = 0; a < numAisles; a++) {
-      const aisleAngle = (a / numAisles) * Math.PI * 2;
-
-      // Draw Tier 1 Yellow Staircase (r1_in to r1_out)
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 1.3;
-
-      // Side rail 1
+      // TIER 1 (Lower Grandstand) Base Concrete Bowl
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r1_in, cy + Math.sin(aisleAngle - dTheta / 2) * r1_in);
-      ctx.lineTo(cx + Math.cos(aisleAngle - dTheta / 2) * (r1_out - 2), cy + Math.sin(aisleAngle - dTheta / 2) * (r1_out - 2));
+      ctx.arc(safeCx, safeCy, (r1_in + r1_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#141e2e';
+      ctx.lineWidth = r1_out - r1_in;
       ctx.stroke();
 
-      // Side rail 2
+      // CONCOURSE PROMENADE
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(aisleAngle + dTheta / 2) * r1_in, cy + Math.sin(aisleAngle + dTheta / 2) * r1_in);
-      ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * (r1_out - 2), cy + Math.sin(aisleAngle + dTheta / 2) * (r1_out - 2));
+      ctx.arc(safeCx, safeCy, (r_conc_in + r_conc_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = r_conc_out - r_conc_in;
       ctx.stroke();
 
-      // Horizontal yellow ladder step rungs spaced every 6.5px radially!
-      for (let r = r1_in + 4; r < r1_out - 2; r += 6.5) {
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, r_conc_in + 1, 0, Math.PI * 2);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, r_conc_out - 1, 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // TIER 2 (Upper Grandstand) Base Concrete Bowl
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, (r2_in + r2_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#0d1522';
+      ctx.lineWidth = r2_out - r2_in;
+      ctx.stroke();
+
+      // 5. Bright Yellow Aisle Staircases
+      const numAisles = 16;
+      const dTheta = 0.034;
+
+      for (let a = 0; a < numAisles; a++) {
+        const aisleAngle = (a / numAisles) * Math.PI * 2;
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 1.3;
+
+        // Side rails Tier 1
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r, cy + Math.sin(aisleAngle - dTheta / 2) * r);
-        ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r, cy + Math.sin(aisleAngle + dTheta / 2) * r);
+        ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r1_in, safeCy + Math.sin(aisleAngle - dTheta / 2) * r1_in);
+        ctx.lineTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r1_out - 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r1_out - 2));
+        ctx.moveTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r1_in, safeCy + Math.sin(aisleAngle + dTheta / 2) * r1_in);
+        ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r1_out - 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r1_out - 2));
         ctx.stroke();
+
+        // Rungs
+        for (let r = r1_in + 6; r < r1_out - 4; r += 12) {
+          ctx.beginPath();
+          ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r, safeCy + Math.sin(aisleAngle - dTheta / 2) * r);
+          ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r, safeCy + Math.sin(aisleAngle + dTheta / 2) * r);
+          ctx.stroke();
+        }
+
+        // Side rails Tier 2
+        ctx.beginPath();
+        ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r2_in + 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r2_in + 2));
+        ctx.lineTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r2_out, safeCy + Math.sin(aisleAngle - dTheta / 2) * r2_out);
+        ctx.moveTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r2_in + 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r2_in + 2));
+        ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r2_out, safeCy + Math.sin(aisleAngle + dTheta / 2) * r2_out);
+        ctx.stroke();
+
+        for (let r = r2_in + 8; r < r2_out - 6; r += 14) {
+          ctx.beginPath();
+          ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r, safeCy + Math.sin(aisleAngle - dTheta / 2) * r);
+          ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r, safeCy + Math.sin(aisleAngle + dTheta / 2) * r);
+          ctx.stroke();
+        }
       }
 
-      // Draw Tier 2 Yellow Staircase (r2_in to r2_out)
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * (r2_in + 2), cy + Math.sin(aisleAngle - dTheta / 2) * (r2_in + 2));
-      ctx.lineTo(cx + Math.cos(aisleAngle - dTheta / 2) * r2_out, cy + Math.sin(aisleAngle - dTheta / 2) * r2_out);
-      ctx.stroke();
+      // 6. High-Performance Concentric Seating Rows with Packed Fan Color Clusters
+      const jerseyColors = ['#2563eb', '#dc2626', '#f59e0b', '#ffffff', '#16a34a', '#ea580c', '#38bdf8', '#ef4444'];
+      const tier1Rows = [br + 28, br + 46, br + 64, br + 82];
+      const tier2Rows = [br + 130, br + 155, br + 180, br + 205];
 
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(aisleAngle + dTheta / 2) * (r2_in + 2), cy + Math.sin(aisleAngle + dTheta / 2) * (r2_in + 2));
-      ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r2_out, cy + Math.sin(aisleAngle + dTheta / 2) * r2_out);
-      ctx.stroke();
+      const drawFastCrowdRows = (rows, isUpper) => {
+        rows.forEach((rowDist, rIdx) => {
+          // Concrete bench line
+          ctx.beginPath();
+          ctx.arc(safeCx, safeCy, rowDist, 0, Math.PI * 2);
+          ctx.strokeStyle = isUpper ? '#162235' : '#1c283c';
+          ctx.lineWidth = 5.5;
+          ctx.stroke();
 
-      for (let r = r2_in + 5; r < r2_out - 4; r += 7.0) {
-        ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(aisleAngle - dTheta / 2) * r, cy + Math.sin(aisleAngle - dTheta / 2) * r);
-        ctx.lineTo(cx + Math.cos(aisleAngle + dTheta / 2) * r, cy + Math.sin(aisleAngle + dTheta / 2) * r);
-        ctx.stroke();
-      }
-    }
+          // Dotted vibrant spectator row
+          ctx.save();
+          ctx.lineWidth = 4.2;
+          ctx.setLineDash([4, 4]);
+          ctx.lineCap = 'round';
+          const col = jerseyColors[(rIdx * 3) % jerseyColors.length];
+          ctx.strokeStyle = col;
+          ctx.beginPath();
+          ctx.arc(safeCx, safeCy, rowDist - 0.5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        });
+      };
 
-    // 6. PACKED COLORFUL SPECTATORS IN SEATING BAYS
-    // Vibrant shirt palette matching Reference Screenshot: Royal Blue, Red, Yellow, White, Green, Orange
-    const jerseyColors = ['#2563eb', '#dc2626', '#f59e0b', '#ffffff', '#16a34a', '#ea580c', '#38bdf8', '#ef4444'];
-    const skinTones = ['#f5d0b0', '#e0a980', '#c68656', '#b57948'];
+      drawFastCrowdRows(tier1Rows, false);
+      drawFastCrowdRows(tier2Rows, true);
 
-    // Rows for Tier 1
-    const tier1Rows = [
-      boundaryRadius + 24,
-      boundaryRadius + 32,
-      boundaryRadius + 40,
-      boundaryRadius + 48,
-      boundaryRadius + 56,
-      boundaryRadius + 64,
-      boundaryRadius + 72,
-      boundaryRadius + 80,
-      boundaryRadius + 88
-    ];
+      // 7. Corner Stadium Floodlight Towers
+      const floodlightAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+      floodlightAngles.forEach(fAngle => {
+        const flDist = br + 245;
+        const flX = safeCx + Math.cos(fAngle) * flDist;
+        const flY = safeCy + Math.sin(fAngle) * flDist;
 
-    // Rows for Tier 2
-    const tier2Rows = [
-      boundaryRadius + 125,
-      boundaryRadius + 134,
-      boundaryRadius + 143,
-      boundaryRadius + 152,
-      boundaryRadius + 162,
-      boundaryRadius + 172,
-      boundaryRadius + 182,
-      boundaryRadius + 193,
-      boundaryRadius + 204,
-      boundaryRadius + 215
-    ];
+        drawRoundRect(ctx, flX - 12, flY - 12, 24, 24, 4, '#1e293b', '#475569', 1.5);
 
-    const drawSpectatorRows = (rows, isUpper = false) => {
-      const bayAngleSpan = (Math.PI * 2 / numAisles) - dTheta - 0.024;
-
-      rows.forEach((rowDist, rowIdx) => {
-        // Draw concrete seating bench line
-        ctx.beginPath();
-        ctx.arc(cx, cy, rowDist, 0, Math.PI * 2);
-        ctx.strokeStyle = isUpper ? '#162235' : '#1c283c';
-        ctx.lineWidth = 6.8;
-        ctx.stroke();
-
-        // Render spectators in each bay along this row
-        for (let a = 0; a < numAisles; a++) {
-          const aisleCenter = (a / numAisles) * Math.PI * 2;
-          const bayStart = aisleCenter + dTheta / 2 + 0.012;
-          const numSeats = Math.floor((rowDist * bayAngleSpan) / 6.2);
-
-          for (let s = 0; s < numSeats; s++) {
-            const seatAngle = bayStart + (s + 0.5) * (bayAngleSpan / numSeats);
-            let sx = cx + Math.cos(seatAngle) * rowDist;
-            let sy = cy + Math.sin(seatAngle) * rowDist;
-
-            // Ball landing in this bay reaction:
-            let isNearLanding = false;
-            if (landing && landing.active) {
-              const dToLanding = Math.hypot(sx - landing.x, sy - landing.y);
-              if (dToLanding < 75) {
-                isNearLanding = true;
-                const scatter = Math.atan2(sy - landing.y, sx - landing.x);
-                sx += Math.cos(scatter) * 6;
-                sy += Math.sin(scatter) * 6 - 3;
-              }
-            }
-
-            // Cheering jump offset
-            if (isCheering || isNearLanding) {
-              const jumpOffset = Math.abs(Math.sin(now * 0.014 + a * 1.5 + s * 0.6)) * 4.5;
-              sy -= jumpOffset;
-            }
-
-            // Spectator Shirt (Circular colorful dots as seen in screenshot)
-            const colorIdx = (a * 17 + rowIdx * 5 + s * 3) % jerseyColors.length;
-            ctx.fillStyle = isNearLanding ? '#fef08a' : jerseyColors[colorIdx];
+        ctx.fillStyle = '#fef08a';
+        for (let lx = -7; lx <= 7; lx += 7) {
+          for (let ly = -7; ly <= 7; ly += 7) {
             ctx.beginPath();
-            ctx.arc(sx, sy, 2.7, 0, Math.PI * 2);
+            ctx.arc(flX + lx, flY + ly, 2.8, 0, Math.PI * 2);
             ctx.fill();
-
-            // Spectator Head
-            const skinIdx = (a * 7 + s * 2) % skinTones.length;
-            ctx.fillStyle = skinTones[skinIdx];
-            ctx.beginPath();
-            ctx.arc(sx, sy - 2.1, 1.6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Cheering raised arms or "6" placards
-            if (isCheering || isNearLanding) {
-              if (s % 5 === 0) {
-                // Cheering arms raised up
-                ctx.strokeStyle = skinTones[skinIdx];
-                ctx.lineWidth = 1.1;
-                ctx.beginPath();
-                ctx.moveTo(sx - 2.2, sy); ctx.lineTo(sx - 4.5, sy - 5.5);
-                ctx.moveTo(sx + 2.2, sy); ctx.lineTo(sx + 4.5, sy - 5.5);
-                ctx.stroke();
-              } else if (s % 9 === 0) {
-                // Golden "6" placard held high
-                ctx.fillStyle = '#facc15';
-                ctx.fillRect(sx - 4, sy - 10, 8, 5.5);
-                ctx.fillStyle = '#0f172a';
-                ctx.font = 'bold 5px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('6', sx, sy - 6);
-              }
-            }
-
-            // Random camera flashes in packed crowd during a boundary six
-            if (isCheering ? Math.random() < 0.035 : Math.random() < 0.005) {
-              ctx.fillStyle = '#ffffff';
-              ctx.beginPath();
-              ctx.arc(sx, sy - 1, 3.5, 0, Math.PI * 2);
-              ctx.fill();
-            }
           }
         }
       });
-    };
 
-    drawSpectatorRows(tier1Rows, false);
-    drawSpectatorRows(tier2Rows, true);
+      // 8. Ball Landing Impact Shockwave in the Stands
+      if (landing && landing.active && Number.isFinite(landing.x) && Number.isFinite(landing.y)) {
+        const lx = landing.x;
+        const ly = landing.y;
 
-    // 7. Corner Stadium Floodlight Towers
-    const floodlightAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
-    floodlightAngles.forEach(fAngle => {
-      const flDist = boundaryRadius + 245;
-      const flX = cx + Math.cos(fAngle) * flDist;
-      const flY = cy + Math.sin(fAngle) * flDist;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 22 + Math.sin(now * 0.015) * 8, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
 
-      // Steel lattice base
-      drawRoundRect(ctx, flX - 12, flY - 12, 24, 24, 4, '#1e293b', '#475569', 1.5);
-
-      // Glowing Lamp Bank
-      ctx.fillStyle = '#fef08a';
-      ctx.shadowColor = '#fef08a';
-      ctx.shadowBlur = 10;
-      for (let lx = -7; lx <= 7; lx += 7) {
-        for (let ly = -7; ly <= 7; ly += 7) {
-          ctx.beginPath();
-          ctx.arc(flX + lx, flY + ly, 2.8, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        ctx.font = '900 12px "Inter", sans-serif';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 24);
       }
-      ctx.shadowBlur = 0;
-    });
 
-    // 8. Ball Landing Impact Shockwave in the Stands
-    if (landing && landing.active) {
-      const lx = landing.x;
-      const ly = landing.y;
-
-      ctx.beginPath();
-      ctx.arc(lx, ly, 22 + Math.sin(now * 0.015) * 8, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.beginPath();
-      ctx.arc(lx, ly, 28, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.font = '900 12px "Inter", sans-serif';
-      ctx.fillStyle = '#fef08a';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = '#000000';
-      ctx.shadowBlur = 8;
-      ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 24);
+      ctx.restore();
+    } catch {
+      ctx.restore();
     }
-
-    ctx.restore();
   }
 };

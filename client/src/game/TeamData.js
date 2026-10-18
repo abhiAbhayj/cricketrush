@@ -1027,23 +1027,21 @@ export const TEAMS = {
 // Global consolidated list of bowlers across all countries
 export const GLOBAL_WORLD_BOWLERS = [
   { name: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard', team: 'IND' },
-  { name: 'K. Rabada', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', team: 'SA' },
-  { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', team: 'AUS' },
-  { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'headband', team: 'AUS' },
-  { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'headband', team: 'PAK' },
   { name: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'beard', team: 'AFG' },
-  { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', team: 'SA' },
-  { name: 'Arshdeep Singh', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'turban', team: 'IND' },
-  { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'headband', team: 'ENG' },
-  { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', team: 'NZ' },
-  { name: 'M. Pathirana', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#b57948', faceStyle: 'headband', team: 'SL' },
-  { name: 'V. Chakaravarthy', type: 'offspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'beard', team: 'IND' },
-  { name: 'A. Zampa', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#f5d0b0', faceStyle: 'headband', team: 'AUS' },
-  { name: 'Haris Rauf', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard', team: 'PAK' },
-  { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', team: 'IND' },
-  { name: 'M. Jansen', type: 'fastmedium', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', team: 'SA' },
+  { name: 'M. Starc', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', team: 'AUS' },
   { name: 'Sunil Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox', skinTone: '#5a3d28', faceStyle: 'spiky', team: 'WI' },
-  { name: 'N. Sarpotdar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'afro', team: 'IND' }
+  { name: 'K. Rabada', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', team: 'SA' },
+  { name: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', team: 'IND' },
+  { name: 'S. Afridi', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'headband', team: 'PAK' },
+  { name: 'V. Chakaravarthy', type: 'offspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'beard', team: 'IND' },
+  { name: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'headband', team: 'AUS' },
+  { name: 'A. Zampa', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#f5d0b0', faceStyle: 'headband', team: 'AUS' },
+  { name: 'Arshdeep Singh', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'turban', team: 'IND' },
+  { name: 'T. Shamsi', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'classic', team: 'SA' },
+  { name: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'headband', team: 'ENG' },
+  { name: 'K. Maharaj', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'beard', team: 'SA' },
+  { name: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', team: 'SA' },
+  { name: 'T. Boult', type: 'fastmedium', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', team: 'NZ' }
 ];
 
 // Global consolidated list of batsmen across all countries

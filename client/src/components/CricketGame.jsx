@@ -66,22 +66,32 @@ export default function CricketGame({
       ? TEAMS[matchConfig.bowlingTeamCode].bowlers
       : WORLD_BOWLERS;
 
-  const initialBowlerIndex = Math.max(0, bowlerList.findIndex(b => b.name === matchConfig?.bowlerName));
-  const initialBowler = bowlerList[initialBowlerIndex] || bowlerList[0] || WORLD_BOWLERS[0];
-  const firstOverTargetBalls = (totalBalls % 6 === 0) ? 6 : (totalBalls % 6);
-
-  // Match State initialized matching authentic situational chase (Image 1 & 2)
+  const matchAllowedBalls = matchConfig?.ballsAllowed || 18;
+  const [totalBalls] = useState(matchAllowedBalls);
+  const [targetRuns] = useState(matchConfig?.targetRuns || 43);
+  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
   const [teamCode] = useState(matchConfig?.teamCode || 'BEB');
   const [teamScoreBase] = useState(matchConfig?.teamScoreBase ?? 124);
   const [teamWicketsBase] = useState(matchConfig?.teamWicketsBase ?? 1);
-  const [targetRuns] = useState(matchConfig?.targetRuns || 43);
-  const [totalBalls] = useState(matchConfig?.ballsAllowed || 18);
-  const [maxWickets] = useState(matchConfig?.wicketsAllowed || 5);
-  const [bowlerType, setBowlerType] = useState(matchConfig?.bowlerType || initialBowler.type);
-  const [bowlingArm, setBowlingArm] = useState(matchConfig?.bowlingArm || initialBowler.arm);
-  const [bowlingAngle, setBowlingAngle] = useState(matchConfig?.bowlingAngle || initialBowler.angle);
-  const [bowlerAction, setBowlerAction] = useState(matchConfig?.bowlerAction || initialBowler.action);
+
+  const isSpinType = (t) => ['legspin', 'offspin', 'leftarm_chinaman', 'leftarm_orthodox', 'spin', 'wrist_spin', 'finger_spin'].includes(t);
+
+  const initialBowlerIndex = matchConfig?.bowlerName
+    ? Math.max(0, bowlerList.findIndex(b => b.name === matchConfig.bowlerName))
+    : matchConfig?.bowlerType
+      ? Math.max(0, bowlerList.findIndex(b => b.type === matchConfig.bowlerType || (isSpinType(matchConfig.bowlerType) && isSpinType(b.type))))
+      : 0;
+
+  const initialBowler = bowlerList[initialBowlerIndex] || bowlerList[0] || WORLD_BOWLERS[0];
+  const firstOverTargetBalls = (matchAllowedBalls % 6 === 0) ? 6 : (matchAllowedBalls % 6);
+
+  const [bowlerType, setBowlerType] = useState(initialBowler.type || matchConfig?.bowlerType);
+  const [bowlingArm, setBowlingArm] = useState(initialBowler.arm || matchConfig?.bowlingArm);
+  const [bowlingAngle, setBowlingAngle] = useState(initialBowler.angle || matchConfig?.bowlingAngle);
+  const [bowlerAction, setBowlerAction] = useState(initialBowler.action || matchConfig?.bowlerAction);
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
+  const [isFreeHit, setIsFreeHit] = useState(false);
+  const [showMatchIntro, setShowMatchIntro] = useState(true);
 
   // Dynamic In-Match Live Scoring
   const [currentRunsScored, setCurrentRunsScored] = useState(0);
@@ -316,11 +326,12 @@ export default function CricketGame({
     }, 1400);
   };
 
-  // Auto-hide cinematic match phase intro banner
+  // Auto-hide cinematic match phase intro banner & match intro broadcast card
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowPhaseBanner(false);
-    }, 3400);
+      setShowMatchIntro(false);
+    }, 4500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -586,18 +597,30 @@ export default function CricketGame({
     let runsScored = 0;
     let isWicket = false;
     let isWide = false;
+    let isNoBall = false;
     let badgeText = '';
     let badgeType = 'good';
     let commentaryLine = '';
 
-    if (outcome.event === 'WIDE') {
+    if (outcome.event === 'NO_BALL') {
+      isNoBall = true;
+      runsScored = 1;
+      badgeText = 'NO BALL! +1 RUN ⚠️ FREE HIT!';
+      badgeType = 'wide';
+      commentaryLine = outcome.reason === 'PITCHED_OFF_PITCH'
+        ? 'NO BALL! Delivery pitched completely outside the pitch strip (+1 extra run, re-bowl & FREE HIT)!'
+        : 'NO BALL! Illegal delivery (+1 extra run, re-bowl & FREE HIT)!';
+      sound.playClick();
+      if (hapticsEnabled) haptics.heavy();
+      setIsFreeHit(true);
+    } else if (outcome.event === 'WIDE') {
       isWide = true;
       runsScored = 1;
       badgeText = 'WIDE BALL! +1 RUN ↔️';
       badgeType = 'wide';
       commentaryLine = outcome.wideSide === 'leg'
-        ? 'Strayed down leg side! Umpire signals WIDE (+1 extra run & re-bowl).'
-        : 'Way outside off past the guideline! Umpire signals WIDE (+1 extra run & re-bowl).';
+        ? 'Strayed down leg side! Wide ball called (+1 extra run & re-bowl).'
+        : 'Way outside off past the guideline! Wide ball called (+1 extra run & re-bowl).';
       sound.playClick();
       if (hapticsEnabled) haptics.light();
     } else if (outcome.event === 'SIX') {
@@ -731,6 +754,22 @@ export default function CricketGame({
     else if (outcome.event === 'FOUR') bigText = 'FOUR';
     else if (outcome.event === 'DOT') bigText = 'DOT';
     else if (isWicket) bigText = 'OUT';
+    else if (isNoBall) bigText = 'NO BALL';
+    else if (isWide) bigText = 'WIDE';
+
+    // Free Hit dismissal immunity (MCC Law: Batsman cannot be dismissed bowled, caught, lbw or stumped on free hit)
+    if (isFreeHit && isWicket && outcome.event !== 'RUN_OUT') {
+      isWicket = false;
+      badgeText = 'FREE HIT! NOT OUT! 🛡️';
+      badgeType = 'good';
+      bigText = 'NOT OUT';
+      commentaryLine = `FREE HIT IMMUNITY! ${outcome.event} on a Free Hit — NOT OUT!`;
+    }
+
+    // Reset Free Hit on legal deliveries (Wides and No Balls preserve Free Hit)
+    if (!isWide && !isNoBall) {
+      setIsFreeHit(false);
+    }
 
     setFeedback({
       text: badgeText,
@@ -741,7 +780,7 @@ export default function CricketGame({
     setCommentary(commentaryLine);
 
     // Accurate cricket over tracking
-    const nextBallsFaced = currentBallsFaced + (isWide ? 0 : 1);
+    const nextBallsFaced = currentBallsFaced + (isWide || isNoBall ? 0 : 1);
     const completedOvers = Math.floor(nextBallsFaced / 6);
     const ballsInOver = nextBallsFaced % 6;
     const currentOverFloat = `${completedOvers}.${ballsInOver}`;
@@ -771,7 +810,7 @@ export default function CricketGame({
       battingScorecardRef.current.push(activeStrikerEntry);
     }
 
-    if (!isWide) {
+    if (!isWide && !isNoBall) {
       activeStrikerEntry.b += 1;
       activeStrikerEntry.r += runsScored;
       if (outcome.event === 'FOUR') activeStrikerEntry.fours += 1;
@@ -873,7 +912,7 @@ export default function CricketGame({
       };
       bowlingScorecardRef.current.push(activeBowlerEntry);
     }
-    if (!isWide) {
+    if (!isWide && !isNoBall) {
       activeBowlerEntry.balls += 1;
     }
     activeBowlerEntry.r += runsScored;
@@ -897,10 +936,10 @@ export default function CricketGame({
     setBowler(bowlerObj);
 
     // 4. Over balls history with authentic base over numbering & accurate over bounds
-    const ballSymbol = isWide ? 'wd' : isWicket ? 'W' : runsScored === 0 ? '•' : `${runsScored}`;
+    const ballSymbol = isNoBall ? 'nb' : isWide ? 'wd' : isWicket ? 'W' : runsScored === 0 ? '•' : `${runsScored}`;
     const nextOverBalls = [...currentOverBalls, ballSymbol];
     const nextOverRuns = currentOverRuns + runsScored;
-    const legalBallsInCurrentOver = nextOverBalls.filter(b => b !== 'wd').length;
+    const legalBallsInCurrentOver = nextOverBalls.filter(b => b !== 'wd' && b !== 'nb').length;
     const baseOver = Math.floor(initialBalls / 6);
     const completedOversCount = allOversHistory.length;
     const targetBallsForThisOver = completedOversCount === 0 ? firstOverTargetBalls : 6;
@@ -914,11 +953,26 @@ export default function CricketGame({
       setCurrentOverBalls([]);
       setCurrentOverRuns(0);
 
-      // Rotate to next bowler if innings continues
+      // Rotate to next bowler if innings continues (alternating Pace and Spin)
       if (nextBallsFaced < totalBalls && nextWicketsLost < maxWickets && nextRunsScored < targetRuns) {
         const nextOverNum = completedOversCount + 1;
-        const nextBIndex = (initialBowlerIndex + nextOverNum) % bowlerList.length;
-        const nextB = bowlerList[nextBIndex];
+        const currentBowlerType = bowlerType || initialBowler.type;
+        const isCurrentSpin = isSpinType(currentBowlerType);
+
+        // Filter eligible bowlers from bowlerList (excluding the bowler who just completed their over)
+        const currentBowlerName = bowlerRef.current?.name || bowler.name;
+        const candidates = bowlerList.filter(b => b.name !== currentBowlerName);
+        // Alternate pace and spin: if current over was Pace, pick Spin; if current over was Spin, pick Pace!
+        const preferred = candidates.filter(b => {
+          const bSpin = isSpinType(b.type);
+          return isCurrentSpin ? !bSpin : bSpin;
+        });
+
+        const nextB = preferred.length > 0
+          ? preferred[Math.floor(Math.random() * preferred.length)]
+          : (candidates.length > 0
+              ? candidates[Math.floor(Math.random() * candidates.length)]
+              : bowlerList[(initialBowlerIndex + nextOverNum) % bowlerList.length]);
 
         let nextBowlerEntry = bowlingScorecardRef.current?.find(bw => bw.name === nextB.name);
         if (!nextBowlerEntry) {
@@ -955,9 +1009,10 @@ export default function CricketGame({
 
         const remainingAfterOver = totalBalls - nextBallsFaced;
         const isDeathOver = remainingAfterOver <= 6;
+        const spinOrPace = isSpinType(nextB.type) ? 'SPIN' : 'PACE';
         const overNotice = isDeathOver
           ? `END OF OVER ${baseOver + nextOverNum} • FINAL OVER: ${nextB.name.toUpperCase()} TO BOWL DEATH OVER 🎯`
-          : `END OF OVER ${baseOver + nextOverNum} • NEW BOWLER: ${nextB.name.toUpperCase()} (${(nextB.arm === 'left' ? 'LA' : 'RA')} ${nextB.type.toUpperCase()}) INTO ATTACK 🎯`;
+          : `END OF OVER ${baseOver + nextOverNum} • NEW BOWLER: ${nextB.name.toUpperCase()} (${(nextB.arm === 'left' ? 'LA' : 'RA')} ${spinOrPace} - ${nextB.type.toUpperCase()}) INTO ATTACK 🎯`;
 
         setFieldChangeNotice(overNotice);
         setTimeout(() => setFieldChangeNotice(null), 3500);
@@ -1822,44 +1877,158 @@ export default function CricketGame({
               </div>
             </div>
 
-            {/* ROW 2: Striker, Non-Striker & Bowler (Image 2) */}
-            <div className="pt-1 border-t border-[#182337] flex items-center justify-between text-xs text-slate-300">
-              <div className="flex items-center gap-3">
+            {/* ROW 2: Striker, Non-Striker & Bowler with explicit badges & details */}
+            <div className="pt-1.5 border-t border-[#182337] flex flex-wrap sm:flex-nowrap items-center justify-between text-xs text-slate-300 gap-y-1">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {/* Striker */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[#facc15] font-black text-xs">▶</span>
-                  <span className="font-bold text-white truncate max-w-[130px] sm:max-w-none">{striker.name}</span>
-                  {isLeftHanded && (
-                    <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-bold text-[9px] border border-amber-400/30" title="Left-Handed Batsman">L</span>
-                  )}
+                <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-0.5 rounded-lg border border-amber-500/40">
+                  <span className="px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+                    STRIKE
+                  </span>
+                  <span className="font-bold text-white truncate max-w-[110px] sm:max-w-none">{striker.name}*</span>
+                  <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-extrabold text-[9px] border border-amber-400/30" title="Batting Hand">
+                    {isLeftHanded ? 'LHB' : 'RHB'}
+                  </span>
                   {currentWicketsLost > 0 && striker.balls <= 1 && (
                     <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">NEW</span>
                   )}
-                  <span className="font-extrabold text-white">{striker.runs}</span>
-                  <span className="text-slate-400 text-[11px]">({striker.balls})</span>
+                  <span className="font-black text-amber-300 ml-0.5">{striker.runs}</span>
+                  <span className="text-slate-400 text-[10px]">({striker.balls})</span>
                 </div>
 
                 {/* Non-Striker */}
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <span className="text-slate-300 truncate max-w-[120px] sm:max-w-none">{nonStriker.name}</span>
-                  {isPlayerLeftHanded(nonStriker.name) && (
-                    <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-bold text-[9px] border border-amber-400/30" title="Left-Handed Batsman">L</span>
-                  )}
-                  <span className="font-bold text-slate-200">{nonStriker.runs}</span>
-                  <span className="text-slate-400 text-[11px]">({nonStriker.balls})</span>
+                <div className="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-700/60">
+                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-bold text-[9px] uppercase tracking-wider">
+                    NON-STRIKE
+                  </span>
+                  <span className="text-slate-200 font-medium truncate max-w-[100px] sm:max-w-none">{nonStriker.name}</span>
+                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-bold text-[9px] border border-slate-700" title="Batting Hand">
+                    {isPlayerLeftHanded(nonStriker.name) ? 'LHB' : 'RHB'}
+                  </span>
+                  <span className="font-bold text-slate-300 ml-0.5">{nonStriker.runs}</span>
+                  <span className="text-slate-400 text-[10px]">({nonStriker.balls})</span>
                 </div>
               </div>
 
               {/* Bowler */}
-              <div className="flex items-center gap-1.5 text-slate-300 ml-auto">
-                <span className="text-red-500 font-bold text-xs">⦿</span>
-                <span className="font-medium text-slate-200 truncate">{bowler.name}</span>
-                <span className="font-bold text-white">{bowler.wickets}-{bowler.runsConceded}</span>
-                <span className="text-slate-400 text-[11px]">({bowler.overs})</span>
+              <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-0.5 rounded-lg border border-red-500/40 ml-auto">
+                <span className="px-1 py-0.2 rounded bg-red-600 text-white font-black text-[9px] uppercase tracking-wider">
+                  BOWLER
+                </span>
+                <span className="font-bold text-white truncate max-w-[110px] sm:max-w-none">{bowler.name}</span>
+                <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-red-300 font-medium border border-slate-700">
+                  {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlerType?.toUpperCase()}
+                </span>
+                <span className="font-black text-red-400 ml-0.5">{bowler.wickets}-{bowler.runsConceded}</span>
+                <span className="text-slate-400 text-[10px]">({bowler.overs})</span>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Free Hit Pulsing Badge */}
+        {isFreeHit && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-35 pointer-events-none animate-bounce-subtle">
+            <div className="px-3.5 py-1 rounded-xl bg-amber-500 text-slate-950 font-black text-xs tracking-wider shadow-2xl border-2 border-white flex items-center gap-1.5">
+              <span>⚠️</span>
+              <span>FREE HIT NEXT BALL • NO WICKET DISMISSAL</span>
+              <span>🛡️</span>
+            </div>
+          </div>
+        )}
+
+        {/* TV Broadcast Match Intro Card */}
+        {showMatchIntro && (
+          <div
+            onClick={() => setShowMatchIntro(false)}
+            className="absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer animate-fade-in"
+          >
+            <div className="bg-[#0b1220] border-2 border-amber-400/60 rounded-3xl p-5 max-w-md w-full shadow-2xl flex flex-col gap-3.5 text-center transform transition-transform animate-scale-up">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <span className="text-xs font-black tracking-widest text-amber-400 uppercase">
+                  🏏 TV BROADCAST • MATCH INTRO
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  {matchConfig?.title || `${teamCode} CHASE`}
+                </span>
+              </div>
+
+              {/* Match Equation Target */}
+              <div className="bg-gradient-to-r from-red-950/40 via-red-900/30 to-red-950/40 border border-red-500/40 rounded-2xl py-2.5 px-3">
+                <div className="text-[11px] text-red-200 uppercase font-black tracking-wider">TARGET CHASE EQUATION</div>
+                <div className="text-xl sm:text-2xl font-black text-white mt-0.5">
+                  Need <span className="text-amber-300">{targetRuns} Runs</span> from <span className="text-amber-300">{matchAllowedBalls} Balls</span>
+                </div>
+                <div className="text-[11px] text-slate-300 mt-0.5">
+                  Required Run Rate: <span className="font-bold text-red-400">{rrr}</span> • Max Wickets: {maxWickets}
+                </div>
+              </div>
+
+              {/* Players Grid: Striker, Non-Striker, Bowler */}
+              <div className="grid grid-cols-1 gap-2.5 text-left">
+                {/* Striker */}
+                <div className="bg-slate-900/90 border border-amber-500/50 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-base">
+                      🏏
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase text-amber-400 tracking-wider">BATSMAN ON STRIKE</div>
+                      <div className="text-sm font-bold text-white leading-tight">{striker.name}</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-extrabold text-xs border border-amber-400/30">
+                    {isLeftHanded ? 'LHB' : 'RHB'}
+                  </span>
+                </div>
+
+                {/* Non-Striker */}
+                <div className="bg-slate-900/80 border border-slate-700/70 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-base">
+                      🏃
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">NON-STRIKER</div>
+                      <div className="text-sm font-bold text-slate-200 leading-tight">{nonStriker.name}</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-bold text-xs border border-slate-700">
+                    {isPlayerLeftHanded(nonStriker.name) ? 'LHB' : 'RHB'}
+                  </span>
+                </div>
+
+                {/* Opening Bowler */}
+                <div className="bg-slate-900/90 border border-red-500/40 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/40 flex items-center justify-center text-base">
+                      ⚡
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase text-red-400 tracking-wider">OPENING BOWLER</div>
+                      <div className="text-sm font-bold text-white leading-tight">{bowler.name}</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-extrabold text-xs border border-red-400/30">
+                    {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlerType?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tap to commence button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  sound.playClick();
+                  setShowMatchIntro(false);
+                }}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 active:scale-98 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg transition-all"
+              >
+                PLAY BALL 🏏 (TAP TO START)
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ================================================================== */}
         {/* 3. SHOT & TIMING STAMP (Image 5)                                   */}

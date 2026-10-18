@@ -290,7 +290,29 @@ export class CricketPhysics {
       return this.pickWeighted(pool);
     }
 
-    // 3. Express Fast (140 - 155 km/h: Straight Seam, Bouncer, Yorker, Outswing, Inswing)
+    // 3. Left-Arm Chinaman / Unorthodox Wrist Spin (Kuldeep, Shamsi, Noor)
+    if (archetype === 'leftarm_chinaman' || archetype === 'chinaman') {
+      const pool = [
+        { type: 'leftarm_chinaman', weight: 34, label: 'Chinaman Turn' },
+        { type: 'googly', weight: 26, label: "Wrong'un Googly" },
+        { type: 'flipper', weight: 20, label: 'Skid Flipper' },
+        { type: 'topspinner', weight: 20, label: 'Top Spinner' }
+      ];
+      return this.pickWeighted(pool);
+    }
+
+    // 4. Left-Arm Orthodox Finger Spin (Jadeja, Maharaj, Axar, Santner)
+    if (archetype === 'leftarm_orthodox' || archetype === 'orthodox') {
+      const pool = [
+        { type: 'leftarm_orthodox', weight: 34, label: 'Orthodox Turn' },
+        { type: 'arm_ball', weight: 26, label: 'Skidding Arm Ball' },
+        { type: 'drifter', weight: 20, label: 'Flight Drifter' },
+        { type: 'topspinner', weight: 20, label: 'Top Spinner' }
+      ];
+      return this.pickWeighted(pool);
+    }
+
+    // 5. Express Fast (140 - 155 km/h: Straight Seam, Bouncer, Yorker, Outswing, Inswing)
     if (archetype === 'fast') {
       const pool = [
         { type: 'fast', weight: 30, label: 'Express Fast' },
@@ -302,7 +324,7 @@ export class CricketPhysics {
       return this.pickWeighted(pool);
     }
 
-    // 4. Fast-Medium & Medium-Fast (125 - 140 km/h: Inswing, Outswing, Reverse Swing, Off-Cutter, Leg-Cutter, Slower Ball)
+    // 6. Fast-Medium & Medium-Fast (125 - 140 km/h: Inswing, Outswing, Reverse Swing, Off-Cutter, Leg-Cutter, Slower Ball)
     if (archetype === 'fastmedium' || archetype === 'mediumfast' || archetype === 'swing') {
       const pool = [
         { type: 'outswing', weight: 22, label: 'Late Outswing' },
@@ -315,7 +337,7 @@ export class CricketPhysics {
       return this.pickWeighted(pool);
     }
 
-    // 5. Medium Pace (105 - 125 km/h: Off Cutter, Leg Cutter, Slower Knuckle Ball, Straight Seam)
+    // 7. Medium Pace (105 - 125 km/h: Off Cutter, Leg Cutter, Slower Knuckle Ball, Straight Seam)
     if (archetype === 'medium') {
       const pool = [
         { type: 'offcutter', weight: 30, label: 'Seam Off Cutter' },
@@ -337,6 +359,8 @@ export class CricketPhysics {
       doosra: 'Mystery Doosra',
       carrom: 'Carrom Ball',
       drifter: 'Flight Drifter',
+      leftarm_chinaman: 'Chinaman Turn',
+      leftarm_orthodox: 'Orthodox Turn',
       inswing: 'Inswing Seam',
       outswing: 'Outswing Seam',
       reverse_swing: 'Reverse Swing',
@@ -718,8 +742,17 @@ export class CricketPhysics {
     this.ball.bounceTime = 0;
     this.ball.trail = [{ x: this.ball.x, y: this.ball.y, hasBounced: false }];
 
-    // Realistic flight speed scaling
-    const baseSpeed = (this.ball.speedKmh / 140) * 11;
+    // Authentic Cricket Pitch Flight Calibration:
+    // Pace (140-155 km/h) -> 5.2 - 6.0 px/f (0.52 - 0.58s reaction time)
+    // Medium / Cutters (105-125 km/h) -> 4.2 - 4.8 px/f (0.65 - 0.74s)
+    // Spin (70-88 km/h) -> 2.8 - 3.4 px/f (0.95 - 1.15s authentic loopy flight, drift & turn)
+    const isSpin = this.ball.speedKmh <= 95 ||
+      this.ball.archetype?.includes('spin') ||
+      this.ball.archetype?.includes('chinaman') ||
+      this.ball.archetype?.includes('orthodox');
+    const baseSpeed = isSpin
+      ? Math.max(2.8, Math.min(3.4, 2.9 + ((this.ball.speedKmh - 70) / 25) * 0.5))
+      : Math.max(4.2, Math.min(6.0, 4.4 + ((this.ball.speedKmh - 95) / 65) * 1.6));
     this.ball.vy = baseSpeed;
 
     const totalDistanceY = this.batsmanCreaseY - (this.bowlerCreaseY - 12);
@@ -1480,9 +1513,24 @@ export class CricketPhysics {
           return { event: 'BOWLED' };
         } else if (this.ball.y > this.batsmanCreaseY + 45) {
           this.ball.state = 'DEAD';
-          // Check genuine ICC cricket Wide Ball rule (untouched deliveries straying outside wide lines)
-          const isWideOff = this.ball.x < (this.cx - 36);
-          const isWideLeg = this.ball.x > (this.cx + 22);
+
+          // 1. MCC Regulation Law 21.7: Ball pitching off the pitch strip or outside return crease is a NO BALL!
+          const halfPitch = (this.pitchWidth || 100) / 2;
+          const pitchedOffPitch = this.ball.hasBounced && this.ball.bounceImpactX && Math.abs(this.ball.bounceImpactX - this.cx) > (halfPitch - 2);
+          const wayOffPitch = Math.abs(this.ball.x - this.cx) > (halfPitch + 6);
+
+          if (pitchedOffPitch || wayOffPitch) {
+            return {
+              event: 'NO_BALL',
+              runs: 1,
+              reason: 'PITCHED_OFF_PITCH',
+              text: 'NO BALL! (Pitched off the pitch strip)'
+            };
+          }
+
+          // 2. Regulation ICC Cricket Wide Ball rule (within pitch strip, but outside guidelines)
+          const isWideOff = this.ball.x < (this.cx - 25);
+          const isWideLeg = this.ball.x > (this.cx + 16);
           if (isWideOff || isWideLeg) {
             return {
               event: 'WIDE',
