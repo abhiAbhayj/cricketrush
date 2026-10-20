@@ -137,17 +137,13 @@ export default function App() {
       initialBalls = 90;
     }
 
-    // Striker and non-striker: strictly authentic international cricketers from team roster
+    // Striker and non-striker: strictly authentic international and IPL cricketers from team roster
     const primaryStriker = BATSMEN_LINEUP[0] || 'Rohit Sharma';
     const secondaryStriker = BATSMEN_LINEUP[1] || 'Virat Kohli';
 
-    const strikerName = teamWicketsBase >= 7
-      ? (BATSMEN_LINEUP[6] || BATSMEN_LINEUP[0])
-      : (BATSMEN_LINEUP[teamWicketsBase] || primaryStriker);
-
-    const nonStrikerName = teamWicketsBase >= 7
-      ? (BATSMEN_LINEUP[7] || BATSMEN_LINEUP[1])
-      : (BATSMEN_LINEUP[teamWicketsBase + 1] || secondaryStriker);
+    const safeWickets = Math.min(teamWicketsBase, Math.max(0, BATSMEN_LINEUP.length - 2));
+    const strikerName = BATSMEN_LINEUP[safeWickets] || primaryStriker;
+    const nonStrikerName = BATSMEN_LINEUP[(safeWickets + 1) % BATSMEN_LINEUP.length] || secondaryStriker;
 
     startMatch({
       title: `${battingTeam.name} vs ${bowlingTeam.name} (${ballsAllowed}B)`,

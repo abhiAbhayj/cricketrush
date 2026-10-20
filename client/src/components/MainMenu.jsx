@@ -520,7 +520,7 @@ export default function MainMenu({
                     : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                🌍 Countries (9)
+                🌍 Countries ({teamList.filter(t => t.type === 'international').length})
               </button>
               <button
                 onClick={() => { sound.playClick(); setTeamCategoryFilter('ipl'); }}
@@ -530,7 +530,7 @@ export default function MainMenu({
                     : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                ⚡ IPL Franchises (10)
+                ⚡ IPL Franchises ({teamList.filter(t => t.type === 'ipl').length})
               </button>
             </div>
 

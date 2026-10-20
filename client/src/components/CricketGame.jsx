@@ -78,7 +78,7 @@ export default function CricketGame({
   const isSpinType = (t) => ['legspin', 'offspin', 'leftarm_chinaman', 'leftarm_orthodox', 'spin', 'wrist_spin', 'finger_spin'].includes(t);
 
   const initialBowlerIndex = matchConfig?.bowlerName
-    ? Math.max(0, bowlerList.findIndex(b => b.name === matchConfig.bowlerName))
+    ? Math.max(0, bowlerList.findIndex(b => b.name === matchConfig.bowlerName || b.shortName === matchConfig.bowlerName))
     : matchConfig?.bowlerType
       ? Math.max(0, bowlerList.findIndex(b => b.type === matchConfig.bowlerType || (isSpinType(matchConfig.bowlerType) && isSpinType(b.type))))
       : 0;
@@ -104,8 +104,9 @@ export default function CricketGame({
     ? matchConfig.initialBalls
     : (totalBalls < 120 && teamScoreBase > 0 ? 120 - totalBalls : 0);
 
-  const initialStrikerName = matchConfig?.strikerName || (teamWicketsBase >= 7 ? (battingLineup[6] || 'Rohit Sharma') : battingLineup[teamWicketsBase] || battingLineup[0] || 'Rohit Sharma');
-  const initialNonStrikerName = matchConfig?.nonStrikerName || (teamWicketsBase >= 7 ? (battingLineup[7] || 'Virat Kohli') : battingLineup[teamWicketsBase + 1] || battingLineup[1] || 'Virat Kohli');
+  const safeInitialWickets = Math.min(teamWicketsBase, Math.max(0, battingLineup.length - 2));
+  const initialStrikerName = matchConfig?.strikerName || battingLineup[safeInitialWickets] || battingLineup[0] || 'Rohit Sharma';
+  const initialNonStrikerName = matchConfig?.nonStrikerName || battingLineup[(safeInitialWickets + 1) % battingLineup.length] || battingLineup[1] || 'Virat Kohli';
   const initialNonStrikerRuns = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 14 : 0);
   const initialNonStrikerBalls = teamWicketsBase > 1 ? 0 : (teamWicketsBase === 1 ? 6 : 0);
 
@@ -152,14 +153,14 @@ export default function CricketGame({
   if (!battingScorecardRef.current) {
     if (teamWicketsBase === 7) {
       battingScorecardRef.current = [
-        { name: battingLineup[0] || 'S. Anchalia', r: 26, b: 33, fours: 2, sixes: 0, notOut: false, dismissal: `b ${initialBowler.name}` },
-        { name: battingLineup[1] || 'P. Sanzgiri', hand: 'L', r: 20, b: 20, fours: 1, sixes: 1, notOut: false, dismissal: `c Cover b ${WORLD_BOWLERS[1].name}` },
-        { name: battingLineup[2] || 'F. Danby', r: 26, b: 28, fours: 3, sixes: 0, notOut: false, dismissal: `c Long-on b ${WORLD_BOWLERS[2].name}` },
-        { name: battingLineup[3] || 'T. Nallamby', r: 23, b: 29, fours: 2, sixes: 0, notOut: false, dismissal: `c Keeper b ${WORLD_BOWLERS[3].name}` },
-        { name: battingLineup[4] || 'S. Kinvara', hand: 'L', r: 27, b: 30, fours: 3, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
-        { name: battingLineup[5] || 'S. Kadam', hand: 'L', r: 23, b: 28, fours: 2, sixes: 0, notOut: false, dismissal: `lbw b ${WORLD_BOWLERS[4].name}` },
-        { name: battingLineup[6] || 'A. Sonpurkar', r: 0, b: 1, fours: 0, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
-        { name: initialNonStrikerName, r: 0, b: 0, fours: 0, sixes: 0, notOut: true, dismissal: '*' },
+        { name: battingLineup[0] || 'Batter 1', hand: isPlayerLeftHanded(battingLineup[0]) ? 'L' : undefined, r: 26, b: 33, fours: 2, sixes: 0, notOut: false, dismissal: `b ${initialBowler.name}` },
+        { name: battingLineup[1] || 'Batter 2', hand: isPlayerLeftHanded(battingLineup[1]) ? 'L' : undefined, r: 20, b: 20, fours: 1, sixes: 1, notOut: false, dismissal: `c Cover b ${(bowlerList[1] || WORLD_BOWLERS[1]).name}` },
+        { name: battingLineup[2] || 'Batter 3', hand: isPlayerLeftHanded(battingLineup[2]) ? 'L' : undefined, r: 26, b: 28, fours: 3, sixes: 0, notOut: false, dismissal: `c Long-on b ${(bowlerList[2] || WORLD_BOWLERS[2]).name}` },
+        { name: battingLineup[3] || 'Batter 4', hand: isPlayerLeftHanded(battingLineup[3]) ? 'L' : undefined, r: 23, b: 29, fours: 2, sixes: 0, notOut: false, dismissal: `c Keeper b ${(bowlerList[3] || WORLD_BOWLERS[3]).name}` },
+        { name: battingLineup[4] || 'Batter 5', hand: isPlayerLeftHanded(battingLineup[4]) ? 'L' : undefined, r: 27, b: 30, fours: 3, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
+        { name: battingLineup[5] || 'Batter 6', hand: isPlayerLeftHanded(battingLineup[5]) ? 'L' : undefined, r: 23, b: 28, fours: 2, sixes: 0, notOut: false, dismissal: `lbw b ${(bowlerList[1] || WORLD_BOWLERS[1]).name}` },
+        { name: battingLineup[6] || 'Batter 7', hand: isPlayerLeftHanded(battingLineup[6]) ? 'L' : undefined, r: 0, b: 1, fours: 0, sixes: 0, notOut: false, dismissal: `lbw b ${initialBowler.name}` },
+        { name: initialNonStrikerName, hand: isPlayerLeftHanded(initialNonStrikerName) ? 'L' : undefined, r: 0, b: 0, fours: 0, sixes: 0, notOut: true, dismissal: '*' },
         { name: initialStrikerName, hand: isLeftHanded ? 'L' : undefined, r: 0, b: 0, fours: 0, sixes: 0, notOut: true, dismissal: '*' }
       ];
     } else if (teamWicketsBase > 0) {
@@ -167,8 +168,8 @@ export default function CricketGame({
       const runsPerBatter = Math.floor(Math.max(10, teamScoreBase - initialNonStrikerRuns) / teamWicketsBase);
       for (let i = 0; i < teamWicketsBase; i++) {
         const bName = battingLineup[i] || `Batter #${i + 1}`;
-        const bHand = bName.toLowerCase().includes('[l]') ? 'L' : undefined;
-        const bBowler = WORLD_BOWLERS[(i + 1) % WORLD_BOWLERS.length].name;
+        const bHand = isPlayerLeftHanded(bName) ? 'L' : undefined;
+        const bBowler = (bowlerList[(i + 1) % bowlerList.length] || WORLD_BOWLERS[(i + 1) % WORLD_BOWLERS.length]).name;
         prior.push({
           name: bName,
           hand: bHand,
@@ -182,7 +183,7 @@ export default function CricketGame({
       }
       prior.push({
         name: initialNonStrikerName,
-        hand: initialNonStrikerName.toLowerCase().includes('[l]') ? 'L' : undefined,
+        hand: isPlayerLeftHanded(initialNonStrikerName) ? 'L' : undefined,
         r: initialNonStrikerRuns,
         b: initialNonStrikerBalls,
         fours: initialNonStrikerRuns >= 4 ? 1 : 0,
@@ -231,7 +232,7 @@ export default function CricketGame({
   const bowlingScorecardRef = useRef(null);
   if (!bowlingScorecardRef.current) {
     if (teamScoreBase > 0) {
-      const priorBowler = bowlerList.find(b => b.name !== initialBowler.name) || bowlerList[1] || WORLD_BOWLERS[1];
+      const priorBowler = bowlerList.find(b => b.name !== initialBowler.name && b.shortName !== initialBowler.name) || bowlerList[1] || WORLD_BOWLERS[1];
       const priorBowlerName = priorBowler.name;
       const priorOvers = Math.min(4, Math.max(1, Math.floor(initialBalls / 18)));
       const priorRuns = Math.round(teamScoreBase * 0.45);
@@ -842,7 +843,7 @@ export default function CricketGame({
         // Current batsman is out! Rotate to the next batsman from battingLineup
         const nextBatterIndex = teamWicketsBase + nextWicketsLost + 1;
         const nextBatterName = battingLineup[nextBatterIndex] || `Batter #${nextBatterIndex + 1}`;
-        const nextBatterHand = nextBatterName.toLowerCase().includes('[l]') ? 'L' : undefined;
+        const nextBatterHand = isPlayerLeftHanded(nextBatterName) ? 'L' : undefined;
 
         const newBatterEntry = {
           name: nextBatterName,
@@ -1188,7 +1189,7 @@ export default function CricketGame({
     const engine = engineRef.current;
     if (engine) {
       const activeBowlerName = bowlerRef.current?.name || bowler.name;
-      const activeBowlerData = bowlerList.find(b => b.name === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
+      const activeBowlerData = bowlerList.find(b => b.name === activeBowlerName || b.shortName === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
 
       // Ensure engine has active bowler's appearance and action
       engine.bowler.skinTone = activeBowlerData.skinTone || '#c68656';
@@ -1266,7 +1267,9 @@ export default function CricketGame({
     setWagonWheelShots([]);
     setConsecutiveDots(0);
     setFieldChangeNotice(null);
-    setStriker({ name: matchConfig?.strikerName || battingLineup[0] || 'Rohit Sharma', runs: 0, balls: 0, fiftiesClaimed: false, centuriesClaimed: false });
+    const safeRestartWickets = Math.min(teamWicketsBase, Math.max(0, battingLineup.length - 2));
+    setStriker({ name: matchConfig?.strikerName || battingLineup[safeRestartWickets] || battingLineup[0] || 'Rohit Sharma', runs: 0, balls: 0, fiftiesClaimed: false, centuriesClaimed: false });
+    setNonStriker({ name: matchConfig?.nonStrikerName || battingLineup[(safeRestartWickets + 1) % battingLineup.length] || battingLineup[1] || 'Virat Kohli' });
     setBowler(prev => ({ ...prev, wickets: 0, runsConceded: 0, overs: '0.0' }));
     setGameState('READY');
     triggerNextDelivery();
