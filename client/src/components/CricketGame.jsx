@@ -1440,55 +1440,6 @@ export default function CricketGame({
     ctx.fillRect(cx - pw / 2 + pw * 0.40, pt + ph * 0.52, pw * 0.40, 22);
     ctx.fillRect(cx - pw / 2 + pw * 0.20, pt + ph * 0.68, pw * 0.50, 16);
 
-    // ------------------------------------------------------------------------
-    // WCC4-Style Pitch Length Delivery Zones (Image 2: Short, Good, Full, Yorker)
-    // ------------------------------------------------------------------------
-    const zoneLeft = cx - pw / 2;
-    const labelX = zoneLeft - 4;
-
-    // A. Short Length Zone (Translucent Red)
-    const shortY = pt + ph * 0.38;
-    const shortH = ph * 0.16;
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.14)';
-    ctx.fillRect(zoneLeft, shortY, pw, shortH);
-    ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(zoneLeft, shortY, pw, shortH);
-
-    // B. Good Length Zone (Translucent Amber)
-    const goodY = pt + ph * 0.54;
-    const goodH = ph * 0.15;
-    ctx.fillStyle = 'rgba(245, 158, 11, 0.14)';
-    ctx.fillRect(zoneLeft, goodY, pw, goodH);
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
-    ctx.strokeRect(zoneLeft, goodY, pw, goodH);
-
-    // C. Full Length / In The Slot (Translucent Teal/Emerald)
-    const fullY = pt + ph * 0.69;
-    const fullH = ph * 0.13;
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
-    ctx.fillRect(zoneLeft, fullY, pw, fullH);
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.40)';
-    ctx.strokeRect(zoneLeft, fullY, pw, fullH);
-
-    // D. Yorker / Full Toss (Translucent Purple)
-    const yorkerY = pt + ph * 0.82;
-    const yorkerH = (pb - 46) - yorkerY;
-    ctx.fillStyle = 'rgba(168, 85, 247, 0.18)';
-    ctx.fillRect(zoneLeft, yorkerY, pw, yorkerH);
-    ctx.strokeStyle = 'rgba(168, 85, 247, 0.45)';
-    ctx.strokeRect(zoneLeft, yorkerY, pw, yorkerH);
-
-    // Pitch Zone Typography Labels along Left Margin (matching Image 2)
-    ctx.font = 'bold 7.5px "Inter", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-    ctx.fillText('SHORT LENGTH', labelX, shortY + shortH / 2);
-    ctx.fillText('GOOD LENGTH', labelX, goodY + goodH / 2);
-    ctx.fillText('FULL LENGTH', labelX, fullY + fullH / 2);
-    ctx.fillText('YORKER', labelX, yorkerY + yorkerH / 2);
-
     // Crease lines (White) - Increased width extending beyond pitch turf
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2.2;
