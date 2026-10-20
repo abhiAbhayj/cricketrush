@@ -21,7 +21,7 @@ export class CricketPhysics {
       this.batsman.x = (this.batsmanHand === 'left' ? this.cx + 3 : this.cx - 3) + (this.batsman.creaseOffsetX || 0);
     }
     if (this.nonStriker) {
-      this.nonStriker.x = this.batsmanHand === 'left' ? this.cx + 42 : this.cx - 42;
+      this.nonStriker.x = this.batsmanHand === 'left' ? this.cx - 28 : this.cx + 28;
     }
   }
 
@@ -145,9 +145,9 @@ export class CricketPhysics {
     };
 
     // Non-striker Batsman at top crease:
-    // Stands on opposite side of striker to keep bowler line-of-sight clear (Image 4 vs 5)
+    // Stands cleanly on pitch turf at bowler crease (matching reference screenshot)
     this.nonStriker = {
-      x: isLHB ? this.cx + 44 : this.cx - 44,
+      x: isLHB ? this.cx - 28 : this.cx + 28,
       y: this.bowlerCreaseY + 6
     };
 
@@ -418,8 +418,8 @@ export class CricketPhysics {
     } else {
       this.bowler.x = (chosenAngle === 'over') ? (this.cx + 5) : (this.cx - 7);
     }
-    // Non-striker positioned cleanly on the opposite side of the bowler
-    this.nonStriker.x = (this.bowler.x > this.cx) ? (this.cx - 38) : (this.cx + 38);
+    // Non-striker positioned cleanly on the opposite side of the bowler on pitch turf
+    this.nonStriker.x = (this.bowler.x > this.cx) ? (this.cx - 28) : (this.cx + 28);
 
     // 2. Determine Pitch Bounce Spot (Length) - STRICTLY RESPECTS USER FILTER
     const isSpinBowler = bType.includes('spin') || bType.includes('break') || bType === 'googly' || bType === 'doosra' || bType === 'flipper' || bType === 'carrom' || bType === 'drifter' || bType === 'arm_ball' || rawBowlerType.includes('spin') || rawBowlerType.includes('chinaman') || rawBowlerType.includes('orthodox');

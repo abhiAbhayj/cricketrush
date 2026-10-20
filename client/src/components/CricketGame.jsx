@@ -1276,7 +1276,7 @@ export default function CricketGame({
   useEffect(() => {
     const handleKeyDown = (e) => {
       const engine = engineRef.current;
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         // If ball is in play and running between wickets is active, Spacebar commands RUN!
         if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
@@ -1284,6 +1284,7 @@ export default function CricketGame({
           if (called) {
             sound.playRunning();
             if (hapticsEnabled) haptics.light();
+            showFootworkAlert(`RUNNING FOR RUN ${(engine.running.runsCompleted || 0) + 1} 🏃`);
           }
         } else {
           handleBatSwing(null);
@@ -1295,27 +1296,34 @@ export default function CricketGame({
           if (called) {
             sound.playRunning();
             if (hapticsEnabled) haptics.light();
+            showFootworkAlert(`RUNNING FOR RUN ${(engine.running.runsCompleted || 0) + 1} 🏃`);
           }
         }
-      } else if (e.code === 'KeyS') {
+      } else if (e.code === 'KeyS' || e.code === 'KeyH') {
         e.preventDefault();
         if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
           engine.commandHold();
           sound.playClick();
+          showFootworkAlert('HOLD / TURN BACK ✋');
+        } else {
+          engineRef.current?.resetCrease();
+          setBatsmanCreasePosition('center');
+          sound.playClick();
+          showFootworkAlert('CREASE STANCE ⬇️');
         }
-      } else if (e.code === 'ArrowLeft') {
+      } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         e.preventDefault();
         engineRef.current?.shuffleLeft();
         setBatsmanCreasePosition('left');
         sound.playClick();
         showFootworkAlert('SHUFFLE OFF ⬅️');
-      } else if (e.code === 'ArrowRight') {
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         e.preventDefault();
         engineRef.current?.shuffleRight();
         setBatsmanCreasePosition('right');
         sound.playClick();
         showFootworkAlert('SHUFFLE LEG ➡️');
-      } else if (e.code === 'ArrowUp') {
+      } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
         e.preventDefault();
         engineRef.current?.stepOut();
         setBatsmanCreasePosition('step_out');
@@ -1323,10 +1331,16 @@ export default function CricketGame({
         showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
       } else if (e.code === 'ArrowDown') {
         e.preventDefault();
-        engineRef.current?.resetCrease();
-        setBatsmanCreasePosition('center');
-        sound.playClick();
-        showFootworkAlert('CREASE STANCE ⬇️');
+        if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+          engine.commandHold();
+          sound.playClick();
+          showFootworkAlert('HOLD / TURN BACK ✋');
+        } else {
+          engineRef.current?.resetCrease();
+          setBatsmanCreasePosition('center');
+          sound.playClick();
+          showFootworkAlert('CREASE STANCE ⬇️');
+        }
       } else if (e.code === 'Escape' || e.code === 'KeyP') {
         setIsPaused(prev => !prev);
       }
@@ -1866,6 +1880,7 @@ export default function CricketGame({
                 if (called) {
                   sound.playRunning();
                   if (hapticsEnabled) haptics.light();
+                  showFootworkAlert(`RUNNING FOR RUN ${(engine.running.runsCompleted || 0) + 1} 🏃`);
                 }
               } else {
                 const cam = cameraRef.current;
@@ -1874,30 +1889,48 @@ export default function CricketGame({
                 handleBatSwing(worldX);
               }
             } else {
-              // Swipe gesture -> Dynamic Crease Footwork!
-              if (Math.abs(dx) > Math.abs(dy)) {
-                if (dx > 0) {
-                  engineRef.current?.shuffleRight();
-                  setBatsmanCreasePosition('right');
+              // If batsmen are currently running between wickets:
+              if (engineRef.current?.running?.active) {
+                if (dy > 20) {
+                  // Swipe Down = Turn Back / Hold Crease!
+                  engineRef.current?.commandHold();
                   sound.playClick();
-                  showFootworkAlert('SHUFFLE LEG ➡️');
+                  showFootworkAlert('HOLD / TURN BACK ✋');
                 } else {
-                  engineRef.current?.shuffleLeft();
-                  setBatsmanCreasePosition('left');
-                  sound.playClick();
-                  showFootworkAlert('SHUFFLE OFF ⬅️');
+                  // Any other swipe commands the next run!
+                  const called = engineRef.current?.commandRun();
+                  if (called) {
+                    sound.playRunning();
+                    if (hapticsEnabled) haptics.light();
+                    showFootworkAlert(`RUNNING FOR RUN ${(engineRef.current.running.runsCompleted || 0) + 1} 🏃`);
+                  }
                 }
               } else {
-                if (dy < 0) {
-                  engineRef.current?.stepOut();
-                  setBatsmanCreasePosition('step_out');
-                  sound.playClick();
-                  showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                // When facing bowler at crease: 4-Way Dynamic Footwork Gestures!
+                if (Math.abs(dx) > Math.abs(dy)) {
+                  if (dx > 0) {
+                    engineRef.current?.shuffleRight();
+                    setBatsmanCreasePosition('right');
+                    sound.playClick();
+                    showFootworkAlert('SHUFFLE LEG ➡️');
+                  } else {
+                    engineRef.current?.shuffleLeft();
+                    setBatsmanCreasePosition('left');
+                    sound.playClick();
+                    showFootworkAlert('SHUFFLE OFF ⬅️');
+                  }
                 } else {
-                  engineRef.current?.resetCrease();
-                  setBatsmanCreasePosition('center');
-                  sound.playClick();
-                  showFootworkAlert('CREASE STANCE ⬇️');
+                  if (dy < 0) {
+                    engineRef.current?.stepOut();
+                    setBatsmanCreasePosition('step_out');
+                    sound.playClick();
+                    showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                  } else {
+                    engineRef.current?.resetCrease();
+                    setBatsmanCreasePosition('center');
+                    sound.playClick();
+                    showFootworkAlert('CREASE STANCE ⬇️');
+                  }
                 }
               }
             }
@@ -2245,19 +2278,18 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
-        {/* 6. BOTTOM-RIGHT CONTROLS: MOBILE BATTING BUTTON & RUNNING WIDGET    */}
+        {/* 6. RUNNING INTERFACE CAMERA (Shown ONLY when batsmen are sprinting)*/}
         {/* ================================================================== */}
-        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 flex flex-col items-end gap-2 pointer-events-auto">
-          {/* A. When Batsmen Are Sprinting Between Wickets: Interactive Running Controls */}
-          {runningState?.active ? (
-            <div className="bg-[#0c1424]/95 border-2 border-emerald-500/80 rounded-2xl p-2.5 flex flex-col items-center shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center gap-2 mb-1">
+        {runningState?.active && (
+          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 pointer-events-none animate-in fade-in duration-150">
+            <div className="bg-[#0b121e]/90 border border-emerald-500/60 rounded-2xl p-2.5 flex flex-col items-center shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-xl font-black text-amber-300 font-display">{runningState.runsCompleted}</span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white">RUNS SCORED</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white">RUNS</span>
               </div>
 
-              {/* Mini pitch track */}
-              <div className="w-16 h-20 bg-[#183617] rounded-lg relative flex flex-col justify-between items-center py-1.5 px-1 border border-emerald-600/40 overflow-hidden my-1">
+              {/* Mini pitch camera track with animated runner dots */}
+              <div className="w-16 h-20 bg-[#142e13] rounded-lg relative flex flex-col justify-between items-center py-1.5 px-1 border border-emerald-600/40 overflow-hidden my-0.5">
                 <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
                 <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
                 {/* Striker runner dot */}
@@ -2278,109 +2310,12 @@ export default function CricketGame({
                 />
               </div>
 
-              {/* Two mobile touch buttons: RUN and HOLD */}
-              <div className="flex flex-col gap-1.5 w-full mt-1">
-                <button
-                  onClick={() => {
-                    const called = engineRef.current?.commandRun();
-                    if (called) {
-                      sound.playRunning();
-                      if (hapticsEnabled) haptics.light();
-                    }
-                  }}
-                  className="w-full py-2 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-95 text-white font-black text-xs uppercase text-center rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-1.5 border border-emerald-400/50"
-                >
-                  <span className="text-sm">🏃</span>
-                  <span>RUN (RUN {runningState.runsCompleted + 1})</span>
-                </button>
-                <button
-                  onClick={() => {
-                    engineRef.current?.commandHold();
-                    sound.playClick();
-                  }}
-                  className="w-full py-1 px-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-[10px] uppercase text-center rounded-lg transition-colors cursor-pointer border border-slate-700 flex items-center justify-center gap-1"
-                >
-                  <span>✋</span>
-                  <span>HOLD / TURN BACK</span>
-                </button>
+              <div className="text-[8px] font-bold text-emerald-400/90 mt-1 uppercase tracking-wider">
+                TAP: RUN • SWIPE ↓: HOLD
               </div>
             </div>
-          ) : (
-            /* B. When at Crease Facing Bowler: Prominent Mobile Batting Button & Quick Footwork */
-            <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
-              {/* Quick Crease Footwork Taps (Mobile ergonomic layout) */}
-              <div className="flex items-center gap-1 bg-[#0b121e]/90 p-1 rounded-xl border border-slate-700/80 shadow-xl backdrop-blur-sm">
-                <button
-                  onClick={() => {
-                    engineRef.current?.shuffleLeft();
-                    setBatsmanCreasePosition('left');
-                    sound.playClick();
-                    showFootworkAlert('SHUFFLE OFF ⬅️');
-                  }}
-                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
-                  title="Shuffle Offside"
-                >
-                  <span>⬅️</span>
-                  <span className="hidden sm:inline">OFF</span>
-                </button>
-                <button
-                  onClick={() => {
-                    engineRef.current?.resetCrease();
-                    setBatsmanCreasePosition('center');
-                    sound.playClick();
-                    showFootworkAlert('CREASE STANCE ⬇️');
-                  }}
-                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
-                  title="Reset Stance"
-                >
-                  <span>STANCE</span>
-                </button>
-                <button
-                  onClick={() => {
-                    engineRef.current?.shuffleRight();
-                    setBatsmanCreasePosition('right');
-                    sound.playClick();
-                    showFootworkAlert('SHUFFLE LEG ➡️');
-                  }}
-                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
-                  title="Shuffle Legside"
-                >
-                  <span className="hidden sm:inline">LEG</span>
-                  <span>➡️</span>
-                </button>
-                <button
-                  onClick={() => {
-                    engineRef.current?.stepOut();
-                    setBatsmanCreasePosition('step_out');
-                    sound.playClick();
-                    showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
-                  }}
-                  className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:scale-90 text-[10px] font-black text-amber-300 border border-amber-500/40 flex items-center gap-0.5 cursor-pointer"
-                  title="Step Out (Power Loft)"
-                >
-                  <span>⬆️</span>
-                  <span>CHARGE</span>
-                </button>
-              </div>
-
-              {/* Main SWING Action Button (Huge, glowing touch target for mobile thumb) */}
-              <button
-                onClick={() => handleBatSwing(null)}
-                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-slate-950 shadow-2xl flex items-center gap-2 cursor-pointer transition-all active:scale-90 ${
-                  engineRef.current?.ball.state === 'BOWLED'
-                    ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-2 border-white ring-4 ring-amber-400/50 animate-pulse scale-105'
-                    : 'bg-gradient-to-r from-amber-500 to-yellow-500 border border-amber-300 hover:from-amber-400 hover:to-yellow-400'
-                }`}
-              >
-                <span className="text-base sm:text-xl">🏏</span>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="font-black">SWING BAT</span>
-                  <span className="text-[8px] sm:text-[9px] text-slate-800 font-bold opacity-80">TAP TO HIT</span>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ================================================================== */}
         {/* 7. IN-GAME PAUSE MODAL                                             */}

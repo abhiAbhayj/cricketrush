@@ -86,6 +86,15 @@ export default function NetPractice({ onBack, profile, settings }) {
   const containerRef = useRef(null);
   const engineRef = useRef(null);
   const animFrameRef = useRef(null);
+  const pointerStartRef = useRef({ x: 0, y: 0, time: 0 });
+  const [footworkNotice, setFootworkNotice] = useState(null);
+
+  const showFootworkAlert = (text) => {
+    setFootworkNotice(text);
+    setTimeout(() => {
+      setFootworkNotice(prev => (prev === text ? null : prev));
+    }, 1800);
+  };
 
   // Left-Handed batsman detection
   const isLeftHanded = profile?.battingHand === 'left' ||
@@ -368,7 +377,7 @@ export default function NetPractice({ onBack, profile, settings }) {
   // Keyboard controls for laptop: Spacebar for hitting, Arrow keys / WASD for footwork
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         handleBatSwing(null);
       } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
@@ -376,21 +385,25 @@ export default function NetPractice({ onBack, profile, settings }) {
         engineRef.current?.shuffleLeft();
         setBatsmanCreasePosition('left');
         sound.playClick();
+        showFootworkAlert('SHUFFLE OFF ⬅️');
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         e.preventDefault();
         engineRef.current?.shuffleRight();
         setBatsmanCreasePosition('right');
         sound.playClick();
+        showFootworkAlert('SHUFFLE LEG ➡️');
       } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
         e.preventDefault();
         engineRef.current?.stepOut();
         setBatsmanCreasePosition('step_out');
         sound.playClick();
+        showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
       } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
         e.preventDefault();
         engineRef.current?.resetCrease();
         setBatsmanCreasePosition('center');
         sound.playClick();
+        showFootworkAlert('CREASE STANCE ⬇️');
       }
     };
 
@@ -1159,16 +1172,66 @@ export default function NetPractice({ onBack, profile, settings }) {
           </div>
         </div>
 
-        {/* Canvas (Touch anywhere on screen to play shot) */}
+        {/* Canvas (Touch anywhere on screen to play shot, swipe for footwork) */}
         <canvas
           ref={canvasRef}
           onPointerDown={(e) => {
+            pointerStartRef.current = {
+              x: e.clientX,
+              y: e.clientY,
+              time: performance.now()
+            };
+          }}
+          onPointerUp={(e) => {
+            const start = pointerStartRef.current;
+            const dx = e.clientX - start.x;
+            const dy = e.clientY - start.y;
+            const dist = Math.hypot(dx, dy);
             const rect = canvasRef.current?.getBoundingClientRect();
             const touchX = rect ? (e.clientX - rect.left) : null;
-            handleBatSwing(touchX);
+
+            if (dist < 18) {
+              handleBatSwing(touchX);
+            } else {
+              // 4-Way Crease Footwork Gestures in Net Practice:
+              if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                  engineRef.current?.shuffleRight();
+                  setBatsmanCreasePosition('right');
+                  sound.playClick();
+                  showFootworkAlert('SHUFFLE LEG ➡️');
+                } else {
+                  engineRef.current?.shuffleLeft();
+                  setBatsmanCreasePosition('left');
+                  sound.playClick();
+                  showFootworkAlert('SHUFFLE OFF ⬅️');
+                }
+              } else {
+                if (dy < 0) {
+                  engineRef.current?.stepOut();
+                  setBatsmanCreasePosition('step_out');
+                  sound.playClick();
+                  showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                } else {
+                  engineRef.current?.resetCrease();
+                  setBatsmanCreasePosition('center');
+                  sound.playClick();
+                  showFootworkAlert('CREASE STANCE ⬇️');
+                }
+              }
+            }
           }}
           className="w-full h-full cursor-pointer touch-none"
         />
+
+        {/* Footwork Gesture Alert */}
+        {footworkNotice && (
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-35 pointer-events-none animate-fade-in">
+            <div className="px-3.5 py-1 rounded-xl bg-slate-950/90 border border-cyan-400 text-cyan-300 font-black text-xs tracking-wider shadow-2xl">
+              {footworkNotice}
+            </div>
+          </div>
+        )}
 
         {/* Timing Feedback Banner (Cleanly centered below top bar) */}
         {feedback && (
@@ -1189,7 +1252,7 @@ export default function NetPractice({ onBack, profile, settings }) {
           </div>
         )}
 
-        {/* Unified Sleek Action Center: Real-Time Timing HUD + Swing Bat */}
+        {/* Unified Sleek Action Center: Real-Time Timing HUD */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-[290px] sm:max-w-xs px-3 pointer-events-auto flex flex-col gap-1.5 items-center">
           {/* Real-Time Precision Timing Meter Card */}
           <div className="w-full bg-[#080e1a]/95 border border-slate-700/80 rounded-2xl p-2 sm:p-2.5 shadow-2xl backdrop-blur-md">
@@ -1221,16 +1284,8 @@ export default function NetPractice({ onBack, profile, settings }) {
             </div>
           </div>
 
-          {/* High-Impact Tactical Swing Bat Button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleBatSwing(null); }}
-            disabled={engineRef.current?.batsman.isSwinging}
-            className="w-full py-2.5 sm:py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:to-green-400 active:scale-95 text-slate-950 font-display font-black text-sm tracking-wider flex items-center justify-center gap-2 shadow-2xl shadow-emerald-500/30 transition-all border border-emerald-300/40"
-          >
-            <Zap className="w-4 h-4 fill-slate-950" /> SWING BAT
-          </button>
-          <div className="text-center text-[9.5px] text-slate-400 font-medium">
-            Tap screen or <kbd className="px-1 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[8.5px]">Spacebar</kbd> to hit
+          <div className="text-center text-[9px] text-slate-400 font-medium tracking-tight">
+            Tap screen or <kbd className="px-1 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[8.5px]">Spacebar</kbd> to hit • Swipe for footwork
           </div>
         </div>
       </div>

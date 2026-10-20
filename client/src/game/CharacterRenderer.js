@@ -176,22 +176,22 @@ export const CharacterRenderer = {
     // 1. Soft Ground Shadow
     drawEllipse(ctx, 0, 13, 13, 5, 'rgba(0, 0, 0, 0.35)');
 
-    // 2. Batting Leg Pads & Spikes (Rounded white pads with knee rolls & team-colored straps)
-    let leftPadX = -8.2;
-    let rightPadX = 3.6;
-    let leftPadY = -2.5;
-    let rightPadY = 4.0;
+    // 2. Batting Leg Pads & Spikes (Balanced, grounded cricket stance matching reference screenshot)
+    let leftPadX = -5.8;
+    let rightPadX = 1.8;
+    let leftPadY = 0.5;
+    let rightPadY = 1.2;
 
     if (isSteppingOut) {
-      leftPadY = -7;
-      rightPadY = 6;
-      leftPadX = -6;
-      rightPadX = 2;
+      leftPadY = -6.5;
+      rightPadY = 5.0;
+      leftPadX = -4.5;
+      rightPadX = 1.5;
     } else if (shotStyle === 'pull') {
-      leftPadX = -9.5;
-      rightPadX = 3.0;
+      leftPadX = -7.5;
+      rightPadX = 2.0;
     } else if (!isSwinging) {
-      leftPadY += triggerTap * 0.35;
+      leftPadY += triggerTap * 0.25;
     }
 
     // Left Batting Pad (Front foot) with Team Accent Straps
@@ -200,158 +200,155 @@ export const CharacterRenderer = {
     // Right Batting Pad (Back foot) with Team Accent Straps
     drawBattingPad(ctx, rightPadX, rightPadY, false, stripeCol);
 
-    // 3. Torso in Team Jersey (Side-on batting posture)
+    // 3. Torso in Team Jersey (Upright athletic stance facing bowler matching reference screenshot)
     ctx.save();
-    let bodyRotation = isSwinging ? 0 : -0.44; // Classic side-on cricket batting stance!
+    let bodyRotation = isSwinging ? 0 : -0.10; // Natural athletic stance facing bowler
     if (isSwinging) {
-      if (shotStyle === 'pull') bodyRotation = 0.40;
-      else if (shotStyle === 'cover_drive') bodyRotation = -0.32;
-      else if (shotStyle === 'square_cut') bodyRotation = -0.42;
-      else if (shotStyle === 'sweep') bodyRotation = 0.48;
+      if (shotStyle === 'pull') bodyRotation = 0.45;
+      else if (shotStyle === 'cover_drive') bodyRotation = -0.35;
+      else if (shotStyle === 'square_cut') bodyRotation = -0.40;
+      else if (shotStyle === 'sweep') bodyRotation = 0.50;
     }
     ctx.rotate(bodyRotation);
 
     // Clean Jersey Body with Dark Outline
-    drawRoundRect(ctx, -7.5, -9, 15, 12, 3.5, topColor, '#090e17', 1.5);
+    drawRoundRect(ctx, -7.0, -9, 14, 12, 3.2, topColor, '#090e17', 1.5);
     // Team contrast accents on flanks
-    drawRoundRect(ctx, 5.2, -8, 1.8, 10, 0.8, secColor);
-    drawRoundRect(ctx, -7.0, -8, 1.8, 10, 0.8, secColor);
-    // Team V-neck collar & button placket
+    drawRoundRect(ctx, 4.8, -8, 1.8, 10, 0.8, secColor);
+    drawRoundRect(ctx, -6.6, -8, 1.8, 10, 0.8, secColor);
+    // Team V-neck collar
     ctx.fillStyle = secColor;
     ctx.beginPath();
-    ctx.moveTo(-3, -9);
-    ctx.lineTo(0, -5.5);
-    ctx.lineTo(3, -9);
+    ctx.moveTo(-2.5, -9);
+    ctx.lineTo(0, -6.0);
+    ctx.lineTo(2.5, -9);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
-    // 4. White Batting Helmet (Clean rounded dome with glossy highlight & black visor rim)
+    // 4. White Batting Helmet (Clean rounded dome with glossy highlight & visor peak facing bowler)
     ctx.save();
-    const headY = -17;
+    const headY = -16.5;
     // Neck
-    drawRoundRect(ctx, -2.2, headY + 7.5, 4.4, 3.2, 1.2, skinTone, '#090e17', 1.1);
+    drawRoundRect(ctx, -2.0, headY + 7.2, 4.0, 3.0, 1.0, skinTone, '#090e17', 1.0);
 
     // Rounded White Helmet Dome (Top-Down view)
-    drawEllipse(ctx, isSwinging ? 0 : -1.2, headY + 2.5, 6.8, 6.4, '#ffffff', '#090e17', 1.5);
+    drawEllipse(ctx, isSwinging ? 0 : -0.5, headY + 2.5, 6.6, 6.2, '#ffffff', '#090e17', 1.5);
     // Team Helmet Trim Crest
-    drawRoundRect(ctx, isSwinging ? -2.5 : -3.5, headY - 0.5, 5.0, 2.0, 0.8, topColor);
+    drawRoundRect(ctx, isSwinging ? -2.5 : -3.0, headY - 0.5, 5.0, 2.0, 0.8, topColor);
     // Glossy White highlight curve on top of helmet
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(isSwinging ? 0 : -1.2, headY + 1.2, 4.8, Math.PI * 0.8, Math.PI * 1.8);
+    ctx.arc(isSwinging ? 0 : -0.5, headY + 1.2, 4.6, Math.PI * 0.8, Math.PI * 1.8);
     ctx.stroke();
 
-    // Sleek Dark Visor Peak angled towards bowler
-    const visorX = isSwinging ? -6.0 : -5.5;
-    const visorY = isSwinging ? (headY + 3.8) : (headY + 1.8);
-    drawRoundRect(ctx, visorX, visorY, 8.5, 2.8, 1.2, '#090e17');
+    // Dark Visor Peak angled towards bowler
+    const visorX = isSwinging ? -5.5 : -4.8;
+    const visorY = isSwinging ? (headY + 1.5) : (headY - 0.5);
+    drawRoundRect(ctx, visorX, visorY, 8.5, 2.6, 1.2, '#090e17');
     // Skin Tone face slit under visor
     ctx.fillStyle = skinTone;
-    ctx.fillRect(visorX + 2.5, visorY + 0.5, 5.0, 1.8);
+    ctx.fillRect(visorX + 2.0, visorY + 1.2, 4.8, 1.6);
     ctx.restore();
 
-    // 5. Arms, White Batting Gloves & Cricket Bat (High Cocked Backlift for unmistakable stance!)
+    // 5. Arms, White Batting Gloves & Cricket Bat (Natural ready stance holding bat angled down at crease)
     ctx.save();
-    let reachX = 3.0;
-    let reachY = 2;
-    let batAngle = 0.14;
+    let reachX = 1.2;
+    let reachY = 2.0;
+    let batAngle = 0.58;
 
     if (isSwinging) {
       const swingRatio = Math.sin(swingProgress * Math.PI);
       if (shotStyle === 'cover_drive') {
-        reachX = 3.0 - swingRatio * 9;
-        reachY = 2 - swingRatio * 13;
-        batAngle = 0.2 - swingRatio * 2.8;
-      } else if (shotStyle === 'square_cut') {
-        reachX = 3.0 + swingRatio * 9;
-        reachY = 2 - swingRatio * 8;
-        batAngle = -0.45 - swingRatio * 1.8;
+        reachX = 1.2 - swingRatio * 8.5;
+        reachY = 2.0 - swingRatio * 12.0;
+        batAngle = 0.58 - swingRatio * 3.0;
+      } else if (shotStyle === 'square_cut' || shotStyle === 'late_cut') {
+        reachX = 1.2 + swingRatio * 8.0;
+        reachY = 2.0 - swingRatio * 6.5;
+        batAngle = -0.30 - swingRatio * 2.0;
       } else if (shotStyle === 'pull' || shotStyle === 'hook') {
-        reachX = 3.0 + swingRatio * 6;
-        reachY = 2 - swingRatio * 8;
-        batAngle = 0.1 + swingRatio * 2.8;
+        reachX = 1.2 + swingRatio * 6.5;
+        reachY = 2.0 - swingRatio * 8.0;
+        batAngle = 0.20 + swingRatio * 2.8;
       } else if (shotStyle === 'sweep' || shotStyle === 'paddle_sweep') {
-        reachX = -3 - swingRatio * 7;
-        reachY = 2 - swingRatio * 8;
+        reachX = -2.0 - swingRatio * 7.5;
+        reachY = 2.0 - swingRatio * 6.5;
         batAngle = 0.35 + swingRatio * 2.2;
-      } else if (shotStyle === 'late_cut') {
-        reachX = 3.0 + swingRatio * 6;
-        reachY = 2 - swingRatio * 4;
-        batAngle = -0.35 - swingRatio * 1.5;
       } else if (shotStyle === 'scoop') {
-        reachX = 2;
-        reachY = 0 - swingRatio * 6;
-        batAngle = 0.2 - swingRatio * 1.6;
+        reachX = 1.5;
+        reachY = 0 - swingRatio * 6.0;
+        batAngle = 0.25 - swingRatio * 1.8;
       } else if (shotStyle === 'step_out') {
-        reachX = 2;
-        reachY = 2 - swingRatio * 16;
-        batAngle = 0.15 - swingRatio * 3.4;
+        reachX = 1.0;
+        reachY = 2.0 - swingRatio * 15.0;
+        batAngle = 0.50 - swingRatio * 3.5;
       } else {
-        reachX = 3.0 - swingRatio * 3;
-        reachY = 2 - swingRatio * 14;
-        batAngle = 0.15 - swingRatio * 3.3;
+        reachX = 1.2 - swingRatio * 2.8;
+        reachY = 2.0 - swingRatio * 13.5;
+        batAngle = 0.58 - swingRatio * 3.3;
       }
     } else {
-      // PROPER CRICKET BACKLIFT: Raised bat angled outwards into off-side slips!
-      reachX = 7.5;
-      reachY = -1.5 + triggerTap * 0.35;
-      batAngle = 0.60 + triggerTap * 0.10; // ~34° prominent outward backlift angle!
+      // NATURAL CRICKET READY STANCE (Matching Reference Screenshot):
+      // Hands held comfortably in front of waist, bat blade angled down-right towards popping crease
+      reachX = 1.2;
+      reachY = 2.0 + triggerTap * 0.25;
+      batAngle = 0.58 + triggerTap * 0.08; // ~33° natural downward angle resting near turf
     }
 
     // Arms in jersey sleeves
     ctx.strokeStyle = topColor;
     ctx.lineWidth = 3.2;
     ctx.lineCap = 'round';
-    // Back arm (meeting at bat handle)
+    // Back arm (from right shoulder down to bat handle)
     ctx.beginPath();
-    ctx.moveTo(5.5, -3);
-    ctx.lineTo(reachX + 1.2, reachY + 0.5);
+    ctx.moveTo(4.8, -4.0);
+    ctx.lineTo(reachX + 0.8, reachY + 0.5);
     ctx.stroke();
-    // Front arm (high flexed elbow pointing forward at bowler)
+    // Front arm (from left shoulder down to bat handle)
     ctx.beginPath();
-    ctx.moveTo(-5.5, -6);
-    ctx.lineTo(reachX - 2.5, reachY - 2.5);
+    ctx.moveTo(-5.0, -4.0);
+    ctx.lineTo(reachX - 1.2, reachY - 0.8);
     ctx.stroke();
 
     // White Batting Gloves with team trim border
-    drawRoundRect(ctx, reachX - 4.5, reachY - 4.0, 4.8, 4.8, 1.8, '#ffffff', '#090e17', 1.2);
-    drawRoundRect(ctx, reachX - 4.1, reachY - 3.6, 2.0, 3.8, 0.6, secColor);
-    drawRoundRect(ctx, reachX - 0.5, reachY - 1.2, 4.8, 4.8, 1.8, '#ffffff', '#090e17', 1.2);
-    drawRoundRect(ctx, reachX - 0.1, reachY - 0.8, 2.0, 3.8, 0.6, secColor);
+    drawRoundRect(ctx, reachX - 2.8, reachY - 2.2, 4.4, 4.4, 1.4, '#ffffff', '#090e17', 1.1);
+    drawRoundRect(ctx, reachX - 2.4, reachY - 1.8, 1.8, 3.4, 0.6, secColor);
+    drawRoundRect(ctx, reachX - 0.5, reachY - 0.5, 4.4, 4.4, 1.4, '#ffffff', '#090e17', 1.1);
+    drawRoundRect(ctx, reachX - 0.1, reachY - 0.1, 1.8, 3.4, 0.6, secColor);
 
     // Cricket Bat with Bright Red Grip & Blonde Willow Blade
     ctx.translate(reachX, reachY);
     ctx.rotate(batAngle);
 
-    // Bright Red Rubber Grip Handle (matching reference screenshot!)
-    drawRoundRect(ctx, -1.6, -11, 3.2, 11, 1.2, '#ef4444', '#090e17', 1.2);
+    // Bright Red Rubber Grip Handle (matching reference screenshot)
+    drawRoundRect(ctx, -1.3, -9.0, 2.6, 9.0, 1.0, '#ef4444', '#090e17', 1.0);
     // Spiral grip highlights
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(-1.4, -8.5); ctx.lineTo(1.4, -8.5);
-    ctx.moveTo(-1.4, -5.5); ctx.lineTo(1.4, -5.5);
-    ctx.moveTo(-1.4, -2.5); ctx.lineTo(1.4, -2.5);
+    ctx.moveTo(-1.1, -7.0); ctx.lineTo(1.1, -7.0);
+    ctx.moveTo(-1.1, -4.5); ctx.lineTo(1.1, -4.5);
+    ctx.moveTo(-1.1, -2.0); ctx.lineTo(1.1, -2.0);
     ctx.stroke();
     // Top pommel
-    drawRoundRect(ctx, -2.0, -12, 4.0, 1.6, 0.8, '#ffffff', '#090e17', 1.0);
+    drawRoundRect(ctx, -1.8, -10.2, 3.6, 1.4, 0.7, '#ffffff', '#090e17', 0.9);
 
-    // Willow Blade with Sweet Spot Contour & Dark Edge Outline
-    drawRoundRect(ctx, -3.6, 0, 7.2, 21, 2.2, '#eab308', '#090e17', 1.4);
+    // Willow Blade with Sweet Spot Contour & Dark Edge Outline (pointing down towards popping crease)
+    drawRoundRect(ctx, -3.2, 0.0, 6.4, 18.0, 2.0, '#eab308', '#090e17', 1.3);
     // Sweet spot face block
-    drawRoundRect(ctx, -4.2, 6, 8.4, 9, 2.0, '#deb887', '#92400e', 1.0);
+    drawRoundRect(ctx, -3.8, 5.0, 7.6, 8.0, 1.8, '#deb887', '#92400e', 0.9);
     // Center spine crease
     ctx.strokeStyle = '#b45309';
     ctx.lineWidth = 0.9;
     ctx.beginPath();
-    ctx.moveTo(0, 2); ctx.lineTo(0, 19);
+    ctx.moveTo(0, 1.5); ctx.lineTo(0, 16.5);
     ctx.stroke();
-    // Manufacturer sticker (e.g. MRF / Kookaburra badge)
-    drawRoundRect(ctx, -2.2, 3.5, 4.4, 3.5, 0.8, '#dc2626', '#ffffff', 0.8);
+    // Manufacturer sticker
+    drawRoundRect(ctx, -1.8, 3.0, 3.6, 3.0, 0.6, '#dc2626', '#ffffff', 0.7);
     // Dark rubber toe guard
-    drawRoundRect(ctx, -3.6, 20.5, 7.2, 1.8, 0.8, '#090e17');
+    drawRoundRect(ctx, -3.2, 17.5, 6.4, 1.6, 0.6, '#090e17');
 
     ctx.restore();
     ctx.restore();
@@ -582,12 +579,12 @@ export const CharacterRenderer = {
     ctx.closePath();
     ctx.fill();
 
-    // White Helmet & Visor Peak
+    // White Helmet & Visor Peak (Visor peak angled forward towards bowler)
     const headY = isStumping ? -18 : -14;
     drawEllipse(ctx, 0, headY + 2.5, 6.5, 6.0, '#ffffff', '#090e17', 1.5);
-    drawRoundRect(ctx, -5.0, headY + 3.5, 8.0, 2.5, 1.2, '#090e17');
+    drawRoundRect(ctx, -4.8, headY - 0.5, 8.0, 2.5, 1.2, '#090e17');
     ctx.fillStyle = skinTone;
-    ctx.fillRect(-2.5, headY + 4.0, 5.0, 1.8);
+    ctx.fillRect(-2.5, headY + 1.2, 5.0, 1.8);
 
     // Wicket-Keeping Gloves with Team Trim Webbing
     const gloveY = isStumping ? -21 : -11;
@@ -603,7 +600,8 @@ export const CharacterRenderer = {
   },
 
   /**
-   * Draw Non-Striker Batsman in authentic backing-up crouch stance with 1-handed grounded bat
+   * Draw Non-Striker Batsman in upright alert stance with bat grounded vertically down by side
+   * (matching Reference Screenshot top-right batsman at bowling crease)
    */
   drawNonStriker(ctx, x, y, {
     skinTone = '#f5d0b0',
@@ -626,63 +624,73 @@ export const CharacterRenderer = {
       ctx.scale(-1, 1);
     }
 
-    // 1. Ground Shadow (Athletic elongated oval in runner's backing-up stance)
-    drawEllipse(ctx, 0, 13, 14, 5.2, 'rgba(0, 0, 0, 0.35)');
+    // 1. Ground Shadow (Clean soft shadow under feet)
+    drawEllipse(ctx, 0, 13, 12, 4.5, 'rgba(0, 0, 0, 0.35)');
 
-    // 2. Athletic Staggered Pads (One foot on the crease, one foot slightly back in backing-up crouch)
-    drawBattingPad(ctx, -5.5, 0, true, stripeCol);  // Inside pad near pitch
-    drawBattingPad(ctx, 3.0, 4.5, false, stripeCol); // Outside pad behind crease
+    // 2. Leg Pads & Spikes (Both pads planted upright facing down-pitch towards striker)
+    drawBattingPad(ctx, -5.0, 0.5, true, stripeCol);
+    drawBattingPad(ctx, 1.8, 1.2, false, stripeCol);
 
-    // 3. Torso: Athletic runner crouch, leaning forward down the pitch towards striker
-    ctx.save();
-    ctx.rotate(0.20); // forward athletic lean towards striker
-    drawRoundRect(ctx, -7.0, -9, 14, 11, 3.2, topColor, '#090e17', 1.5);
+    // 3. Torso in Team Jersey (Upright stance facing down-pitch towards striker)
+    drawRoundRect(ctx, -6.5, -9, 13, 11, 3.0, topColor, '#090e17', 1.4);
+    // Contrast accents on flanks
+    drawRoundRect(ctx, 4.2, -8, 1.6, 9, 0.6, secColor);
+    drawRoundRect(ctx, -5.8, -8, 1.6, 9, 0.6, secColor);
     // V-neck collar
     ctx.fillStyle = secColor;
     ctx.beginPath();
-    ctx.moveTo(-2.5, -9); ctx.lineTo(0, -6); ctx.lineTo(2.5, -9);
+    ctx.moveTo(-2.0, -9);
+    ctx.lineTo(0, -6.0);
+    ctx.lineTo(2.0, -9);
     ctx.closePath();
     ctx.fill();
-    ctx.restore();
 
-    // 4. Helmet: Looking DOWN THE PITCH towards striker & bowler
-    const headY = -17;
-    drawEllipse(ctx, 0, headY + 2.5, 6.5, 6.0, '#ffffff', '#090e17', 1.5);
+    // 4. White Helmet: Visor pointing DOWN THE PITCH towards striker
+    const headY = -16.5;
+    drawEllipse(ctx, 0, headY + 2.5, 6.2, 5.8, '#ffffff', '#090e17', 1.5);
     drawRoundRect(ctx, -2.5, headY - 0.5, 5.0, 2.0, 0.8, topColor);
     // Visor turned down the track
-    drawRoundRect(ctx, -4.5, headY + 3.8, 8.0, 2.5, 1.2, '#090e17');
+    drawRoundRect(ctx, -4.2, headY + 4.5, 8.4, 2.5, 1.1, '#090e17');
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(-2.5, headY + 3.8, 5.0, 1.6);
 
-    // 5. Arms & Bat:
-    // Outside arm: resting on thigh/hip in runner's start
+    // 5. Arms & Bat (Holding bat vertically down along side, matching Reference Screenshot):
+    // Left arm: resting relaxed along side
     ctx.strokeStyle = topColor;
     ctx.lineWidth = 3.0;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(5.5, -4); ctx.lineTo(7.5, 1.5);
+    ctx.moveTo(-5.0, -4.0);
+    ctx.lineTo(-6.0, 2.0);
     ctx.stroke();
-    // Outside glove on hip
-    drawRoundRect(ctx, 6.0, 1.5, 3.4, 3.4, 1.2, '#ffffff', '#090e17', 0.8);
 
-    // Inside arm: reaching down firmly grounding the bat inside the crease!
+    // Right arm: holding bat straight down along side
     ctx.beginPath();
-    ctx.moveTo(-5.5, -4); ctx.lineTo(-8.5, 2.0);
+    ctx.moveTo(5.0, -4.0);
+    ctx.lineTo(5.8, 2.0);
     ctx.stroke();
-    // Inside glove gripping the bat
-    drawRoundRect(ctx, -10.5, 1.5, 4.2, 4.2, 1.4, '#ffffff', '#090e17', 1.0);
 
-    // GROUNDED BAT: Flat on the crease turf, pointing forward along the crease line!
-    ctx.save();
-    ctx.translate(-8.5, 3.5);
-    ctx.rotate(0.40); // angled along crease
-    // Red rubber grip handle
-    drawRoundRect(ctx, -1.2, -7.5, 2.4, 7.5, 1.0, '#ef4444', '#090e17', 0.9);
-    // Golden willow blade resting grounded on turf
-    drawRoundRect(ctx, -2.6, 0, 5.2, 17, 1.8, '#eab308', '#090e17', 1.2);
+    // White batting glove gripping the bat handle
+    drawRoundRect(ctx, 4.0, 1.0, 4.2, 4.2, 1.2, '#ffffff', '#090e17', 1.0);
+
+    // Bat held vertically down:
+    // Handle extends UP from hand:
+    drawRoundRect(ctx, 4.8, -6.5, 2.2, 7.5, 0.8, '#ef4444', '#090e17', 0.9);
+    drawRoundRect(ctx, 4.4, -7.5, 3.0, 1.2, 0.6, '#ffffff', '#090e17', 0.8);
+
+    // Willow Blade extends DOWN onto crease turf:
+    drawRoundRect(ctx, 3.2, 3.5, 5.6, 17.0, 1.6, '#eab308', '#090e17', 1.2);
     // Sweet spot face block
-    drawRoundRect(ctx, -2.0, 4, 4.0, 8, 1.2, '#deb887', '#92400e', 0.8);
-    // Dark toe guard
-    drawRoundRect(ctx, -2.6, 16.5, 5.2, 1.5, 0.6, '#090e17');
-    ctx.restore();
+    drawRoundRect(ctx, 3.6, 7.5, 4.8, 7.0, 1.0, '#deb887', '#92400e', 0.8);
+    // Center spine crease
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(6.0, 4.5);
+    ctx.lineTo(6.0, 19.5);
+    ctx.stroke();
+    // Dark rubber toe guard on turf
+    drawRoundRect(ctx, 3.2, 19.5, 5.6, 1.4, 0.6, '#090e17');
 
     ctx.restore();
   },
