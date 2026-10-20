@@ -18,10 +18,10 @@ export class CricketPhysics {
   setBatsmanHand(hand = 'right') {
     this.batsmanHand = hand === 'left' ? 'left' : 'right';
     if (this.batsman) {
-      this.batsman.x = this.batsmanHand === 'left' ? this.cx - 2 : this.cx + 2;
+      this.batsman.x = (this.batsmanHand === 'left' ? this.cx + 3 : this.cx - 3) + (this.batsman.creaseOffsetX || 0);
     }
     if (this.nonStriker) {
-      this.nonStriker.x = this.batsmanHand === 'left' ? this.cx + 44 : this.cx - 44;
+      this.nonStriker.x = this.batsmanHand === 'left' ? this.cx + 42 : this.cx - 42;
     }
   }
 
@@ -124,7 +124,7 @@ export class CricketPhysics {
     const isLHB = this.batsmanHand === 'left';
 
     this.batsman = {
-      x: (isLHB ? this.cx - 2 : this.cx + 2) + prevCreaseX,
+      x: (isLHB ? this.cx + 3 : this.cx - 3) + prevCreaseX,
       y: this.batsmanCreaseY,
       creaseOffsetX: prevCreaseX, // Left / Right shuffle offset
       isSteppingOut: prevStepOut,

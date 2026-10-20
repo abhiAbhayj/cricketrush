@@ -1616,13 +1616,15 @@ export default function CricketGame({
         kit: battingKit
       });
     } else {
-      // 6. Realistic Humanoid Non-Striker (Top Crease Right Side)
+      // 6. Realistic Humanoid Non-Striker (Top Crease with 1-handed grounded bat & backing-up stance)
       CharacterRenderer.drawNonStriker(ctx, engine.nonStriker.x, engine.nonStriker.y, {
         jerseyColor: battingJerseyColor,
-        kit: battingKit
+        kit: battingKit,
+        pitchCenterX: cx,
+        isLeftHanded: isPlayerLeftHanded(nonStriker.name)
       });
 
-      // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Helmet, Facial Texture & Living Footwork)
+      // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Side-On Stance & Backlift)
       CharacterRenderer.drawBatsman(ctx, engine.batsman.x, engine.batsman.y, {
         isSwinging: engine.batsman.isSwinging,
         swingProgress: engine.batsman.swingProgress,
@@ -1640,6 +1642,34 @@ export default function CricketGame({
         faceStyle: 'beard',
         skinTone: '#d49b70'
       });
+
+      // On-pitch Stance & Batting Hand Indicator Badge
+      if (!engine.batsman.isSwinging) {
+        ctx.save();
+        const badgeX = isLeftHanded ? (cx - 36) : (cx + 36);
+        const badgeY = pb - 38;
+        const badgeText = isLeftHanded ? 'LHB 🏏' : 'RHB 🏏';
+        const badgeCol = isLeftHanded ? '#06b6d4' : '#f59e0b';
+        ctx.font = 'bold 8.5px "Inter", sans-serif';
+        const tw = ctx.measureText(badgeText).width;
+        const bw = tw + 10;
+        ctx.fillStyle = 'rgba(11, 18, 32, 0.85)';
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(badgeX - bw / 2, badgeY - 7, bw, 14, 5);
+        } else {
+          ctx.rect(badgeX - bw / 2, badgeY - 7, bw, 14);
+        }
+        ctx.fill();
+        ctx.strokeStyle = badgeCol;
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+        ctx.fillStyle = badgeCol;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, badgeX, badgeY);
+        ctx.restore();
+      }
     }
 
     // 7. Realistic Vector Bowler (Top Crease with High-Arm Action, Sprint Reach & Fielding)
@@ -1876,45 +1906,45 @@ export default function CricketGame({
         />
 
         {/* ================================================================== */}
-        {/* 2. SLEEK TOP HUD BAR (Exact Pixel Replica of Images 2, 3, 4, 5)    */}
+        {/* 2. SLEEK TOP HUD BAR (Mobile-Optimized Responsive Layout)          */}
         {/* ================================================================== */}
-        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-3xl pointer-events-auto">
-          <div className="bg-[#0b121e]/95 border border-[#1e2a3f] rounded-2xl px-4 py-2 shadow-2xl backdrop-blur-md flex flex-col gap-1.5">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-3xl pointer-events-auto">
+          <div className="bg-[#0b121e]/95 border border-[#1e2a3f] rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-2 shadow-2xl backdrop-blur-md flex flex-col gap-1 sm:gap-1.5">
             {/* ROW 1: Team Pill, Score, Overs, Target Equation, RRR Pill, Over Balls Circles */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="px-2.5 py-0.5 rounded bg-[#0284c7] font-black italic text-xs tracking-wider text-white shadow-sm">
+            <div className="flex items-center justify-between gap-1 sm:gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="px-2 sm:px-2.5 py-0.5 rounded bg-[#0284c7] font-black italic text-[11px] sm:text-xs tracking-wider text-white shadow-sm">
                   {teamCode}
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+                <div className="flex items-baseline gap-1 sm:gap-1.5">
+                  <span className="text-xl sm:text-3xl font-display font-black text-white tracking-tight">
                     {totalTeamScore}-{totalTeamWickets}
                   </span>
-                  <span className="text-xs sm:text-sm font-semibold text-slate-400">
+                  <span className="text-[11px] sm:text-sm font-semibold text-slate-400">
                     {teamScoreBase > 0
                       ? `${Math.floor((initialBalls + currentBallsFaced) / 6)}.${(initialBalls + currentBallsFaced) % 6}`
                       : `${Math.floor(currentBallsFaced / 6)}.${currentBallsFaced % 6}`
-                    }<span className="text-[11px] font-normal">ov</span>
+                    }<span className="text-[9px] sm:text-[11px] font-normal">ov</span>
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="text-xs sm:text-sm font-bold text-white tracking-tight whitespace-nowrap">
+              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                <div className="text-[11px] sm:text-sm font-bold text-white tracking-tight whitespace-nowrap truncate">
                   Need <span className="text-[#ef4444] font-black">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
                 </div>
-                <div className="px-2 py-0.5 rounded bg-[#ef4444] font-display font-black text-xs text-white tracking-wider whitespace-nowrap shadow-sm">
+                <div className="px-1.5 sm:px-2 py-0.5 rounded bg-[#ef4444] font-display font-black text-[10px] sm:text-xs text-white tracking-wider whitespace-nowrap shadow-sm flex-shrink-0">
                   RRR {rrr}
                 </div>
               </div>
 
-              {/* Over Balls Array on Right of Row 1 (Image 2) */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Over Balls Array on Right of Row 1 */}
+              <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                 {Array.from({ length: allOversHistory.length === 0 ? firstOverTargetBalls : 6 }).map((_, idx) => {
                   const ballVal = currentOverBalls[idx];
                   if (!ballVal) {
                     return (
-                      <div key={idx} className="w-5 h-5 rounded-full border border-[#2a374f] bg-transparent" />
+                      <div key={idx} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border border-[#2a374f] bg-transparent" />
                     );
                   }
                   const isSix = ballVal === '6';
@@ -1924,7 +1954,7 @@ export default function CricketGame({
                   return (
                     <div
                       key={idx}
-                      className={`w-5 h-5 rounded-full flex items-center justify-center font-display font-black text-[10px] text-white shadow-sm ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-display font-black text-[8px] sm:text-[10px] text-white shadow-sm ${
                         isSix ? 'bg-[#9333ea]' : isFour ? 'bg-[#16a34a]' : isWicket ? 'bg-[#dc2626]' : isWide ? 'bg-[#d97706]' : 'bg-[#1e293b] text-slate-300'
                       }`}
                     >
@@ -1935,50 +1965,50 @@ export default function CricketGame({
               </div>
             </div>
 
-            {/* ROW 2: Striker, Non-Striker & Bowler with explicit badges & details */}
-            <div className="pt-1.5 border-t border-[#182337] flex flex-wrap sm:flex-nowrap items-center justify-between text-xs text-slate-300 gap-y-1">
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* ROW 2: Striker, Non-Striker & Bowler with prominent Handedness Badges */}
+            <div className="pt-1 border-t border-[#182337] flex items-center justify-between text-[11px] sm:text-xs text-slate-300 gap-1 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 flex-nowrap min-w-0">
                 {/* Striker */}
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-0.5 rounded-lg border border-amber-500/40">
-                  <span className="px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+                <div className="flex items-center gap-1 bg-slate-900/90 px-1.5 sm:px-2 py-0.5 rounded-lg border border-amber-500/50 flex-shrink-0">
+                  <span className="px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] uppercase tracking-wider">
                     STRIKE
                   </span>
-                  <span className="font-bold text-white truncate max-w-[110px] sm:max-w-none">{striker.name}*</span>
-                  <span className="px-1 py-0.2 rounded bg-slate-800 text-amber-300 font-extrabold text-[9px] border border-amber-400/30" title="Batting Hand">
+                  <span className="font-bold text-white truncate max-w-[80px] sm:max-w-none">{striker.name}*</span>
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-black text-[8px] sm:text-[9px] border border-amber-400/50" title="Batting Hand">
                     {isLeftHanded ? 'LHB' : 'RHB'}
                   </span>
                   {currentWicketsLost > 0 && striker.balls <= 1 && (
-                    <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">NEW</span>
+                    <span className="text-[8px] sm:text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">NEW</span>
                   )}
                   <span className="font-black text-amber-300 ml-0.5">{striker.runs}</span>
-                  <span className="text-slate-400 text-[10px]">({striker.balls})</span>
+                  <span className="text-slate-400 text-[9px] sm:text-[10px]">({striker.balls})</span>
                 </div>
 
                 {/* Non-Striker */}
-                <div className="flex items-center gap-1.5 bg-slate-900/60 px-2 py-0.5 rounded-lg border border-slate-700/60">
-                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-bold text-[9px] uppercase tracking-wider">
-                    NON-STRIKE
+                <div className="flex items-center gap-1 bg-slate-900/70 px-1.5 sm:px-2 py-0.5 rounded-lg border border-slate-700/60 flex-shrink-0">
+                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-bold text-[8px] sm:text-[9px] uppercase tracking-wider">
+                    NON
                   </span>
-                  <span className="text-slate-200 font-medium truncate max-w-[100px] sm:max-w-none">{nonStriker.name}</span>
-                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-bold text-[9px] border border-slate-700" title="Batting Hand">
+                  <span className="text-slate-200 font-medium truncate max-w-[70px] sm:max-w-none">{nonStriker.name}</span>
+                  <span className="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 font-black text-[8px] sm:text-[9px] border border-cyan-500/40" title="Batting Hand">
                     {isPlayerLeftHanded(nonStriker.name) ? 'LHB' : 'RHB'}
                   </span>
                   <span className="font-bold text-slate-300 ml-0.5">{nonStriker.runs}</span>
-                  <span className="text-slate-400 text-[10px]">({nonStriker.balls})</span>
+                  <span className="text-slate-400 text-[9px] sm:text-[10px]">({nonStriker.balls})</span>
                 </div>
               </div>
 
               {/* Bowler */}
-              <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-0.5 rounded-lg border border-red-500/40 ml-auto">
-                <span className="px-1 py-0.2 rounded bg-red-600 text-white font-black text-[9px] uppercase tracking-wider">
-                  BOWLER
+              <div className="flex items-center gap-1 bg-slate-900/90 px-1.5 sm:px-2 py-0.5 rounded-lg border border-red-500/40 flex-shrink-0 ml-1">
+                <span className="px-1 py-0.2 rounded bg-red-600 text-white font-black text-[8px] sm:text-[9px] uppercase tracking-wider">
+                  BOWL
                 </span>
-                <span className="font-bold text-white truncate max-w-[110px] sm:max-w-none">{bowler.name}</span>
-                <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-red-300 font-medium border border-slate-700">
-                  {bowlingArm === 'left' ? 'LA' : 'RA'} {bowlerType?.toUpperCase()}
+                <span className="font-bold text-white truncate max-w-[75px] sm:max-w-none">{bowler.name}</span>
+                <span className="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-slate-800 text-red-300 font-medium border border-slate-700">
+                  {bowlingArm === 'left' ? 'LA' : 'RA'}
                 </span>
                 <span className="font-black text-red-400 ml-0.5">{bowler.wickets}-{bowler.runsConceded}</span>
-                <span className="text-slate-400 text-[10px]">({bowler.overs})</span>
+                <span className="text-slate-400 text-[9px] sm:text-[10px]">({bowler.overs})</span>
               </div>
             </div>
           </div>
@@ -2001,7 +2031,7 @@ export default function CricketGame({
             onClick={() => setShowMatchIntro(false)}
             className="absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer animate-fade-in"
           >
-            <div className="bg-[#0b1220] border-2 border-amber-400/60 rounded-3xl p-5 max-w-md w-full shadow-2xl flex flex-col gap-3.5 text-center transform transition-transform animate-scale-up">
+            <div className="bg-[#0b1220] border-2 border-amber-400/60 rounded-3xl p-4 sm:p-5 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col gap-2.5 sm:gap-3.5 text-center transform transition-transform animate-scale-up">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                 <span className="text-xs font-black tracking-widest text-amber-400 uppercase">
                   🏏 TV BROADCAST • MATCH INTRO
@@ -2123,38 +2153,40 @@ export default function CricketGame({
         )}
 
         {/* ================================================================== */}
-        {/* 5. BOTTOM-LEFT CONTROLS & RADAR MINI-MAP (Image 2)                 */}
+        {/* 5. BOTTOM-LEFT CONTROLS & RADAR MINI-MAP (Mobile Responsive)       */}
         {/* ================================================================== */}
-        <div className="absolute bottom-4 left-4 z-30 flex flex-col items-start gap-2.5 pointer-events-auto">
-          {/* Circular Pause Button */}
-          <button
-            onClick={() => setIsPaused(true)}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0c1424] border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-95 transition-all cursor-pointer"
-            title="Pause Match"
-          >
-            <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white" />
-          </button>
+        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-30 flex flex-col items-start gap-2 pointer-events-auto">
+          <div className="flex items-center gap-1.5">
+            {/* Circular Pause Button */}
+            <button
+              onClick={() => setIsPaused(true)}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-90 transition-all cursor-pointer backdrop-blur-sm"
+              title="Pause Match"
+            >
+              <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+            </button>
 
-          {/* Circular Sound Button */}
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0c1424] border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-95 transition-all cursor-pointer"
-            title={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
-          </button>
+            {/* Circular Sound Button */}
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-90 transition-all cursor-pointer backdrop-blur-sm"
+              title={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
+            </button>
+          </div>
 
-          {/* Radar Mini-Map (Image 2, 3, 4) */}
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#0c1424] border border-slate-700/90 p-1.5 shadow-2xl relative flex items-center justify-center overflow-hidden">
+          {/* Radar Mini-Map (Scaled responsively for mobile) */}
+          <div className="w-20 h-20 sm:w-26 sm:h-26 rounded-2xl bg-[#0c1424]/90 border border-slate-700/90 p-1 shadow-2xl relative flex items-center justify-center overflow-hidden backdrop-blur-sm">
             <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
-              {/* Inner 30-Yard Circle (Calibrated to 50% ground diameter) */}
+              {/* Inner 30-Yard Circle */}
               <div className="w-[50%] h-[50%] rounded-full border border-dashed border-white/60 pointer-events-none" />
               {/* Center Pitch Turf */}
-              <div className="w-2 h-5 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
+              <div className="w-1.5 h-4 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
 
-              {/* 9 Fielders on Radar (Red Dots) */}
+              {/* Fielders on Radar (Red Dots) */}
               {fieldersRef.current?.fielders.map((f, idx) => {
-                const radarRadius = 38;
+                const radarRadius = 32;
                 const engine = engineRef.current;
                 const rx = engine ? ((f.x - engine.cx) / engine.boundaryRadius) * radarRadius : 0;
                 const ry = engine ? ((f.y - engine.cy) / engine.boundaryRadius) * radarRadius : 0;
@@ -2172,38 +2204,38 @@ export default function CricketGame({
                 className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-sm pointer-events-none"
                 style={{
                   transform: `translate(${
-                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 38 : 0
+                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32 : 0
                   }px, ${
-                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 38 : 0
+                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32 : 0
                   }px)`
                 }}
               />
 
-              {/* Cricket Ball on Radar (Yellow Pulsing Dot) */}
+              {/* Cricket Ball on Radar */}
               {engineRef.current?.ball.inPlay && (
                 <div
                   className="w-1.5 h-1.5 rounded-full bg-[#facc15] absolute shadow-md shadow-yellow-400 pointer-events-none animate-ping"
                   style={{
                     transform: `translate(${
-                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 38
+                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32
                     }px, ${
-                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 38
+                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32
                     }px)`
                   }}
                 />
               )}
 
-              {/* Camera Viewport Wireframe Rectangle (Image 2, 3, 4) */}
+              {/* Camera Viewport Wireframe */}
               {engineRef.current && (
                 <div
                   className="absolute border border-yellow-400/80 bg-yellow-400/10 pointer-events-none rounded-[1px]"
                   style={{
-                    width: `${Math.min(48, Math.max(18, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 64))}px`,
-                    height: `${Math.min(48, Math.max(18, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 64))}px`,
+                    width: `${Math.min(40, Math.max(16, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
+                    height: `${Math.min(40, Math.max(16, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
                     transform: `translate(${
-                      (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 38
+                      (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 32
                     }px, ${
-                      (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 38
+                      (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 32
                     }px)`
                   }}
                 />
@@ -2213,68 +2245,142 @@ export default function CricketGame({
         </div>
 
         {/* ================================================================== */}
-        {/* 6. BOTTOM-RIGHT RUNNING WIDGET (Shown ONLY when Batsmen Run)       */}
+        {/* 6. BOTTOM-RIGHT CONTROLS: MOBILE BATTING BUTTON & RUNNING WIDGET    */}
         {/* ================================================================== */}
-        {runningState?.active && (
-          <div className="absolute bottom-4 right-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-right-4 duration-200">
-            <div className="w-20 sm:w-24 bg-[#0c1424] border-2 border-[#ef4444] rounded-lg p-2 flex flex-col items-center shadow-2xl">
-              <div className="text-[10px] font-black uppercase text-white tracking-widest text-center leading-tight">
-                <div className="text-base font-black text-white">{runningState?.runsCompleted || 0}</div>
-                <div className="text-[9px] text-slate-300">RUNS</div>
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 flex flex-col items-end gap-2 pointer-events-auto">
+          {/* A. When Batsmen Are Sprinting Between Wickets: Interactive Running Controls */}
+          {runningState?.active ? (
+            <div className="bg-[#0c1424]/95 border-2 border-emerald-500/80 rounded-2xl p-2.5 flex flex-col items-center shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl font-black text-amber-300 font-display">{runningState.runsCompleted}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white">RUNS SCORED</span>
               </div>
 
-              {/* Mini top-down vertical pitch strip */}
-              <div className="w-14 h-28 bg-[#a8c99c] rounded relative flex flex-col justify-between items-center py-2 px-1 border border-slate-700/60 overflow-hidden my-1">
-                {/* Top Stumps */}
-                <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
-                {/* Bottom Stumps */}
-                <div className="text-[8px] font-mono font-bold text-amber-500 tracking-tighter">TTT</div>
-
-                {/* Striker Token */}
+              {/* Mini pitch track */}
+              <div className="w-16 h-20 bg-[#183617] rounded-lg relative flex flex-col justify-between items-center py-1.5 px-1 border border-emerald-600/40 overflow-hidden my-1">
+                <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
+                <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
+                {/* Striker runner dot */}
                 <div
-                  className={`absolute w-3.5 h-3.5 rounded-full bg-blue-500 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
-                    runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
-                  }`}
+                  className="absolute w-3 h-3 rounded-full bg-amber-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
                   style={{
-                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '76%',
+                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '72%',
                     left: '20%'
                   }}
-                  title="Striker"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                </div>
-
-                {/* Non-Striker Token */}
+                />
+                {/* Non-striker runner dot */}
                 <div
-                  className={`absolute w-3.5 h-3.5 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300 ${
-                    runningState?.active && runningState.isCallingRun ? 'animate-pulse ring-2 ring-amber-400' : ''
-                  }`}
+                  className="absolute w-3 h-3 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
                   style={{
-                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '76%' : '12%',
+                    top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '72%' : '12%',
                     right: '20%'
                   }}
-                  title="Non-Striker"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                </div>
+                />
               </div>
 
-              {/* Action button: SPC:RUN */}
+              {/* Two mobile touch buttons: RUN and HOLD */}
+              <div className="flex flex-col gap-1.5 w-full mt-1">
+                <button
+                  onClick={() => {
+                    const called = engineRef.current?.commandRun();
+                    if (called) {
+                      sound.playRunning();
+                      if (hapticsEnabled) haptics.light();
+                    }
+                  }}
+                  className="w-full py-2 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-95 text-white font-black text-xs uppercase text-center rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-1.5 border border-emerald-400/50"
+                >
+                  <span className="text-sm">🏃</span>
+                  <span>RUN (RUN {runningState.runsCompleted + 1})</span>
+                </button>
+                <button
+                  onClick={() => {
+                    engineRef.current?.commandHold();
+                    sound.playClick();
+                  }}
+                  className="w-full py-1 px-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-[10px] uppercase text-center rounded-lg transition-colors cursor-pointer border border-slate-700 flex items-center justify-center gap-1"
+                >
+                  <span>✋</span>
+                  <span>HOLD / TURN BACK</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* B. When at Crease Facing Bowler: Prominent Mobile Batting Button & Quick Footwork */
+            <div className="flex flex-col items-end gap-1.5 pointer-events-auto">
+              {/* Quick Crease Footwork Taps (Mobile ergonomic layout) */}
+              <div className="flex items-center gap-1 bg-[#0b121e]/90 p-1 rounded-xl border border-slate-700/80 shadow-xl backdrop-blur-sm">
+                <button
+                  onClick={() => {
+                    engineRef.current?.shuffleLeft();
+                    setBatsmanCreasePosition('left');
+                    sound.playClick();
+                    showFootworkAlert('SHUFFLE OFF ⬅️');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
+                  title="Shuffle Offside"
+                >
+                  <span>⬅️</span>
+                  <span className="hidden sm:inline">OFF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    engineRef.current?.resetCrease();
+                    setBatsmanCreasePosition('center');
+                    sound.playClick();
+                    showFootworkAlert('CREASE STANCE ⬇️');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
+                  title="Reset Stance"
+                >
+                  <span>STANCE</span>
+                </button>
+                <button
+                  onClick={() => {
+                    engineRef.current?.shuffleRight();
+                    setBatsmanCreasePosition('right');
+                    sound.playClick();
+                    showFootworkAlert('SHUFFLE LEG ➡️');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-90 text-[10px] font-bold text-slate-200 border border-slate-700 flex items-center gap-0.5 cursor-pointer"
+                  title="Shuffle Legside"
+                >
+                  <span className="hidden sm:inline">LEG</span>
+                  <span>➡️</span>
+                </button>
+                <button
+                  onClick={() => {
+                    engineRef.current?.stepOut();
+                    setBatsmanCreasePosition('step_out');
+                    sound.playClick();
+                    showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                  }}
+                  className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:scale-90 text-[10px] font-black text-amber-300 border border-amber-500/40 flex items-center gap-0.5 cursor-pointer"
+                  title="Step Out (Power Loft)"
+                >
+                  <span>⬆️</span>
+                  <span>CHARGE</span>
+                </button>
+              </div>
+
+              {/* Main SWING Action Button (Huge, glowing touch target for mobile thumb) */}
               <button
-                onClick={() => {
-                  const called = engineRef.current?.commandRun();
-                  if (called) {
-                    sound.playRunning();
-                    if (hapticsEnabled) haptics.light();
-                  }
-                }}
-                className="w-full py-1 bg-[#1e293b] hover:bg-emerald-600 active:scale-95 text-[#facc15] hover:text-white font-mono font-black text-[10px] uppercase text-center rounded transition-colors cursor-pointer border border-slate-700"
+                onClick={() => handleBatSwing(null)}
+                className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider text-slate-950 shadow-2xl flex items-center gap-2 cursor-pointer transition-all active:scale-90 ${
+                  engineRef.current?.ball.state === 'BOWLED'
+                    ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-2 border-white ring-4 ring-amber-400/50 animate-pulse scale-105'
+                    : 'bg-gradient-to-r from-amber-500 to-yellow-500 border border-amber-300 hover:from-amber-400 hover:to-yellow-400'
+                }`}
               >
-                SPC:RUN
+                <span className="text-base sm:text-xl">🏏</span>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="font-black">SWING BAT</span>
+                  <span className="text-[8px] sm:text-[9px] text-slate-800 font-bold opacity-80">TAP TO HIT</span>
+                </div>
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ================================================================== */}
         {/* 7. IN-GAME PAUSE MODAL                                             */}
