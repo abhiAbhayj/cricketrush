@@ -214,7 +214,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#f9cd05',
     stripeColor: '#090e17',
     price: 500,
-    desc: 'The roaring canary yellow & royal blue stripes of Ruturaj, Thala Dhoni & Jadeja.'
+    desc: 'The roaring canary yellow & royal blue stripes of Ruturaj, Thala Dhoni & Dube.'
   },
   {
     id: 'jersey_dc',
@@ -227,7 +227,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#002855',
     stripeColor: '#d71920',
     price: 450,
-    desc: 'Aggressive electric blue & fiery crimson worn by KL Rahul, Starc, Axar & Kuldeep.'
+    desc: 'Aggressive electric blue & fiery crimson worn by Axar, KL Rahul, Starc & Kuldeep.'
   },
   {
     id: 'jersey_gt',
@@ -240,7 +240,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#0d111a',
     stripeColor: '#e5a823',
     price: 450,
-    desc: 'Deep titanium navy blue with geometric gold prism accents of Shubman Gill, Rashid & Siraj.'
+    desc: 'Deep titanium navy blue with geometric gold prism accents of Shubman Gill, Buttler & Siraj.'
   },
   {
     id: 'jersey_kkr',
@@ -253,7 +253,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#231538',
     stripeColor: '#f7d54e',
     price: 500,
-    desc: 'Imperial royal purple with glittering gold trim of champions Rinku, Narine & Green.'
+    desc: 'Imperial royal purple with glittering gold trim of Rahane, Rinku, Narine & Green.'
   },
   {
     id: 'jersey_lsg',
@@ -279,7 +279,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#003366',
     stripeColor: '#d1ab3e',
     price: 500,
-    desc: 'Paltan electric blue with metallic gold stripes of Rohit, Surya, Hardik & Bumrah.'
+    desc: 'Paltan electric blue with metallic gold stripes of Hardik, Rohit, Surya & Bumrah.'
   },
   {
     id: 'jersey_pbks',
@@ -292,7 +292,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#8a0f14',
     stripeColor: '#d4af37',
     price: 450,
-    desc: 'Passionate crimson red with regal gold stripes worn by Shreyas Iyer, Warner & Arshdeep.'
+    desc: 'Passionate crimson red with regal gold stripes worn by Shreyas Iyer, Stoinis & Arshdeep.'
   },
   {
     id: 'jersey_rr',
@@ -305,7 +305,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#001d48',
     stripeColor: '#eb1a73',
     price: 450,
-    desc: 'Jaipur royal pink with navy blue shoulders worn by Jaiswal, Samson & Archer.'
+    desc: 'Jaipur royal pink with navy blue shoulders worn by Samson, Jaiswal, Jadeja & Archer.'
   },
   {
     id: 'jersey_rcb',
@@ -318,7 +318,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#001a4d',
     stripeColor: '#d71920',
     price: 550,
-    desc: 'Fiery crimson red & midnight navy royal armor worn by King Kohli, Salt & Hazlewood.'
+    desc: 'Fiery crimson red & midnight navy royal armor worn by Patidar, King Kohli & Hazlewood.'
   },
   {
     id: 'jersey_srh',
@@ -331,7 +331,7 @@ export const ALL_JERSEYS = [
     pantsColor: '#09090b',
     stripeColor: '#f26522',
     price: 500,
-    desc: 'Blazing volcanic orange & coal black worn by powerplay destroyers Head, Abhishek & Cummins.'
+    desc: 'Blazing volcanic orange & coal black worn by Cummins, Head, Abhishek & Klaasen.'
   },
 
   // ==========================================
@@ -492,7 +492,7 @@ export const LEFT_HANDED_BATSMEN = new Set([
 
   // Pakistan
   'fakhar zaman', 'f zaman', 'fakhar',
-  'imam-ul-haq', 'imam ul haq', 'imam',
+  'imam-ul-haq', 'imam ul haq', 'imamulhaq', 'imam',
   'saim ayub', 's ayub', 'ayub',
   'imad wasim', 'i wasim',
   'shaheen afridi', 's afridi', 'shaheen',
@@ -566,9 +566,40 @@ export const LEFT_HANDED_BATSMEN = new Set([
   // Netherlands
   'vikramjit singh', 'v singh', 'vikramjit',
 
-  // IPL Kolkata & Others
+  // IPL Stars
   'sunil narine', 's narine', 'narine',
-  'venkatesh iyer', 'nitish rana', 'sai sudharsan'
+  'mukesh choudhary', 'm choudhary',
+  'gurjapneet singh', 'gurjapneet',
+  'abishek porel', 'porel',
+  'nitish rana', 'n rana',
+  't. natarajan', 't natarajan', 'natarajan',
+  'ajay mandal', 'a mandal', 'mandal',
+  'sai sudharsan', 'sudharsan',
+  'anuj rawat', 'a rawat', 'rawat',
+  'nishant sindhu', 'sindhu',
+  'sai kishore', 'kishore',
+  'manav suthar', 'suthar',
+  'gurnoor singh brar', 'gurnoor',
+  'anukul roy', 'anukul',
+  'shahbaz ahamad', 'shahbaz ahmed', 'shahbaz',
+  'mohsin khan', 'mohsin',
+  'arjun tendulkar', 'tendulkar',
+  'naman tiwari', 'tiwari',
+  'robin minz', 'minz',
+  'sherfane rutherford', 'rutherford',
+  'priyansh arya', 'priyansh',
+  'harpreet brar', 'brar',
+  'cooper connolly', 'connolly',
+  'ben dwarshuis', 'dwarshuis',
+  'shubham dubey', 'vaibhav suryavanshi', 'suryavanshi',
+  'lhuan-dre pretorius', 'pretorius',
+  'kwena maphaka', 'maphaka',
+  'kumar kartikeya', 'kartikeya',
+  'devdutt padikkal', 'padikkal',
+  'yash dayal', 'dayal',
+  'ishan kishan', 'ishan',
+  'harsh dubey',
+  'venkatesh iyer'
 ]);
 
 const DISTINCTIVE_LHB_TOKENS = new Set([
@@ -583,7 +614,12 @@ const DISTINCTIVE_LHB_TOKENS = new Set([
   'atal', 'alikhil', 'calitz',
   'marumani', 'burl', 'masakadza', 'ngarava',
   'munsey', 'hairs', 'malla', 'gulshan', 'rajbanshi', 'vikramjit',
-  'tewatia', 'narine', 'abhishek', 'krunal', 'burger'
+  'tewatia', 'narine', 'abhishek', 'krunal', 'burger',
+  'gurjapneet', 'porel', 'sindhu', 'suthar', 'gurnoor',
+  'shahbaz', 'tendulkar', 'minz', 'rickelton', 'rutherford',
+  'priyansh', 'brar', 'connolly', 'dwarshuis',
+  'suryavanshi', 'pretorius', 'maphaka', 'kartikeya',
+  'padikkal', 'bethell', 'dayal', 'kishore', 'mandal', 'anukul'
 ]);
 
 export function isPlayerLeftHanded(name) {
@@ -1184,7 +1220,7 @@ export const TEAMS = {
   },
 
   // ====================================================
-  // PART 2: INDIAN PREMIER LEAGUE (IPL) FRANCHISES
+  // PART 2: INDIAN PREMIER LEAGUE (IPL) 20-PLAYER ROSTERS
   // ====================================================
 
   // 1. CHENNAI SUPER KINGS (CSK)
@@ -1198,16 +1234,36 @@ export const TEAMS = {
     batsmen: [
       'Ruturaj Gaikwad',
       'MS Dhoni',
+      'Dewald Brevis',
       'Shivam Dube',
-      'Ravindra Jadeja',
-      'Matheesha Pathirana',
-      'Noor Ahmad'
+      'Ayush Mhatre',
+      'Urvil Patel',
+      'Jamie Overton',
+      'Anshul Kamboj',
+      'Ramakrishna Ghosh',
+      'Shreyas Gopal',
+      'Khaleel Ahmed',
+      'Noor Ahmad',
+      'Mukesh Choudhary',
+      'Nathan Ellis',
+      'Gurjapneet Singh',
+      'Akeal Hosein',
+      'Matt Henry',
+      'Rahul Chahar',
+      'Prashant Veer',
+      'C. Andre Siddarth'
     ],
     bowlers: [
-      { name: 'Matheesha Pathirana', shortName: 'M. Pathirana', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#b57948', faceStyle: 'headband', role: 'Fast Bowler' },
+      { name: 'Khaleel Ahmed', shortName: 'K. Ahmed', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'Noor Ahmad', shortName: 'Noor Ahmad', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
-      { name: 'Ravindra Jadeja', shortName: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'beard', role: 'All-rounder' },
-      { name: 'Shivam Dube', shortName: 'S. Dube', type: 'mediumfast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#d49b70', faceStyle: 'classic', role: 'All-rounder' }
+      { name: 'Nathan Ellis', shortName: 'N. Ellis', type: 'fastmedium', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#e0a980', faceStyle: 'beard', role: 'Fast Bowler' },
+      { name: 'Matt Henry', shortName: 'M. Henry', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Rahul Chahar', shortName: 'R. Chahar', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Akeal Hosein', shortName: 'A. Hosein', type: 'leftarm_orthodox', arm: 'left', angle: 'around', action: 'finger_spin', skinTone: '#5a3d28', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Shivam Dube', shortName: 'S. Dube', type: 'mediumfast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#d49b70', faceStyle: 'classic', role: 'Medium-fast' },
+      { name: 'Jamie Overton', shortName: 'J. Overton', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Mukesh Choudhary', shortName: 'M. Choudhary', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Anshul Kamboj', shortName: 'A. Kamboj', type: 'mediumfast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' }
     ]
   },
 
@@ -1220,17 +1276,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_dc'),
     batsmen: [
-      'KL Rahul',
       'Axar Patel',
+      'KL Rahul',
+      'Karun Nair',
+      'David Miller',
+      'Ben Duckett',
+      'Pathum Nissanka',
+      'Prithvi Shaw',
+      'Abishek Porel',
+      'Tristan Stubbs',
+      'Nitish Rana',
+      'Ashutosh Sharma',
+      'Sameer Rizvi',
+      'Vipraj Nigam',
       'Mitchell Starc',
+      'T. Natarajan',
+      'Mukesh Kumar',
       'Kuldeep Yadav',
-      'T. Natarajan'
+      'Lungi Ngidi',
+      'Dushmantha Chameera',
+      'Ajay Mandal'
     ],
     bowlers: [
       { name: 'Mitchell Starc', shortName: 'M. Starc', type: 'fast', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'T. Natarajan', shortName: 'T. Natarajan', type: 'fastmedium', arm: 'left', angle: 'over', action: 'slingshot', skinTone: '#b57948', faceStyle: 'beard', role: 'Fast Bowler' },
       { name: 'Kuldeep Yadav', shortName: 'K. Yadav', type: 'leftarm_chinaman', arm: 'left', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
-      { name: 'Axar Patel', shortName: 'A. Patel', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' }
+      { name: 'Axar Patel', shortName: 'A. Patel', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Mukesh Kumar', shortName: 'M. Kumar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Lungi Ngidi', shortName: 'L. Ngidi', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Dushmantha Chameera', shortName: 'D. Chameera', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#b57948', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Vipraj Nigam', shortName: 'V. Nigam', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Nitish Rana', shortName: 'N. Rana', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'beard', role: 'All-rounder' },
+      { name: 'Ajay Mandal', shortName: 'A. Mandal', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
     ]
   },
 
@@ -1244,16 +1321,37 @@ export const TEAMS = {
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_gt'),
     batsmen: [
       'Shubman Gill',
-      'Rashid Khan',
+      'Sai Sudharsan',
+      'Jos Buttler',
+      'Shahrukh Khan',
       'Rahul Tewatia',
+      'Anuj Rawat',
+      'Kumar Kushagra',
+      'Glenn Phillips',
+      'Washington Sundar',
+      'Nishant Sindhu',
+      'Rashid Khan',
+      'Mohammed Siraj',
       'Kagiso Rabada',
-      'Mohammed Siraj'
+      'Prasidh Krishna',
+      'Ishant Sharma',
+      'Sai Kishore',
+      'Manav Suthar',
+      'Jayant Yadav',
+      'Gurnoor Singh Brar',
+      'Ashok Sharma'
     ],
     bowlers: [
       { name: 'Mohammed Siraj', shortName: 'M. Siraj', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'Kagiso Rabada', shortName: 'K. Rabada', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'Rashid Khan', shortName: 'Rashid Khan', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'beard', role: 'Spinner' },
-      { name: 'Rahul Tewatia', shortName: 'R. Tewatia', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' }
+      { name: 'Prasidh Krishna', shortName: 'P. Krishna', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#b57948', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Ishant Sharma', shortName: 'I. Sharma', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'beard', role: 'Fast Bowler' },
+      { name: 'Sai Kishore', shortName: 'R. Sai Kishore', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Washington Sundar', shortName: 'W. Sundar', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Rahul Tewatia', shortName: 'R. Tewatia', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Manav Suthar', shortName: 'M. Suthar', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Jayant Yadav', shortName: 'J. Yadav', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
     ]
   },
 
@@ -1266,17 +1364,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_kkr'),
     batsmen: [
+      'Ajinkya Rahane',
       'Rinku Singh',
-      'Sunil Narine',
+      'Angkrish Raghuvanshi',
+      'Manish Pandey',
+      'Rovman Powell',
+      'Rahul Tripathi',
       'Cameron Green',
-      'Varun Chakravarthy',
-      'Harshit Rana'
+      'Finn Allen',
+      'Tim Seifert',
+      'Sunil Narine',
+      'Ramandeep Singh',
+      'Anukul Roy',
+      'Varun Chakaravarthy',
+      'Harshit Rana',
+      'Vaibhav Arora',
+      'Matheesha Pathirana',
+      'Umran Malik',
+      'Kartik Tyagi',
+      'Akash Deep',
+      'Prashant Solanki'
     ],
     bowlers: [
+      { name: 'Matheesha Pathirana', shortName: 'M. Pathirana', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#b57948', faceStyle: 'headband', role: 'Fast Bowler' },
       { name: 'Harshit Rana', shortName: 'H. Rana', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Cameron Green', shortName: 'C. Green', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Umran Malik', shortName: 'U. Malik', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'Sunil Narine', shortName: 'S. Narine', type: 'offspin', arm: 'right', angle: 'around', action: 'unorthodox', skinTone: '#5a3d28', faceStyle: 'spiky', role: 'All-rounder' },
-      { name: 'Varun Chakravarthy', shortName: 'V. Chakravarthy', type: 'offspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'beard', role: 'Spinner' }
+      { name: 'Varun Chakaravarthy', shortName: 'V. Chakaravarthy', type: 'offspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'beard', role: 'Spinner' },
+      { name: 'Vaibhav Arora', shortName: 'V. Arora', type: 'fastmedium', arm: 'right', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Akash Deep', shortName: 'A. Deep', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Cameron Green', shortName: 'C. Green', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Kartik Tyagi', shortName: 'K. Tyagi', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Prashant Solanki', shortName: 'P. Solanki', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
     ]
   },
 
@@ -1291,14 +1410,36 @@ export const TEAMS = {
     batsmen: [
       'Rishabh Pant',
       'Nicholas Pooran',
+      'Aiden Markram',
+      'Ayush Badoni',
+      'Abdul Samad',
+      'Matthew Breetzke',
+      'Himmat Singh',
       'Mitchell Marsh',
+      'Shahbaz Ahamad',
+      'Arshin Kulkarni',
       'Mohammad Shami',
-      'Ravi Bishnoi'
+      'Anrich Nortje',
+      'Avesh Khan',
+      'Mayank Yadav',
+      'Mohsin Khan',
+      'M. Siddharth',
+      'Digvesh Singh',
+      'Akash Singh',
+      'Arjun Tendulkar',
+      'Naman Tiwari'
     ],
     bowlers: [
-      { name: 'Mohammad Shami', shortName: 'M. Shami', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'beard', role: 'Fast Bowler' },
+      { name: 'Mohammad Shami', shortName: 'M. Shami', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'beard', role: 'Fast Bowler' },
+      { name: 'Anrich Nortje', shortName: 'A. Nortje', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Mayank Yadav', shortName: 'M. Yadav', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Avesh Khan', shortName: 'A. Khan', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Mohsin Khan', shortName: 'M. Khan', type: 'fastmedium', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'M. Siddharth', shortName: 'M. Siddharth', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Digvesh Singh', shortName: 'D. Singh', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
       { name: 'Mitchell Marsh', shortName: 'M. Marsh', type: 'medium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', role: 'All-rounder' },
-      { name: 'Ravi Bishnoi', shortName: 'R. Bishnoi', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
+      { name: 'Shahbaz Ahamad', shortName: 'S. Ahamad', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Arjun Tendulkar', shortName: 'A. Tendulkar', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'classic', role: 'All-rounder' }
     ]
   },
 
@@ -1311,16 +1452,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_mi'),
     batsmen: [
+      'Hardik Pandya',
       'Rohit Sharma',
       'Suryakumar Yadav',
-      'Hardik Pandya',
+      'Tilak Varma',
+      'Naman Dhir',
+      'Robin Minz',
+      'Ryan Rickelton',
+      'Will Jacks',
+      'Mitchell Santner',
+      'Shardul Thakur',
+      'Sherfane Rutherford',
       'Jasprit Bumrah',
-      'Trent Boult'
+      'Trent Boult',
+      'Deepak Chahar',
+      'Mayank Markande',
+      'Allah Ghazanfar',
+      'Mujeeb-ur-Rahman',
+      'Lizaad Williams',
+      'Ashwani Kumar',
+      'Vignesh Puthur'
     ],
     bowlers: [
       { name: 'Jasprit Bumrah', shortName: 'J. Bumrah', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard', role: 'Fast Bowler' },
       { name: 'Trent Boult', shortName: 'T. Boult', type: 'fast', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Hardik Pandya', shortName: 'H. Pandya', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#b57948', faceStyle: 'headband', role: 'All-rounder' }
+      { name: 'Deepak Chahar', shortName: 'D. Chahar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Hardik Pandya', shortName: 'H. Pandya', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#b57948', faceStyle: 'headband', role: 'All-rounder' },
+      { name: 'Shardul Thakur', shortName: 'S. Thakur', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Mitchell Santner', shortName: 'M. Santner', type: 'leftarm_orthodox', arm: 'left', angle: 'around', action: 'finger_spin', skinTone: '#e0a980', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Mayank Markande', shortName: 'M. Markande', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Allah Ghazanfar', shortName: 'A. Ghazanfar', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Mujeeb-ur-Rahman', shortName: 'Mujeeb', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Lizaad Williams', shortName: 'L. Williams', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', role: 'Fast Bowler' }
     ]
   },
 
@@ -1334,15 +1497,37 @@ export const TEAMS = {
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_pbks'),
     batsmen: [
       'Shreyas Iyer',
-      'David Warner',
+      'Prabhsimran Singh',
+      'Shashank Singh',
+      'Priyansh Arya',
+      'Musheer Khan',
+      'Suryansh Shedge',
       'Marcus Stoinis',
+      'Marco Jansen',
+      'Azmatullah Omarzai',
+      'Harpreet Brar',
       'Arshdeep Singh',
-      'Yuzvendra Chahal'
+      'Yuzvendra Chahal',
+      'Yash Thakur',
+      'Vyshak Vijaykumar',
+      'Lockie Ferguson',
+      'Xavier Bartlett',
+      'Cooper Connolly',
+      'Ben Dwarshuis',
+      'Mitch Owen',
+      'Pravin Dubey'
     ],
     bowlers: [
       { name: 'Arshdeep Singh', shortName: 'Arshdeep Singh', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'turban', role: 'Fast Bowler' },
+      { name: 'Lockie Ferguson', shortName: 'L. Ferguson', type: 'fast', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#e0a980', faceStyle: 'headband', role: 'Fast Bowler' },
+      { name: 'Marco Jansen', shortName: 'M. Jansen', type: 'fastmedium', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Yuzvendra Chahal', shortName: 'Y. Chahal', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
       { name: 'Marcus Stoinis', shortName: 'M. Stoinis', type: 'medium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', role: 'All-rounder' },
-      { name: 'Yuzvendra Chahal', shortName: 'Y. Chahal', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
+      { name: 'Azmatullah Omarzai', shortName: 'A. Omarzai', type: 'mediumfast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Harpreet Brar', shortName: 'H. Brar', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'turban', role: 'All-rounder' },
+      { name: 'Xavier Bartlett', shortName: 'X. Bartlett', type: 'fastmedium', arm: 'right', angle: 'over', action: 'fast_swing', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Yash Thakur', shortName: 'Y. Thakur', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Ben Dwarshuis', shortName: 'B. Dwarshuis', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' }
     ]
   },
 
@@ -1355,18 +1540,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_rr'),
     batsmen: [
-      'Yashasvi Jaiswal',
-      'Riyan Parag',
       'Sanju Samson',
+      'Yashasvi Jaiswal',
+      'Dhruv Jurel',
+      'Riyan Parag',
+      'Shimron Hetmyer',
+      'Shubham Dubey',
+      'Vaibhav Suryavanshi',
+      'Lhuan-dre Pretorius',
+      'Ravindra Jadeja',
+      'Sam Curran',
+      'Donovan Ferreira',
+      'Wanindu Hasaranga',
       'Jofra Archer',
-      'Trent Boult',
-      'Nandre Burger'
+      'Tushar Deshpande',
+      'Fazalhaq Farooqi',
+      'Nandre Burger',
+      'Kwena Maphaka',
+      'Akash Madhwal',
+      'Kumar Kartikeya',
+      'Yudhvir Singh Charak'
     ],
     bowlers: [
       { name: 'Jofra Archer', shortName: 'J. Archer', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'headband', role: 'Fast Bowler' },
-      { name: 'Trent Boult', shortName: 'T. Boult', type: 'fast', arm: 'left', angle: 'around', action: 'fast_swing', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Nandre Burger', shortName: 'N. Burger', type: 'fast', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Riyan Parag', shortName: 'R. Parag', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#d49b70', faceStyle: 'classic', role: 'Leg-break spin' }
+      { name: 'Nandre Burger', shortName: 'N. Burger', type: 'fastmedium', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Kwena Maphaka', shortName: 'K. Maphaka', type: 'fast', arm: 'left', angle: 'over', action: 'slingshot', skinTone: '#5a3d28', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Fazalhaq Farooqi', shortName: 'F. Farooqi', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#d49b70', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Ravindra Jadeja', shortName: 'R. Jadeja', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'beard', role: 'All-rounder' },
+      { name: 'Wanindu Hasaranga', shortName: 'W. Hasaranga', type: 'legspin', arm: 'right', angle: 'over', action: 'wrist_spin', skinTone: '#b57948', faceStyle: 'beard', role: 'Spinner' },
+      { name: 'Sam Curran', shortName: 'S. Curran', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#f5d0b0', faceStyle: 'headband', role: 'All-rounder' },
+      { name: 'Tushar Deshpande', shortName: 'T. Deshpande', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Akash Madhwal', shortName: 'A. Madhwal', type: 'fastmedium', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Kumar Kartikeya', shortName: 'K. Kartikeya', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
     ]
   },
 
@@ -1379,17 +1584,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_rcb'),
     batsmen: [
-      'Virat Kohli',
       'Rajat Patidar',
+      'Virat Kohli',
       'Phil Salt',
+      'Devdutt Padikkal',
+      'Jitesh Sharma',
+      'Tim David',
+      'Romario Shepherd',
       'Krunal Pandya',
+      'Jacob Bethell',
+      'Swapnil Singh',
+      'Bhuvneshwar Kumar',
       'Josh Hazlewood',
-      'Bhuvneshwar Kumar'
+      'Yash Dayal',
+      'Nuwan Thushara',
+      'Suyash Sharma',
+      'Rasikh Dar',
+      'Jacob Duffy',
+      'Abhinandan Singh',
+      'Jordan Cox',
+      'Vicky Ostwal'
     ],
     bowlers: [
       { name: 'Josh Hazlewood', shortName: 'J. Hazlewood', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'classic', role: 'Fast Bowler' },
       { name: 'Bhuvneshwar Kumar', shortName: 'B. Kumar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Krunal Pandya', shortName: 'K. Pandya', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'beard', role: 'All-rounder' }
+      { name: 'Yash Dayal', shortName: 'Y. Dayal', type: 'fastmedium', arm: 'left', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Nuwan Thushara', shortName: 'N. Thushara', type: 'fast', arm: 'right', angle: 'around', action: 'slingshot', skinTone: '#b57948', faceStyle: 'spiky', role: 'Fast Bowler' },
+      { name: 'Krunal Pandya', shortName: 'K. Pandya', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'beard', role: 'All-rounder' },
+      { name: 'Romario Shepherd', shortName: 'R. Shepherd', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#5a3d28', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Suyash Sharma', shortName: 'S. Sharma', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' },
+      { name: 'Rasikh Dar', shortName: 'R. Dar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Jacob Duffy', shortName: 'J. Duffy', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Swapnil Singh', shortName: 'S. Singh', type: 'leftarm_orthodox', arm: 'left', angle: 'over', action: 'finger_spin', skinTone: '#c68656', faceStyle: 'beard', role: 'All-rounder' }
     ]
   },
 
@@ -1402,19 +1628,38 @@ export const TEAMS = {
     type: 'ipl',
     jersey: ALL_JERSEYS.find(j => j.id === 'jersey_srh'),
     batsmen: [
+      'Pat Cummins',
       'Travis Head',
       'Abhishek Sharma',
       'Heinrich Klaasen',
-      'Pat Cummins',
-      'Bhuvneshwar Kumar',
-      'Harshal Patel'
+      'Ishan Kishan',
+      'Nitish Kumar Reddy',
+      'Aniket Verma',
+      'Smaran Ravichandran',
+      'Kamindu Mendis',
+      'Harshal Patel',
+      'Brydon Carse',
+      'Jaydev Unadkat',
+      'Eshan Malinga',
+      'Zeeshan Ansari',
+      'Harsh Dubey',
+      'Salil Arora',
+      'Abhinav Manohar',
+      'Simarjeet Singh',
+      'Wiaan Mulder',
+      'Adam Zampa'
     ],
     bowlers: [
       { name: 'Pat Cummins', shortName: 'P. Cummins', type: 'fast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#e0a980', faceStyle: 'headband', role: 'Fast Bowler' },
-      { name: 'Bhuvneshwar Kumar', shortName: 'B. Kumar', type: 'fastmedium', arm: 'right', angle: 'over', action: 'fast_swing', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
-      { name: 'Harshal Patel', shortName: 'H. Patel', type: 'fastmedium', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard', role: 'Fast Bowler' },
+      { name: 'Harshal Patel', shortName: 'H. Patel', type: 'fastmedium', arm: 'right', angle: 'over', action: 'slingshot', skinTone: '#c68656', faceStyle: 'beard', role: 'All-rounder' },
+      { name: 'Adam Zampa', shortName: 'A. Zampa', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#f5d0b0', faceStyle: 'headband', role: 'Spinner' },
+      { name: 'Brydon Carse', shortName: 'B. Carse', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#f5d0b0', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Jaydev Unadkat', shortName: 'J. Unadkat', type: 'fastmedium', arm: 'left', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Simarjeet Singh', shortName: 'S. Singh', type: 'fastmedium', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'Fast Bowler' },
+      { name: 'Nitish Kumar Reddy', shortName: 'N. K. Reddy', type: 'mediumfast', arm: 'right', angle: 'over', action: 'high_arm', skinTone: '#c68656', faceStyle: 'classic', role: 'All-rounder' },
       { name: 'Abhishek Sharma', shortName: 'A. Sharma', type: 'leftarm_orthodox', arm: 'left', angle: 'around', action: 'finger_spin', skinTone: '#d49b70', faceStyle: 'classic', role: 'All-rounder' },
-      { name: 'Travis Head', shortName: 'T. Head', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#e0a980', faceStyle: 'classic', role: 'Part-time Off-break' }
+      { name: 'Kamindu Mendis', shortName: 'K. Mendis', type: 'offspin', arm: 'right', angle: 'over', action: 'finger_spin', skinTone: '#b57948', faceStyle: 'classic', role: 'All-rounder' },
+      { name: 'Zeeshan Ansari', shortName: 'Z. Ansari', type: 'legspin', arm: 'right', angle: 'around', action: 'wrist_spin', skinTone: '#c68656', faceStyle: 'classic', role: 'Spinner' }
     ]
   }
 };
