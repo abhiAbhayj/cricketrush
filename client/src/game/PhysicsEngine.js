@@ -395,8 +395,31 @@ export class CricketPhysics {
 
     // Intelligently resolve dynamic variation from bowler archetype if not explicitly passed
     const resolvedVariation = this.resolveBowlerVariation(rawBowlerType);
-    const bType = resolvedVariation.type;
-    this.ball.variationLabel = resolvedVariation.label;
+    const bType = config.variation || config.deliveryType || resolvedVariation.type;
+    const variationLabelMap = {
+      legbreak: 'Leg Break',
+      googly: 'Mystery Googly',
+      topspinner: 'Top Spinner',
+      flipper: 'Skid Flipper',
+      arm_ball: 'Skidding Arm Ball',
+      offbreak: 'Off Break',
+      doosra: 'Mystery Doosra',
+      carrom: 'Carrom Ball',
+      drifter: 'Flight Drifter',
+      leftarm_chinaman: 'Chinaman Turn',
+      leftarm_orthodox: 'Orthodox Turn',
+      inswing: 'Inswing Seam',
+      outswing: 'Outswing Seam',
+      reverse_swing: 'Reverse Swing',
+      offcutter: 'Off Cutter',
+      legcutter: 'Leg Cutter',
+      straight_seam: 'Straight Seam',
+      slow_ball: 'Slower Dipper',
+      yorker: 'Toe Yorker',
+      bouncer: 'Sharp Bouncer',
+      fast: 'Express Fast'
+    };
+    this.ball.variationLabel = config.variationLabel || variationLabelMap[bType] || resolvedVariation.label || bType.replace('_', ' ');
     this.ball.archetype = rawBowlerType;
 
     this.ball.deliveryType = bType;
@@ -480,7 +503,11 @@ export class CricketPhysics {
     }
 
     this.ball.isFullToss = isFullToss;
-    this.ball.bounceSpotY = this.pitchTop + (this.pitchLength * bounceRel);
+    if (config.targetY !== undefined && config.targetY !== null) {
+      this.ball.bounceSpotY = config.targetY;
+    } else {
+      this.ball.bounceSpotY = this.pitchTop + (this.pitchLength * bounceRel);
+    }
 
     // 3. Physical Dynamics, Real-World Cricket Speeds, Aim Line & Movement
     let swingRate = 0;
@@ -709,7 +736,11 @@ export class CricketPhysics {
     this.ball.swingCurve = swingRate * 20;
     this.ball.spinLateralV = spinLateralV;
     this.ball.speedKmh = speedKmh;
-    this.ball.bounceSpotX = this.cx + lineOffset;
+    if (config.targetX !== undefined && config.targetX !== null) {
+      this.ball.bounceSpotX = config.targetX;
+    } else {
+      this.ball.bounceSpotX = this.cx + lineOffset;
+    }
 
     if (config.bowlerAction || config.action) {
       this.bowler.actionType = config.bowlerAction || config.action;

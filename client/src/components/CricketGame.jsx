@@ -26,7 +26,11 @@ import {
   Gauge,
   Sparkles,
   MoveLeft,
-  MoveRight
+  MoveRight,
+  Camera,
+  Shield,
+  Crosshair,
+  Target
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -93,6 +97,21 @@ export default function CricketGame({
   const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
   const [isFreeHit, setIsFreeHit] = useState(false);
   const [showMatchIntro, setShowMatchIntro] = useState(true);
+
+  // Tactical Role, Broadcast Camera & Fielding Controls
+  const [gameRole, setGameRole] = useState(matchConfig?.gameRole || 'BATTING'); // 'BATTING' or 'BOWLING'
+  const [cameraAngle, setCameraAngle] = useState('BOWLER_END'); // 'BOWLER_END', 'BATSMAN_END', 'BROADCAST'
+  const [tacticalField, setTacticalField] = useState(isDeathOvers ? 'defending' : 'normal'); // 'normal', 'attacking', 'defending'
+  const [userLockedField, setUserLockedField] = useState(false);
+
+  // Manual Bowling Arsenal & Pitch Landing Reticle
+  const [selectedBowlerIndex, setSelectedBowlerIndex] = useState(initialBowlerIndex);
+  const [manualLength, setManualLength] = useState('good'); // 'yorker', 'slot', 'good', 'short'
+  const [manualLine, setManualLine] = useState('stumps'); // 'outside_off', 'stumps', 'leg'
+  const [manualVariation, setManualVariation] = useState(
+    isSpinType(initialBowler.type) ? 'legbreak' : 'outswing'
+  );
+  const [pitchTarget, setPitchTarget] = useState(null); // { x, y, length, line }
 
   // Dynamic In-Match Live Scoring
   const [currentRunsScored, setCurrentRunsScored] = useState(0);
@@ -441,17 +460,90 @@ export default function CricketGame({
           const physicsEvent = engine.update(dt);
           fielders.update(engine.ball, dt, engine);
 
+          // AI Batsman reaction against manual delivery in BOWLING mode
+          if (gameRole === 'BOWLING' && engine.ball.state === 'BOWLED' && !engine.batsman.isSwinging) {
+            const effectiveBatsmanY = engine.batsmanCreaseY - (engine.batsman.isSteppingOut ? engine.batsman.stepOutOffset : 0);
+            const distToBat = effectiveBatsmanY - engine.ball.y;
+            const timeDeltaMs = (distToBat / (engine.ball.vy || 10)) * 16.6;
+
+            if (timeDeltaMs <= 42 && timeDeltaMs >= -18) {
+              const ballX = engine.ball.x;
+              const isYorker = engine.ball.lengthType === 'yorker' || engine.ball.bounceSpotY > engine.batsmanCreaseY - 28;
+              const isBouncer = engine.ball.lengthType === 'short' || engine.ball.bounceSpotY < engine.pitchTop + 140;
+              const isOutsideOff = Math.abs(ballX - cx) > 22;
+              const isSharpMovement = Math.abs(engine.ball.swingRate || 0) > 0.035 || Math.abs(engine.ball.spinLateralV || 0) > 0.22;
+
+              let aiShot = 'straight_drive';
+              const roll = Math.random();
+
+              if (isYorker) {
+                if (roll < 0.35 && Math.abs(ballX - cx) < 14) {
+                  aiShot = null; // Clean bowled or LBW
+                } else if (roll < 0.70) {
+                  aiShot = 'straight_drive';
+                } else {
+                  aiShot = 'flick';
+                }
+              } else if (isBouncer) {
+                if (roll < 0.50) {
+                  aiShot = 'pull';
+                } else if (roll < 0.80) {
+                  aiShot = 'upper_cut';
+                } else {
+                  aiShot = null; // Duck
+                }
+              } else if (isOutsideOff && isSharpMovement) {
+                if (roll < 0.45) {
+                  aiShot = 'cover_drive'; // Edge to slips/keeper
+                } else if (roll < 0.75) {
+                  aiShot = 'upper_cut';
+                } else {
+                  aiShot = 'cover_drive';
+                }
+              } else {
+                if (ballX < cx - 6) {
+                  aiShot = 'cover_drive';
+                } else if (ballX > cx + 6) {
+                  aiShot = roll < 0.5 ? 'pull' : 'flick';
+                } else {
+                  aiShot = roll < 0.5 ? 'straight_drive' : 'flick';
+                }
+              }
+
+              if (aiShot) {
+                const swingRes = engine.swingBat(null, aiShot);
+                if (swingRes) {
+                  sound.playBatHit(swingRes.quality === 'PERFECT');
+                }
+              }
+            }
+          }
+
           // Update Camera Targets based on game action & broadcast angles (Image 2):
           const cam = cameraRef.current;
           const cx = engine.cx;
           const cy = engine.cy;
 
-          if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE') {
-            // Clean centered pitch view matching Image 2
-            cam.mode = 'PITCH_CENTER';
-            cam.targetX = cx;
-            cam.targetY = cy;
-            cam.targetZoom = 0.94;
+          if (engine.ball.state === 'BOWLED' || engine.ball.state === 'RUN_UP' || engine.ball.state === 'IDLE' || engine.ball.state === 'READY') {
+            if (cameraAngle === 'BOWLER_END') {
+              // Angle 1: BOWLER_END - high angle from behind the bowler looking down the pitch towards batsman
+              cam.mode = 'BOWLER_END';
+              cam.targetX = cx;
+              cam.targetY = engine.bowlerCreaseY + 68;
+              cam.targetZoom = 1.06;
+            } else if (cameraAngle === 'BATSMAN_END') {
+              // Angle 2: BATSMAN_END - low angle from behind the batsman looking towards the bowler
+              cam.mode = 'BATSMAN_END';
+              cam.targetX = cx;
+              cam.targetY = engine.batsmanCreaseY - 58;
+              cam.targetZoom = 1.06;
+            } else {
+              // Angle 3: BROADCAST - clean centered pitch view
+              cam.mode = 'PITCH_CENTER';
+              cam.targetX = cx;
+              cam.targetY = cy;
+              cam.targetZoom = 0.94;
+            }
           } else if (engine.ball.state === 'HIT') {
             if (engine.ball.isRocketSix) {
               // Angle 4: SIX_SKYCAM - broadcast tracking camera for soaring six into crowd stands
@@ -487,9 +579,19 @@ export default function CricketGame({
             }
           } else {
             // DEAD / OVER_PAUSE
-            cam.targetX = cx;
-            cam.targetY = cy;
-            cam.targetZoom = 0.94;
+            if (cameraAngle === 'BOWLER_END') {
+              cam.targetX = cx;
+              cam.targetY = engine.bowlerCreaseY + 68;
+              cam.targetZoom = 1.04;
+            } else if (cameraAngle === 'BATSMAN_END') {
+              cam.targetX = cx;
+              cam.targetY = engine.batsmanCreaseY - 58;
+              cam.targetZoom = 1.04;
+            } else {
+              cam.targetX = cx;
+              cam.targetY = cy;
+              cam.targetZoom = 0.94;
+            }
           }
 
           // Smooth camera matrix interpolation
@@ -1166,11 +1268,19 @@ export default function CricketGame({
         });
       }, 1500);
     } else {
-      setTimeout(() => {
-        triggerNextDelivery();
-      }, isWide ? 1400 : 1800);
+      if (gameRole === 'BOWLING') {
+        setTimeout(() => {
+          if (gameState !== 'FINISHED' && !isPaused) {
+            setGameState('READY');
+          }
+        }, isWide ? 1000 : 1400);
+      } else {
+        setTimeout(() => {
+          triggerNextDelivery();
+        }, isWide ? 1400 : 1800);
+      }
     }
-  }, [currentRunsScored, currentBallsFaced, currentWicketsLost, targetRuns, totalBalls, maxWickets, sixesCount, foursCount, aimDirection, selectedShot, hapticsEnabled, currentOverBalls, currentOverRuns, allOversHistory, onGameOver, initialBalls, teamCode, teamScoreBase, teamWicketsBase, battingLineup, isLeftHanded, bowler, bowlerList, initialBowlerIndex, firstOverTargetBalls]);
+  }, [currentRunsScored, currentBallsFaced, currentWicketsLost, targetRuns, totalBalls, maxWickets, sixesCount, foursCount, aimDirection, selectedShot, hapticsEnabled, currentOverBalls, currentOverRuns, allOversHistory, onGameOver, initialBalls, teamCode, teamScoreBase, teamWicketsBase, battingLineup, isLeftHanded, bowler, bowlerList, initialBowlerIndex, firstOverTargetBalls, gameRole, tacticalField, userLockedField]);
 
   const triggerSpecialCelebration = (type, title, subTitle, distanceMeters = null) => {
     setCelebrationOverlay({ type, title, subTitle, distanceMeters });
@@ -1179,7 +1289,91 @@ export default function CricketGame({
     }, 2400);
   };
 
-  const triggerNextDelivery = () => {
+  const handleFieldPresetChange = (preset) => {
+    setTacticalField(preset);
+    setUserLockedField(true);
+    sound.playClick();
+    if (fieldersRef.current) {
+      fieldersRef.current.applyFieldPreset(preset, false, isLeftHanded);
+      const label = preset === 'attacking'
+        ? '⚔️ ATTACKING FIELD: 2 Slips & Close Infield Active!'
+        : preset === 'defending'
+          ? '🛡️ DEFENDING FIELD: Boundary Riders Deep on Fence!'
+          : '⚖️ NORMAL FIELD: Standard Balanced Ring & Sweepers!';
+      setFieldChangeNotice(label);
+      setTimeout(() => setFieldChangeNotice(null), 3200);
+    }
+  };
+
+  const handleCameraToggle = () => {
+    sound.playClick();
+    setCameraAngle(prev => {
+      let next = 'BOWLER_END';
+      if (prev === 'BOWLER_END') next = 'BATSMAN_END';
+      else if (prev === 'BATSMAN_END') next = 'BROADCAST';
+      else next = 'BOWLER_END';
+
+      const label = next === 'BOWLER_END'
+        ? '🎯 CAMERA: BOWLER END VIEW (BEHIND BOWLER)'
+        : next === 'BATSMAN_END'
+          ? '🏏 CAMERA: BATSMAN END VIEW (BEHIND STRIKER)'
+          : '📡 CAMERA: BROADCAST TRACKING VIEW';
+      setFootworkNotice(label);
+      setTimeout(() => setFootworkNotice(null), 2500);
+      return next;
+    });
+  };
+
+  const handleRoleToggle = () => {
+    sound.playClick();
+    setGameRole(prev => {
+      const next = prev === 'BATTING' ? 'BOWLING' : 'BATTING';
+      const label = next === 'BOWLING'
+        ? '🎯 BOWLING MODE ACTIVE: BOWL MANUALLY & SET FIELD!'
+        : '🏏 BATTING MODE ACTIVE: CHASE TARGET!';
+      setFootworkNotice(label);
+      setTimeout(() => setFootworkNotice(null), 3000);
+      if (next === 'BOWLING') {
+        setCameraAngle('BOWLER_END');
+        setGameState('READY');
+      }
+      return next;
+    });
+  };
+
+  const handleUserBowl = () => {
+    if (gameState === 'BOWLING' || gameState === 'FINISHED' || isPaused) return;
+    const activeBowlerData = bowlerList[selectedBowlerIndex] || bowlerList[0] || WORLD_BOWLERS[0];
+
+    let targetX = pitchTarget?.x;
+    let targetY = pitchTarget?.y;
+
+    if (!targetX || !targetY) {
+      const cx = engineRef.current?.cx || 200;
+      const pt = engineRef.current?.pitchTop || 120;
+      const pl = engineRef.current?.pitchLength || 320;
+      const relY = manualLength === 'yorker' ? 0.91 : manualLength === 'slot' ? 0.74 : manualLength === 'short' ? 0.38 : 0.58;
+      targetY = pt + pl * relY;
+      const offset = manualLine === 'outside_off' ? (isLeftHanded ? -14 : 14) : manualLine === 'leg' ? (isLeftHanded ? 12 : -12) : 0;
+      targetX = cx + offset;
+    }
+
+    triggerNextDelivery({
+      bowlerType: activeBowlerData.type,
+      bowlingArm: activeBowlerData.arm || 'right',
+      bowlingAngle: activeBowlerData.angle || 'over',
+      bowlerAction: activeBowlerData.action || 'high_arm',
+      skinTone: activeBowlerData.skinTone || '#c68656',
+      faceStyle: activeBowlerData.faceStyle || 'classic',
+      variation: manualVariation,
+      length: manualLength,
+      line: manualLine,
+      targetX,
+      targetY
+    });
+  };
+
+  const triggerNextDelivery = (manualDeliveryConfig = null) => {
     if (gameState === 'FINISHED' || isPaused) return;
     setFeedback(null);
     setTimingMeterProgress(0);
@@ -1189,7 +1383,7 @@ export default function CricketGame({
     const engine = engineRef.current;
     if (engine) {
       const activeBowlerName = bowlerRef.current?.name || bowler.name;
-      const activeBowlerData = bowlerList.find(b => b.name === activeBowlerName || b.shortName === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
+      const activeBowlerData = bowlerList[selectedBowlerIndex] || bowlerList.find(b => b.name === activeBowlerName || b.shortName === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
 
       // Ensure engine has active bowler's appearance and action
       engine.bowler.skinTone = activeBowlerData.skinTone || '#c68656';
@@ -1197,21 +1391,24 @@ export default function CricketGame({
       engine.bowler.actionType = activeBowlerData.action || 'high_arm';
       engine.bowler.armSide = activeBowlerData.arm || 'right';
 
-      const deliveryInfo = engine.startDelivery({
+      const deliveryPayload = {
         bowlerType: activeBowlerData.type || bowlerType,
         bowlingArm: activeBowlerData.arm || bowlingArm || 'right',
         bowlingAngle: activeBowlerData.angle || bowlingAngle || 'over',
         bowlerAction: activeBowlerData.action || bowlerAction || 'high_arm',
         action: activeBowlerData.action || bowlerAction || 'high_arm',
         skinTone: activeBowlerData.skinTone || '#c68656',
-        faceStyle: activeBowlerData.faceStyle || 'classic'
-      }, 1.0);
+        faceStyle: activeBowlerData.faceStyle || 'classic',
+        ...(manualDeliveryConfig || {})
+      };
+
+      const deliveryInfo = engine.startDelivery(deliveryPayload, 1.0);
       sound.playBowlerRelease();
       if (deliveryInfo) {
         setDeliveryVariationNotice(deliveryInfo);
         const armLabel = (deliveryInfo.bowlingArm === 'left' ? 'LA' : 'RA');
         const angleLabel = deliveryInfo.bowlingAngle === 'around' ? 'Around' : 'Over';
-        const variationLine = `${activeBowlerName} (${armLabel} ${angleLabel}) bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
+        const variationLine = `${activeBowlerData.name || activeBowlerName} (${armLabel} ${angleLabel}) bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
         setCommentary(variationLine);
       }
     }
@@ -1279,6 +1476,23 @@ export default function CricketGame({
   useEffect(() => {
     const handleKeyDown = (e) => {
       const engine = engineRef.current;
+      if (e.code === 'KeyC' || e.code === 'KeyV') {
+        e.preventDefault();
+        handleCameraToggle();
+        return;
+      }
+      if (e.code === 'KeyB') {
+        e.preventDefault();
+        handleRoleToggle();
+        return;
+      }
+      if (e.code === 'KeyF') {
+        e.preventDefault();
+        const presets = ['normal', 'attacking', 'defending'];
+        const next = presets[(presets.indexOf(tacticalField) + 1) % presets.length];
+        handleFieldPresetChange(next);
+        return;
+      }
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         // If ball is in play and running between wickets is active, Spacebar commands RUN!
@@ -1289,6 +1503,8 @@ export default function CricketGame({
             if (hapticsEnabled) haptics.light();
             showFootworkAlert(`RUNNING FOR RUN ${(engine.running.runsCompleted || 0) + 1} 🏃`);
           }
+        } else if (gameRole === 'BOWLING' && engine && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+          handleUserBowl();
         } else {
           handleBatSwing(null);
         }
@@ -1603,12 +1819,87 @@ export default function CricketGame({
       ctx.restore();
     }
 
+    // 5.2 Interactive Pitch Target Reticle (for Manual Bowling)
+    if ((gameRole === 'BOWLING' || pitchTarget) && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+      const relY = manualLength === 'yorker' ? 0.91 : manualLength === 'slot' ? 0.74 : manualLength === 'short' ? 0.38 : 0.58;
+      const defaultY = engine.pitchTop + engine.pitchLength * relY;
+      const defaultOffset = manualLine === 'outside_off' ? (isLeftHanded ? -14 : 14) : manualLine === 'leg' ? (isLeftHanded ? 12 : -12) : 0;
+      const defaultX = cx + defaultOffset;
+
+      const tx = pitchTarget ? pitchTarget.x : defaultX;
+      const ty = pitchTarget ? pitchTarget.y : defaultY;
+
+      const targetColor = manualLength === 'short' ? '#ef4444' : manualLength === 'slot' ? '#10b981' : manualLength === 'yorker' ? '#a855f7' : '#f59e0b';
+      const pulse = Math.sin(Date.now() / 140) * 2.5;
+
+      ctx.save();
+      // Glowing halo
+      const halo = ctx.createRadialGradient(tx, ty, 2, tx, ty, 18 + pulse);
+      halo.addColorStop(0, `${targetColor}66`);
+      halo.addColorStop(1, 'transparent');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(tx, ty, 18 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pulsing Reticle Ring
+      ctx.beginPath();
+      ctx.arc(tx, ty, 11 + pulse, 0, Math.PI * 2);
+      ctx.strokeStyle = targetColor;
+      ctx.lineWidth = 2.0;
+      ctx.stroke();
+
+      // Inner Bulls-Eye Dot
+      ctx.beginPath();
+      ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // Crosshairs
+      ctx.strokeStyle = targetColor;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(tx - 15, ty); ctx.lineTo(tx + 15, ty);
+      ctx.moveTo(tx, ty - 15); ctx.lineTo(tx, ty + 15);
+      ctx.stroke();
+
+      // Reticle Tag
+      const tagText = `🎯 ${manualVariation.toUpperCase()} • ${manualLength.toUpperCase()}`;
+      ctx.font = 'bold 8.5px monospace';
+      const tw = ctx.measureText(tagText).width;
+      ctx.fillStyle = 'rgba(10, 16, 28, 0.92)';
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(tx - tw / 2 - 5, ty - 24, tw + 10, 14, 4);
+      } else {
+        ctx.rect(tx - tw / 2 - 5, ty - 24, tw + 10, 14);
+      }
+      ctx.fill();
+      ctx.strokeStyle = targetColor;
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tagText, tx, ty - 17);
+      ctx.restore();
+    }
+
     const defaultBatKit = { color: '#0066b2', secondaryColor: '#ff9933', pantsColor: '#004c85', stripeColor: '#ff9933' };
-    const defaultFieldKit = { color: '#006837', secondaryColor: '#ffc72c', pantsColor: '#004c27', stripeColor: '#ffc72c' };
-    const battingKit = getJerseyData(userProfile?.equippedJersey || matchConfig?.teamJersey || matchConfig?.teamCode || 'jersey_ind') || defaultBatKit;
-    const fieldingKit = getJerseyData(matchConfig?.bowlingJersey || matchConfig?.bowlingTeamCode || (matchConfig?.teamCode === 'SA' ? 'jersey_ind' : 'jersey_sa')) || defaultFieldKit;
+    const defaultFieldKit = { color: '#ffcd00', secondaryColor: '#00573d', pantsColor: '#004225', stripeColor: '#00573d' };
+    const userTeamCode = matchConfig?.teamCode || 'IND';
+    const oppTeamCode = matchConfig?.bowlingTeamCode || (userTeamCode === 'AUS' ? 'IND' : 'AUS');
+
+    // Authentic Team Kits: Match teamCode and teamJersey STRICTLY take priority over stored profile
+    const userTeamKit = getJerseyData(matchConfig?.teamJersey || userTeamCode) || defaultBatKit;
+    const oppTeamKit = getJerseyData(matchConfig?.bowlingJersey || oppTeamCode) || defaultFieldKit;
+
+    const isUserBowling = (gameRole === 'BOWLING');
+    const battingKit = isUserBowling ? oppTeamKit : userTeamKit;
+    const fieldingKit = isUserBowling ? userTeamKit : oppTeamKit;
     const battingJerseyColor = battingKit?.color || '#0066b2';
-    const fieldingJerseyColor = fieldingKit?.color || '#006837';
+    const fieldingJerseyColor = fieldingKit?.color || '#ffcd00';
 
     // 6 & 8. Batsmen: Either sprinting between wickets or standard stance
     if (engine.running?.active && (engine.running.isCallingRun || engine.running.runsCompleted > 0)) {
@@ -1850,7 +2141,33 @@ export default function CricketGame({
 
             if (dist < 18) {
               const engine = engineRef.current;
-              if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
+              if (gameRole === 'BOWLING' && engine && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+                const cam = cameraRef.current;
+                const canvasW = canvasRef.current?.clientWidth || 400;
+                const canvasH = canvasRef.current?.clientHeight || 600;
+                const worldX = cam ? cam.x + ((e.clientX - rect.left) - canvasW / 2) / cam.zoom : e.clientX - rect.left;
+                const worldY = cam ? cam.y + ((e.clientY - rect.top) - canvasH / 2) / cam.zoom : e.clientY - rect.top;
+
+                const cx = engine.cx;
+                const clampedX = Math.max(cx - 38, Math.min(cx + 38, worldX));
+                const clampedY = Math.max(engine.bowlerCreaseY + 15, Math.min(engine.batsmanCreaseY - 5, worldY));
+
+                const relY = (clampedY - engine.pitchTop) / engine.pitchLength;
+                let newLength = 'good';
+                if (relY > 0.85) newLength = 'yorker';
+                else if (relY > 0.68) newLength = 'slot';
+                else if (relY < 0.48) newLength = 'short';
+
+                let newLine = 'stumps';
+                if (clampedX < cx - 10) newLine = isLeftHanded ? 'leg' : 'outside_off';
+                else if (clampedX > cx + 10) newLine = isLeftHanded ? 'outside_off' : 'leg';
+
+                setPitchTarget({ x: clampedX, y: clampedY, length: newLength, line: newLine });
+                setManualLength(newLength);
+                setManualLine(newLine);
+                sound.playClick();
+                showFootworkAlert(`AIM: ${newLength.toUpperCase()} • ${newLine.toUpperCase()} 🎯`);
+              } else if (engine && engine.ball.state === 'HIT' && engine.running?.active) {
                 const called = engine.commandRun();
                 if (called) {
                   sound.playRunning();
@@ -2019,8 +2336,215 @@ export default function CricketGame({
                 <span className="text-slate-400 text-[9px] sm:text-[10px]">({bowler.overs})</span>
               </div>
             </div>
+
+            {/* ROW 3: Tactical Mode, Camera Angle & Fielding Presets */}
+            <div className="pt-1 border-t border-[#182337] flex items-center justify-between text-[10px] sm:text-xs text-slate-300 gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                {/* Camera View Switcher */}
+                <button
+                  onClick={handleCameraToggle}
+                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 font-bold border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
+                  title="Switch Camera View: Bowler End / Batsman End / Broadcast (Key C)"
+                >
+                  <Camera className="w-3 h-3 text-cyan-400" />
+                  <span>
+                    {cameraAngle === 'BOWLER_END' ? 'Bowler View' : cameraAngle === 'BATSMAN_END' ? 'Batsman View' : 'Broadcast'}
+                  </span>
+                </button>
+
+                {/* Role Switcher (Bat / Bowl) */}
+                <button
+                  onClick={handleRoleToggle}
+                  className={`px-2 py-0.5 rounded-lg border font-black text-[9px] sm:text-[10px] flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm ${
+                    gameRole === 'BOWLING'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                      : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                  }`}
+                  title="Toggle Batting or Bowling Role (Key B)"
+                >
+                  <span>{gameRole === 'BOWLING' ? '🎯 BOWLING' : '🏏 BATTING'}</span>
+                </button>
+              </div>
+
+              {/* Fielding Presets (Attacking / Normal / Defending) */}
+              <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+                <span className="text-[9px] text-slate-400 font-bold uppercase px-1 flex items-center gap-0.5">
+                  <Shield className="w-2.5 h-2.5 text-slate-400" /> Field:
+                </span>
+                <button
+                  onClick={() => handleFieldPresetChange('attacking')}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
+                    tacticalField === 'attacking'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Attacking Field: 2 Slips & Close Catchers deployed"
+                >
+                  ⚔️ Attack
+                </button>
+                <button
+                  onClick={() => handleFieldPresetChange('normal')}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
+                    tacticalField === 'normal' || tacticalField === 'balanced'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Normal Field: Standard 30-yard ring & boundary sweepers"
+                >
+                  ⚖️ Normal
+                </button>
+                <button
+                  onClick={() => handleFieldPresetChange('defending')}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
+                    tacticalField === 'defending' || tacticalField === 'death_overs'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Defending Field: 5 Deep boundary riders guarding the ropes"
+                >
+                  🛡️ Defend
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Dedicated Manual Bowling Control Deck (Active in Bowling Mode) */}
+        {gameRole === 'BOWLING' && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-35 w-[96%] max-w-lg pointer-events-auto animate-fade-in">
+            <div className="bg-[#0b1220]/95 border-2 border-amber-500/70 rounded-2xl p-2.5 sm:p-3 shadow-2xl backdrop-blur-md flex flex-col gap-2">
+              {/* Row 1: Active Bowler & Next Bowler Button */}
+              <div className="flex items-center justify-between gap-1.5 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-amber-400 font-black text-xs uppercase tracking-wider flex items-center gap-1">
+                    <Target className="w-3.5 h-3.5" /> {bowlerList[selectedBowlerIndex]?.name || bowler.name}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                    {bowlerList[selectedBowlerIndex]?.arm === 'left' ? 'LA' : 'RA'} {bowlerList[selectedBowlerIndex]?.type?.toUpperCase()}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    const nextIdx = (selectedBowlerIndex + 1) % bowlerList.length;
+                    setSelectedBowlerIndex(nextIdx);
+                    const nextB = bowlerList[nextIdx];
+                    setBowler(prev => ({ ...prev, name: nextB.name }));
+                    if (isSpinType(nextB.type)) {
+                      setManualVariation('legbreak');
+                    } else {
+                      setManualVariation('outswing');
+                    }
+                  }}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-cyan-300 border border-slate-700 cursor-pointer"
+                >
+                  ⇄ Change Bowler
+                </button>
+              </div>
+
+              {/* Row 2: Delivery Variations (Pace vs Spin Repertoire) */}
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                <span className="text-[10px] text-slate-400 font-bold uppercase mr-1 flex-shrink-0">Type:</span>
+                {(isSpinType(bowlerList[selectedBowlerIndex]?.type || bowlerType)
+                  ? [
+                      { id: 'legbreak', label: 'Leg Break' },
+                      { id: 'offbreak', label: 'Off Break' },
+                      { id: 'googly', label: 'Googly' },
+                      { id: 'doosra', label: 'Doosra' },
+                      { id: 'flipper', label: 'Flipper' },
+                      { id: 'carrom', label: 'Carrom' }
+                    ]
+                  : [
+                      { id: 'outswing', label: 'Outswing' },
+                      { id: 'inswing', label: 'Inswing' },
+                      { id: 'yorker', label: 'Yorker' },
+                      { id: 'bouncer', label: 'Bouncer' },
+                      { id: 'offcutter', label: 'Cutter' },
+                      { id: 'slow_ball', label: 'Slower' }
+                    ]
+                ).map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      sound.playClick();
+                      setManualVariation(v.id);
+                      if (v.id === 'yorker') setManualLength('yorker');
+                      if (v.id === 'bouncer') setManualLength('short');
+                    }}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all ${
+                      manualVariation === v.id
+                        ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                        : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Row 3: Length & Line Buttons */}
+              <div className="flex items-center justify-between gap-1 text-[10px]">
+                {/* Length */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-400 font-bold uppercase">Length:</span>
+                  {['yorker', 'slot', 'good', 'short'].map(l => (
+                    <button
+                      key={l}
+                      onClick={() => {
+                        sound.playClick();
+                        setManualLength(l);
+                        setPitchTarget(null);
+                      }}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
+                        manualLength === l
+                          ? 'bg-cyan-500 text-slate-950 font-black'
+                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      }`}
+                    >
+                      {l === 'slot' ? 'Full' : l}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Line */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-400 font-bold uppercase">Line:</span>
+                  {['outside_off', 'stumps', 'leg'].map(ln => (
+                    <button
+                      key={ln}
+                      onClick={() => {
+                        sound.playClick();
+                        setManualLine(ln);
+                        setPitchTarget(null);
+                      }}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
+                        manualLine === ln
+                          ? 'bg-emerald-500 text-slate-950 font-black'
+                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      }`}
+                    >
+                      {ln === 'outside_off' ? 'Off' : ln === 'stumps' ? 'Mid' : 'Leg'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 4: Big BOWL Action Button & Pitch Target Guidance */}
+              <div className="flex items-center gap-2 pt-1 border-t border-slate-800">
+                <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <span>🎯 Tap pitch to set landing reticle!</span>
+                </div>
+                <button
+                  onClick={handleUserBowl}
+                  className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:brightness-110 active:scale-95 text-slate-950 font-display font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                  <span>BOWL (SPACE)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Free Hit Pulsing Badge */}
         {isFreeHit && (

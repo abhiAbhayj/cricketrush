@@ -34,6 +34,9 @@ export class FielderManager {
    * while boundary sweepers protect the 80-meter boundary perimeter.
    */
   applyFieldPreset(preset = 'balanced', snap = false, isLeftHanded = false) {
+    // Normalize tactical preset aliases (attacking, normal, defending)
+    if (preset === 'normal') preset = 'balanced';
+    if (preset === 'defending') preset = 'death_overs';
     this.currentPreset = preset;
     this.currentIsLeftHanded = isLeftHanded;
     const cx = this.width / 2;
@@ -61,8 +64,8 @@ export class FielderManager {
 
     let targetPlacements = [];
 
-    if (preset === 'death_overs') {
-      // DEATH OVERS: Exactly 4 Fielders ON the 30-Yard Circle Line, 5 deep on 80m boundary
+    if (preset === 'death_overs' || preset === 'defending') {
+      // DEFENDING FIELD: Ring fielders cutting off singles, 5 deep boundary sweepers on fence saving 4s and 6s
       const cov = onCircle(-2.55);
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
@@ -74,37 +77,36 @@ export class FielderManager {
       const dThirdMan = onBoundary(2.35, 0.88);
 
       targetPlacements = [
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'deepcover', role: 'Deep Extra Cover', x: dCov.x, y: dCov.y, speed: 2.8, zone: 'boundary' },
-        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.8, zone: 'boundary' },
-        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 2.8, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' }
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'sqleg', role: 'Square Leg', x: sqL.x, y: sqL.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'deepcover', role: 'Deep Extra Cover', x: dCov.x, y: dCov.y, speed: 2.9, zone: 'boundary' },
+        { id: 'longoff', role: 'Long-Off', x: dLongOff.x, y: dLongOff.y, speed: 2.9, zone: 'boundary' },
+        { id: 'longon', role: 'Long-On', x: dLongOn.x, y: dLongOn.y, speed: 2.9, zone: 'boundary' },
+        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.9, zone: 'boundary' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.9, zone: 'boundary' }
       ];
     } else if (preset === 'attacking') {
-      // Aggressive wicket-taking field: 1 Slip, 3 on Ring, 5 Deep on 80m boundary
+      // ATTACKING FIELD: 1st Slip, 2nd Slip / Gully, Short Leg, Ring catchers up saving singles
       const cov = onCircle(-2.55);
       const mOff = onCircle(-1.95);
       const mOn = onCircle(-1.19);
       const dThirdMan = onBoundary(2.35, 0.88);
       const dPoint = onBoundary(2.95, 0.88);
-      const dCover = onBoundary(-2.55, 0.88);
       const dMidWkt = onBoundary(-0.48, 0.88);
       const dFineLeg = onBoundary(0.85, 0.88);
 
       targetPlacements = [
-        { id: 'slip1', role: '1st Slip', x: cx - 42, y: batsmanY + 36, speed: 2.4, zone: 'slips' },
-        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.4, zone: 'infield_ring' },
-        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.8, zone: 'boundary' },
-        { id: 'point', role: 'Deep Point', x: dPoint.x, y: dPoint.y, speed: 2.8, zone: 'boundary' },
-        { id: 'deepcover', role: 'Deep Cover', x: dCover.x, y: dCover.y, speed: 2.8, zone: 'boundary' },
-        { id: 'deepmidwicket', role: 'Deep Mid-Wkt', x: dMidWkt.x, y: dMidWkt.y, speed: 2.8, zone: 'boundary' },
-        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.8, zone: 'boundary' }
+        { id: 'slip1', role: '1st Slip', x: cx - 38, y: batsmanY + 34, speed: 2.6, zone: 'slips' },
+        { id: 'slip2', role: '2nd Slip / Gully', x: cx - 62, y: batsmanY + 40, speed: 2.6, zone: 'slips' },
+        { id: 'shortleg', role: 'Short Leg', x: cx + 44, y: batsmanY - 24, speed: 2.6, zone: 'infield_ring' },
+        { id: 'cover', role: 'Cover', x: cov.x, y: cov.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'midoff', role: 'Mid-Off', x: mOff.x, y: mOff.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'midon', role: 'Mid-On', x: mOn.x, y: mOn.y, speed: 2.5, zone: 'infield_ring' },
+        { id: 'thirdman', role: 'Deep 3rd Man', x: dThirdMan.x, y: dThirdMan.y, speed: 2.9, zone: 'boundary' },
+        { id: 'point', role: 'Deep Point', x: dPoint.x, y: dPoint.y, speed: 2.9, zone: 'boundary' },
+        { id: 'fineleg', role: 'Deep Fine Leg', x: dFineLeg.x, y: dFineLeg.y, speed: 2.9, zone: 'boundary' }
       ];
     } else if (preset === 'offside_defensive') {
       // Packed off-side ring: 4 on 30-yard circle line, 5 on 80m boundary

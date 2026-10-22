@@ -24,8 +24,8 @@ import {
 import { TEAMS } from '../game/TeamData';
 
 const RIVALRIES = [
-  { bat: 'IND', bowl: 'SA', label: 'IND vs SA', badge: '🇮🇳 v 🇿🇦' },
   { bat: 'IND', bowl: 'AUS', label: 'IND vs AUS', badge: '🇮🇳 v 🇦🇺' },
+  { bat: 'IND', bowl: 'SA', label: 'IND vs SA', badge: '🇮🇳 v 🇿🇦' },
   { bat: 'IND', bowl: 'PAK', label: 'IND vs PAK', badge: '🇮🇳 v 🇵🇰' },
   { bat: 'CSK', bowl: 'MI', label: 'CSK vs MI', badge: '💛 v 💙' },
   { bat: 'SRH', bowl: 'KKR', label: 'SRH vs KKR', badge: '🧡 v 💜' },
@@ -94,7 +94,7 @@ export default function MainMenu({
 }) {
   // Selected Batting and Bowling Teams for Quick Play / Chase
   const [battingTeamKey, setBattingTeamKey] = useState('IND');
-  const [bowlingTeamKey, setBowlingTeamKey] = useState('SA');
+  const [bowlingTeamKey, setBowlingTeamKey] = useState('AUS');
 
   // Selected format for the featured Chase Card (default 18 balls matching Reference Image 2)
   const [selectedBalls, setSelectedBalls] = useState(18);
