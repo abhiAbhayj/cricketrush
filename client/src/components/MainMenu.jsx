@@ -200,7 +200,7 @@ export default function MainMenu({
       {/* ==================================================================== */}
       {/* MAIN CONTAINER: FEATURE CHASE CARD + MODES SHELF                     */}
       {/* ==================================================================== */}
-      <div className="relative z-10 w-full max-w-md mx-auto px-4 flex-1 flex flex-col justify-end pb-3 space-y-3">
+      <div className="relative z-10 w-full max-w-md mx-auto px-3 sm:px-4 flex-1 flex flex-col justify-start sm:justify-end pb-3 space-y-2.5 sm:space-y-3">
         {/* ================================================================== */}
         {/* HERO CHASE CARD (Exact 1:1 Pixel Match of Image 2)                 */}
         {/* ================================================================== */}

@@ -1252,10 +1252,9 @@ export default function NetPractice({ onBack, profile, settings }) {
           </div>
         )}
 
-        {/* Unified Sleek Action Center: Real-Time Timing HUD */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-[290px] sm:max-w-xs px-3 pointer-events-auto flex flex-col gap-1.5 items-center">
-          {/* Real-Time Precision Timing Meter Card */}
-          <div className="w-full bg-[#080e1a]/95 border border-slate-700/80 rounded-2xl p-2 sm:p-2.5 shadow-2xl backdrop-blur-md">
+        {/* Real-Time Precision Timing Meter Card */}
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-30 w-full max-w-[220px] sm:max-w-xs px-2 pointer-events-none flex flex-col gap-1 items-center">
+          <div className="w-full bg-[#080e1a]/95 border border-slate-700/80 rounded-2xl p-2 shadow-2xl backdrop-blur-md">
             <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
               <span className="text-amber-400 font-extrabold">Early</span>
               <span className="text-emerald-400 font-black flex items-center gap-1">
@@ -1263,7 +1262,7 @@ export default function NetPractice({ onBack, profile, settings }) {
               </span>
               <span className="text-rose-400 font-extrabold">Late</span>
             </div>
-            <div className="relative w-full h-2.5 rounded-full bg-slate-950 border border-slate-800 overflow-hidden flex">
+            <div className="relative w-full h-2 rounded-full bg-slate-950 border border-slate-800 overflow-hidden flex">
               <div className="w-[35%] h-full bg-amber-500/25 border-r border-amber-500/40" />
               <div className="w-[30%] h-full bg-emerald-500/50 shadow-inner" />
               <div className="w-[35%] h-full bg-rose-500/25 border-l border-rose-500/40" />
@@ -1283,10 +1282,96 @@ export default function NetPractice({ onBack, profile, settings }) {
               )}
             </div>
           </div>
+        </div>
 
-          <div className="text-center text-[9px] text-slate-400 font-medium tracking-tight">
-            Tap screen or <kbd className="px-1 py-0.5 rounded bg-slate-800 text-white font-mono font-bold text-[8.5px]">Spacebar</kbd> to hit • Swipe for footwork
+        {/* ON-SCREEN MOBILE TOUCH CONTROLS (Training Net Practice) */}
+        {/* Left Thumb: Footwork Direction Pad */}
+        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-35 pointer-events-auto flex flex-col items-center gap-1 bg-[#0b121e]/92 border border-slate-700/80 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md">
+          {/* ⬆️ CHARGE */}
+          <button
+            onClick={() => {
+              engineRef.current?.stepOut();
+              setBatsmanCreasePosition('step_out');
+              sound.playClick();
+              showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+            }}
+            className={`w-28 py-1.5 rounded-xl font-display font-black text-[10px] sm:text-[11px] tracking-wider uppercase flex items-center justify-center gap-1 active:scale-95 transition-all shadow-md cursor-pointer ${
+              batsmanCreasePosition === 'step_out'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-amber-500/50'
+                : 'bg-slate-900/90 text-amber-300 border border-amber-500/40 hover:bg-slate-800'
+            }`}
+            title="Step out down pitch (Charge Loft)"
+          >
+            <span>⬆️ CHARGE</span>
+          </button>
+
+          {/* Horizontal Row: ⬅️ OFF | STANCE | LEG ➡️ */}
+          <div className="flex items-center gap-1">
+            {/* ⬅️ OFF */}
+            <button
+              onClick={() => {
+                engineRef.current?.shuffleLeft();
+                setBatsmanCreasePosition('left');
+                sound.playClick();
+                showFootworkAlert('SHUFFLE OFF ⬅️');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                batsmanCreasePosition === 'left'
+                  ? 'bg-cyan-500 text-slate-950 font-black shadow-cyan-500/50'
+                  : 'bg-slate-900/90 text-cyan-300 border border-cyan-500/40 hover:bg-slate-800'
+              }`}
+              title="Shuffle Off"
+            >
+              ⬅️ OFF
+            </button>
+
+            {/* STANCE */}
+            <button
+              onClick={() => {
+                engineRef.current?.resetCrease();
+                setBatsmanCreasePosition('center');
+                sound.playClick();
+                showFootworkAlert('CREASE STANCE ⬇️');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                batsmanCreasePosition === 'center'
+                  ? 'bg-emerald-500 text-slate-950 font-black shadow-emerald-500/50'
+                  : 'bg-slate-900/90 text-emerald-300 border border-emerald-500/40 hover:bg-slate-800'
+              }`}
+              title="Reset Stance"
+            >
+              STANCE
+            </button>
+
+            {/* LEG ➡️ */}
+            <button
+              onClick={() => {
+                engineRef.current?.shuffleRight();
+                setBatsmanCreasePosition('right');
+                sound.playClick();
+                showFootworkAlert('SHUFFLE LEG ➡️');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                batsmanCreasePosition === 'right'
+                  ? 'bg-indigo-500 text-white font-black shadow-indigo-500/50'
+                  : 'bg-slate-900/90 text-indigo-300 border border-indigo-500/40 hover:bg-slate-800'
+              }`}
+              title="Shuffle Leg"
+            >
+              LEG ➡️
+            </button>
           </div>
+        </div>
+
+        {/* Right Thumb: Swing Bat Button */}
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-35 pointer-events-auto">
+          <button
+            onClick={() => handleBatSwing(null)}
+            className="py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:brightness-110 active:scale-95 text-slate-950 font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-xl shadow-amber-500/40 border border-amber-300 flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Swing Bat (or Tap Pitch)"
+          >
+            <span>🏏 SWING BAT</span>
+          </button>
         </div>
       </div>
 

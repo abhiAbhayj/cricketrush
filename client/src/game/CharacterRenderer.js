@@ -615,9 +615,10 @@ export const CharacterRenderer = {
     const secColor = resolvedKit.secondaryColor || '#ffffff';
     const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
-    // If on left side of pitch (x < pitchCenterX), mirror so bat is grounded on the inside towards pitch
+    // Mirror stance according to handedness and pitch side (so LHB holds bat with left hand)
     const isLeftSide = pitchCenterX !== null ? (x < pitchCenterX) : false;
-    if (isLeftSide) {
+    const shouldMirror = isLeftHanded ? !isLeftSide : isLeftSide;
+    if (shouldMirror) {
       ctx.scale(-1, 1);
     }
 

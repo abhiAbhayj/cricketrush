@@ -103,6 +103,8 @@ export default function CricketGame({
   const [cameraAngle, setCameraAngle] = useState('BOWLER_END'); // 'BOWLER_END', 'BATSMAN_END', 'BROADCAST'
   const [tacticalField, setTacticalField] = useState(isDeathOvers ? 'defending' : 'normal'); // 'normal', 'attacking', 'defending'
   const [userLockedField, setUserLockedField] = useState(false);
+  const [showOnScreenControls, setShowOnScreenControls] = useState(true);
+  const [isRadarExpanded, setIsRadarExpanded] = useState(false);
 
   // Manual Bowling Arsenal & Pitch Landing Reticle
   const [selectedBowlerIndex, setSelectedBowlerIndex] = useState(initialBowlerIndex);
@@ -2115,6 +2117,8 @@ export default function CricketGame({
   const runsRemaining = Math.max(0, targetRuns - currentRunsScored);
   const ballsRemaining = Math.max(0, totalBalls - currentBallsFaced);
   const rrr = ballsRemaining > 0 ? ((runsRemaining / ballsRemaining) * 6).toFixed(2) : '0.00';
+  const totalBallsBowled = teamScoreBase > 0 ? (initialBalls + currentBallsFaced) : currentBallsFaced;
+  const oversFormatted = `${Math.floor(totalBallsBowled / 6)}.${totalBallsBowled % 6}`;
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#080d1a] select-none flex items-center justify-center">
@@ -2231,195 +2235,180 @@ export default function CricketGame({
         />
 
         {/* ================================================================== */}
-        {/* 2. SLEEK TOP HUD BAR (Mobile-Optimized Responsive Layout)          */}
+        {/* 2. SLEEK TOP BROADCAST HUD (Mobile-First Ultra-Compact 2-Row Design)*/}
         {/* ================================================================== */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-3xl pointer-events-auto">
-          <div className="bg-[#0b121e]/95 border border-[#1e2a3f] rounded-2xl px-2.5 py-1.5 sm:px-4 sm:py-2 shadow-2xl backdrop-blur-md flex flex-col gap-1 sm:gap-1.5">
-            {/* ROW 1: Team Pill, Score, Overs, Target Equation, RRR Pill, Over Balls Circles */}
-            <div className="flex items-center justify-between gap-1 sm:gap-2">
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <div className="px-2 sm:px-2.5 py-0.5 rounded bg-[#0284c7] font-black italic text-[11px] sm:text-xs tracking-wider text-white shadow-sm">
-                  {teamCode}
-                </div>
-                <div className="flex items-baseline gap-1 sm:gap-1.5">
-                  <span className="text-xl sm:text-3xl font-display font-black text-white tracking-tight">
-                    {totalTeamScore}-{totalTeamWickets}
-                  </span>
-                  <span className="text-[11px] sm:text-sm font-semibold text-slate-400">
-                    {teamScoreBase > 0
-                      ? `${Math.floor((initialBalls + currentBallsFaced) / 6)}.${(initialBalls + currentBallsFaced) % 6}`
-                      : `${Math.floor(currentBallsFaced / 6)}.${currentBallsFaced % 6}`
-                    }<span className="text-[9px] sm:text-[11px] font-normal">ov</span>
-                  </span>
-                </div>
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-2xl pointer-events-auto flex flex-col gap-1">
+          {/* MAIN BROADCAST STRIP (Row 1): High-Density TV Scoreboard */}
+          <div className="bg-[#0b121e]/95 border border-[#1e2a3f] rounded-2xl px-2 sm:px-3 py-1 sm:py-1.5 shadow-2xl backdrop-blur-md flex items-center justify-between gap-1 sm:gap-2">
+            {/* Left: Team Code & Match Score */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="px-2 py-0.5 rounded bg-[#0284c7] font-black italic text-[10px] sm:text-xs tracking-wider text-white shadow-sm">
+                {teamCode}
               </div>
-
-              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                <div className="text-[11px] sm:text-sm font-bold text-white tracking-tight whitespace-nowrap truncate">
-                  Need <span className="text-[#ef4444] font-black">{runsRemaining}</span> off <span className="text-white">{ballsRemaining}</span>
-                </div>
-                <div className="px-1.5 sm:px-2 py-0.5 rounded bg-[#ef4444] font-display font-black text-[10px] sm:text-xs text-white tracking-wider whitespace-nowrap shadow-sm flex-shrink-0">
-                  RRR {rrr}
-                </div>
-              </div>
-
-              {/* Over Balls Array on Right of Row 1 */}
-              <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-                {Array.from({ length: allOversHistory.length === 0 ? firstOverTargetBalls : 6 }).map((_, idx) => {
-                  const ballVal = currentOverBalls[idx];
-                  if (!ballVal) {
-                    return (
-                      <div key={idx} className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border border-[#2a374f] bg-transparent" />
-                    );
-                  }
-                  const isSix = ballVal === '6';
-                  const isFour = ballVal === '4';
-                  const isWicket = ballVal === 'W';
-                  const isWide = ballVal === 'wd';
-                  return (
-                    <div
-                      key={idx}
-                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-display font-black text-[8px] sm:text-[10px] text-white shadow-sm ${
-                        isSix ? 'bg-[#9333ea]' : isFour ? 'bg-[#16a34a]' : isWicket ? 'bg-[#dc2626]' : isWide ? 'bg-[#d97706]' : 'bg-[#1e293b] text-slate-300'
-                      }`}
-                    >
-                      {ballVal}
-                    </div>
-                  );
-                })}
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg sm:text-2xl font-display font-black text-white tracking-tight">
+                  {totalTeamScore}-{totalTeamWickets}
+                </span>
+                <span className="text-[10px] sm:text-xs font-semibold text-slate-400">
+                  {oversFormatted}<span className="text-[8px] sm:text-[10px] font-normal">ov</span>
+                </span>
               </div>
             </div>
 
-            {/* ROW 2: Striker, Non-Striker & Bowler with prominent Handedness Badges */}
-            <div className="pt-1 border-t border-[#182337] flex items-center justify-between text-[11px] sm:text-xs text-slate-300 gap-1 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-1.5 sm:gap-2.5 flex-nowrap min-w-0">
-                {/* Striker */}
-                <div className="flex items-center gap-1 bg-slate-900/90 px-1.5 sm:px-2 py-0.5 rounded-lg border border-amber-500/50 flex-shrink-0">
-                  <span className="px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] sm:text-[9px] uppercase tracking-wider">
-                    STRIKE
-                  </span>
-                  <span className="font-bold text-white truncate max-w-[80px] sm:max-w-none">{striker.name}*</span>
-                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-black text-[8px] sm:text-[9px] border border-amber-400/50" title="Batting Hand">
-                    {isLeftHanded ? 'LHB' : 'RHB'}
-                  </span>
-                  {currentWicketsLost > 0 && striker.balls <= 1 && (
-                    <span className="text-[8px] sm:text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-bold">NEW</span>
-                  )}
-                  <span className="font-black text-amber-300 ml-0.5">{striker.runs}</span>
-                  <span className="text-slate-400 text-[9px] sm:text-[10px]">({striker.balls})</span>
-                </div>
+            {/* Center: Chase Equation Pill */}
+            <div className="flex items-center gap-1 min-w-0">
+              <div className="text-[10px] sm:text-xs font-bold text-white tracking-tight whitespace-nowrap truncate bg-red-950/60 border border-red-500/40 px-1.5 sm:px-2 py-0.5 rounded-lg flex items-center gap-1">
+                <span>Need <strong className="text-red-400">{runsRemaining}</strong> in <strong className="text-white">{ballsRemaining}b</strong></span>
+                <span className="px-1 py-0.2 rounded bg-red-600 font-display font-black text-[9px] sm:text-[10px] text-white">
+                  RRR {rrr}
+                </span>
+              </div>
+            </div>
 
-                {/* Non-Striker */}
-                <div className="flex items-center gap-1 bg-slate-900/70 px-1.5 sm:px-2 py-0.5 rounded-lg border border-slate-700/60 flex-shrink-0">
-                  <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-bold text-[8px] sm:text-[9px] uppercase tracking-wider">
-                    NON
-                  </span>
-                  <span className="text-slate-200 font-medium truncate max-w-[70px] sm:max-w-none">{nonStriker.name}</span>
-                  <span className="px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 font-black text-[8px] sm:text-[9px] border border-cyan-500/40" title="Batting Hand">
-                    {isPlayerLeftHanded(nonStriker.name) ? 'LHB' : 'RHB'}
-                  </span>
-                  <span className="font-bold text-slate-300 ml-0.5">{nonStriker.runs}</span>
-                  <span className="text-slate-400 text-[9px] sm:text-[10px]">({nonStriker.balls})</span>
-                </div>
+            {/* Right: Compact Icon Controls (Camera, Field, Role, Controls, Pause) */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Camera Switcher */}
+              <button
+                onClick={handleCameraToggle}
+                className="p-1 sm:px-1.5 sm:py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 font-bold border border-slate-700/80 flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm"
+                title={`Camera: ${cameraAngle === 'BOWLER_END' ? 'Bowler View' : cameraAngle === 'BATSMAN_END' ? 'Batsman View' : 'Broadcast'} (Key C)`}
+              >
+                <Camera className="w-3 h-3 text-cyan-400" />
+                <span className="text-[9px] font-bold hidden sm:inline">
+                  {cameraAngle === 'BOWLER_END' ? 'Bowl' : cameraAngle === 'BATSMAN_END' ? 'Bat' : 'TV'}
+                </span>
+              </button>
+
+              {/* Field Preset Switcher */}
+              <button
+                onClick={() => handleFieldPresetChange(tacticalField === 'attacking' ? 'normal' : tacticalField === 'normal' ? 'defending' : 'attacking')}
+                className={`p-1 sm:px-1.5 sm:py-0.5 rounded-lg border font-black text-[9px] flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm ${
+                  tacticalField === 'attacking'
+                    ? 'bg-red-900/50 border-red-500/60 text-red-300'
+                    : tacticalField === 'defending'
+                    ? 'bg-emerald-900/50 border-emerald-500/60 text-emerald-300'
+                    : 'bg-sky-900/50 border-sky-500/60 text-sky-300'
+                }`}
+                title={`Field: ${tacticalField.toUpperCase()} (Click to toggle)`}
+              >
+                <Shield className="w-3 h-3" />
+                <span className="text-[9px] hidden sm:inline">{tacticalField === 'attacking' ? 'Atk' : tacticalField === 'defending' ? 'Def' : 'Norm'}</span>
+              </button>
+
+              {/* Role Switcher */}
+              <button
+                onClick={handleRoleToggle}
+                className={`p-1 sm:px-1.5 sm:py-0.5 rounded-lg border font-black text-[9px] flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm ${
+                  gameRole === 'BOWLING'
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                    : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                }`}
+                title="Toggle Batting or Bowling Role (Key B)"
+              >
+                <span>{gameRole === 'BOWLING' ? '🎯' : '🏏'}</span>
+              </button>
+
+              {/* On-Screen Touch Controls Visibility Toggle */}
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setShowOnScreenControls(prev => !prev);
+                }}
+                className={`p-1 sm:px-1.5 sm:py-0.5 rounded-lg border font-black text-[9px] flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm ${
+                  showOnScreenControls
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400'
+                }`}
+                title={showOnScreenControls ? "On-Screen Controls Active (Click to Hide)" : "On-Screen Controls Hidden (Click to Show)"}
+              >
+                <span>🎮</span>
+              </button>
+
+              {/* Pause Match */}
+              <button
+                onClick={() => setIsPaused(true)}
+                className="p-1 sm:p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white cursor-pointer active:scale-95 shadow-sm"
+                title="Pause Match"
+              >
+                <Pause className="w-3 h-3 fill-white text-white" />
+              </button>
+            </div>
+          </div>
+
+          {/* MICRO PLAYER & OVER STRIP (Row 2): Translucent sub-strip */}
+          <div className="bg-[#0b121e]/85 border border-[#1e2a3f]/70 rounded-xl px-2 sm:px-2.5 py-0.5 shadow-md backdrop-blur-sm flex items-center justify-between text-[9px] sm:text-[10px] text-slate-300 gap-1 overflow-x-auto no-scrollbar">
+            {/* Players on strike / pitch */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap min-w-0">
+              {/* Striker */}
+              <div className="flex items-center gap-0.5 bg-slate-900/90 px-1.5 py-0.2 rounded border border-amber-500/40 flex-shrink-0">
+                <span className="text-amber-400 font-bold">🏏</span>
+                <span className="font-bold text-white truncate max-w-[65px] sm:max-w-none">{striker.name.split(' ').pop()}*</span>
+                <span className="px-1 py-0.1 rounded bg-amber-500/20 text-amber-300 font-black text-[8px] border border-amber-400/40">
+                  {isLeftHanded ? 'LHB' : 'RHB'}
+                </span>
+                <span className="font-black text-amber-300 ml-0.5">{striker.runs}</span>
+                <span className="text-slate-400 text-[8px]">({striker.balls})</span>
+              </div>
+
+              {/* Non-Striker */}
+              <div className="flex items-center gap-0.5 bg-slate-900/70 px-1.5 py-0.2 rounded border border-slate-700/50 flex-shrink-0">
+                <span className="text-slate-400 font-bold">🏃</span>
+                <span className="text-slate-200 font-medium truncate max-w-[55px] sm:max-w-none">{nonStriker.name.split(' ').pop()}</span>
+                <span className="px-1 py-0.1 rounded bg-slate-800 text-cyan-300 font-black text-[8px] border border-cyan-500/30">
+                  {isPlayerLeftHanded(nonStriker.name) ? 'LHB' : 'RHB'}
+                </span>
+                <span className="font-bold text-slate-300 ml-0.5">{nonStriker.runs}</span>
+                <span className="text-slate-400 text-[8px]">({nonStriker.balls})</span>
               </div>
 
               {/* Bowler */}
-              <div className="flex items-center gap-1 bg-slate-900/90 px-1.5 sm:px-2 py-0.5 rounded-lg border border-red-500/40 flex-shrink-0 ml-1">
-                <span className="px-1 py-0.2 rounded bg-red-600 text-white font-black text-[8px] sm:text-[9px] uppercase tracking-wider">
-                  BOWL
-                </span>
-                <span className="font-bold text-white truncate max-w-[75px] sm:max-w-none">{bowler.name}</span>
-                <span className="text-[8px] sm:text-[9px] px-1 py-0.2 rounded bg-slate-800 text-red-300 font-medium border border-slate-700">
-                  {bowlingArm === 'left' ? 'LA' : 'RA'}
-                </span>
+              <div className="flex items-center gap-0.5 bg-slate-900/90 px-1.5 py-0.2 rounded border border-red-500/30 flex-shrink-0">
+                <span className="text-red-400 font-bold">⚡</span>
+                <span className="font-bold text-white truncate max-w-[60px] sm:max-w-none">{bowler.name.split(' ').pop()}</span>
                 <span className="font-black text-red-400 ml-0.5">{bowler.wickets}-{bowler.runsConceded}</span>
-                <span className="text-slate-400 text-[9px] sm:text-[10px]">({bowler.overs})</span>
+                <span className="text-slate-400 text-[8px]">({bowler.overs})</span>
               </div>
             </div>
 
-            {/* ROW 3: Tactical Mode, Camera Angle & Fielding Presets */}
-            <div className="pt-1 border-t border-[#182337] flex items-center justify-between text-[10px] sm:text-xs text-slate-300 gap-1.5 flex-wrap">
-              <div className="flex items-center gap-1.5">
-                {/* Camera View Switcher */}
-                <button
-                  onClick={handleCameraToggle}
-                  className="px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 font-bold border border-slate-700/80 flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm"
-                  title="Switch Camera View: Bowler End / Batsman End / Broadcast (Key C)"
-                >
-                  <Camera className="w-3 h-3 text-cyan-400" />
-                  <span>
-                    {cameraAngle === 'BOWLER_END' ? 'Bowler View' : cameraAngle === 'BATSMAN_END' ? 'Batsman View' : 'Broadcast'}
-                  </span>
-                </button>
-
-                {/* Role Switcher (Bat / Bowl) */}
-                <button
-                  onClick={handleRoleToggle}
-                  className={`px-2 py-0.5 rounded-lg border font-black text-[9px] sm:text-[10px] flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm ${
-                    gameRole === 'BOWLING'
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                      : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
-                  }`}
-                  title="Toggle Batting or Bowling Role (Key B)"
-                >
-                  <span>{gameRole === 'BOWLING' ? '🎯 BOWLING' : '🏏 BATTING'}</span>
-                </button>
-              </div>
-
-              {/* Fielding Presets (Attacking / Normal / Defending) */}
-              <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
-                <span className="text-[9px] text-slate-400 font-bold uppercase px-1 flex items-center gap-0.5">
-                  <Shield className="w-2.5 h-2.5 text-slate-400" /> Field:
-                </span>
-                <button
-                  onClick={() => handleFieldPresetChange('attacking')}
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
-                    tacticalField === 'attacking'
-                      ? 'bg-red-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Attacking Field: 2 Slips & Close Catchers deployed"
-                >
-                  ⚔️ Attack
-                </button>
-                <button
-                  onClick={() => handleFieldPresetChange('normal')}
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
-                    tacticalField === 'normal' || tacticalField === 'balanced'
-                      ? 'bg-sky-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Normal Field: Standard 30-yard ring & boundary sweepers"
-                >
-                  ⚖️ Normal
-                </button>
-                <button
-                  onClick={() => handleFieldPresetChange('defending')}
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5 cursor-pointer transition-all ${
-                    tacticalField === 'defending' || tacticalField === 'death_overs'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Defending Field: 5 Deep boundary riders guarding the ropes"
-                >
-                  🛡️ Defend
-                </button>
-              </div>
+            {/* Over balls array */}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {Array.from({ length: allOversHistory.length === 0 ? firstOverTargetBalls : 6 }).map((_, idx) => {
+                const ballVal = currentOverBalls[idx];
+                if (!ballVal) {
+                  return (
+                    <div key={idx} className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border border-[#2a374f] bg-transparent" />
+                  );
+                }
+                const isSix = ballVal === '6';
+                const isFour = ballVal === '4';
+                const isWicket = ballVal === 'W';
+                const isWide = ballVal === 'wd';
+                return (
+                  <div
+                    key={idx}
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center font-display font-black text-[7px] sm:text-[9px] text-white shadow-sm ${
+                      isSix ? 'bg-[#9333ea]' : isFour ? 'bg-[#16a34a]' : isWicket ? 'bg-[#dc2626]' : isWide ? 'bg-[#d97706]' : 'bg-[#1e293b] text-slate-300'
+                    }`}
+                  >
+                    {ballVal}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Dedicated Manual Bowling Control Deck (Active in Bowling Mode) */}
         {gameRole === 'BOWLING' && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-35 w-[96%] max-w-lg pointer-events-auto animate-fade-in">
-            <div className="bg-[#0b1220]/95 border-2 border-amber-500/70 rounded-2xl p-2.5 sm:p-3 shadow-2xl backdrop-blur-md flex flex-col gap-2">
+          <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 z-34 w-[96%] max-w-md pointer-events-auto animate-fade-in">
+            <div className="bg-[#0b1220]/95 border border-amber-500/70 rounded-2xl p-2 shadow-2xl backdrop-blur-md flex flex-col gap-1.5">
               {/* Row 1: Active Bowler & Next Bowler Button */}
-              <div className="flex items-center justify-between gap-1.5 text-xs">
-                <div className="flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-1 text-[11px]">
+                <div className="flex items-center gap-1">
                   <span className="text-amber-400 font-black text-xs uppercase tracking-wider flex items-center gap-1">
-                    <Target className="w-3.5 h-3.5" /> {bowlerList[selectedBowlerIndex]?.name || bowler.name}
+                    <Target className="w-3 h-3" /> {bowlerList[selectedBowlerIndex]?.name || bowler.name}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
                     {bowlerList[selectedBowlerIndex]?.arm === 'left' ? 'LA' : 'RA'} {bowlerList[selectedBowlerIndex]?.type?.toUpperCase()}
                   </span>
                 </div>
@@ -2436,15 +2425,15 @@ export default function CricketGame({
                       setManualVariation('outswing');
                     }
                   }}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-cyan-300 border border-slate-700 cursor-pointer"
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[9px] font-bold text-cyan-300 border border-slate-700 cursor-pointer"
                 >
-                  ⇄ Change Bowler
+                  ⇄ Bowler
                 </button>
               </div>
 
               {/* Row 2: Delivery Variations (Pace vs Spin Repertoire) */}
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase mr-1 flex-shrink-0">Type:</span>
+                <span className="text-[9px] text-slate-400 font-bold uppercase mr-0.5 flex-shrink-0">Type:</span>
                 {(isSpinType(bowlerList[selectedBowlerIndex]?.type || bowlerType)
                   ? [
                       { id: 'legbreak', label: 'Leg Break' },
@@ -2471,9 +2460,9 @@ export default function CricketGame({
                       if (v.id === 'yorker') setManualLength('yorker');
                       if (v.id === 'bouncer') setManualLength('short');
                     }}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all ${
+                    className={`px-1.5 py-0.5 rounded-lg text-[9px] font-bold whitespace-nowrap cursor-pointer transition-all ${
                       manualVariation === v.id
-                        ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                         : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800'
                     }`}
                   >
@@ -2483,10 +2472,10 @@ export default function CricketGame({
               </div>
 
               {/* Row 3: Length & Line Buttons */}
-              <div className="flex items-center justify-between gap-1 text-[10px]">
+              <div className="flex items-center justify-between gap-1 text-[9px]">
                 {/* Length */}
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-400 font-bold uppercase">Length:</span>
+                <div className="flex items-center gap-0.5">
+                  <span className="text-slate-400 font-bold uppercase mr-0.5">Len:</span>
                   {['yorker', 'slot', 'good', 'short'].map(l => (
                     <button
                       key={l}
@@ -2495,7 +2484,7 @@ export default function CricketGame({
                         setManualLength(l);
                         setPitchTarget(null);
                       }}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase cursor-pointer ${
                         manualLength === l
                           ? 'bg-cyan-500 text-slate-950 font-black'
                           : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
@@ -2507,8 +2496,8 @@ export default function CricketGame({
                 </div>
 
                 {/* Line */}
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-400 font-bold uppercase">Line:</span>
+                <div className="flex items-center gap-0.5">
+                  <span className="text-slate-400 font-bold uppercase mr-0.5">Line:</span>
                   {['outside_off', 'stumps', 'leg'].map(ln => (
                     <button
                       key={ln}
@@ -2517,7 +2506,7 @@ export default function CricketGame({
                         setManualLine(ln);
                         setPitchTarget(null);
                       }}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase cursor-pointer ${
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase cursor-pointer ${
                         manualLine === ln
                           ? 'bg-emerald-500 text-slate-950 font-black'
                           : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
@@ -2528,22 +2517,160 @@ export default function CricketGame({
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
 
-              {/* Row 4: Big BOWL Action Button & Pitch Target Guidance */}
-              <div className="flex items-center gap-2 pt-1 border-t border-slate-800">
-                <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <span>🎯 Tap pitch to set landing reticle!</span>
-                </div>
+        {/* ================================================================== */}
+        {/* ON-SCREEN MOBILE TOUCH CONTROLS (Ergonomic Thumb Zones)             */}
+        {/* ================================================================== */}
+        {showOnScreenControls && (
+          <>
+            {/* LEFT THUMB ZONE: Crease Footwork Direction Pad (OFF / STANCE / LEG / CHARGE) */}
+            <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-35 pointer-events-auto flex flex-col items-center gap-1 bg-[#0b121e]/92 border border-slate-700/80 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md">
+              {/* ⬆️ CHARGE (Step out down pitch for power loft) */}
+              <button
+                onClick={() => {
+                  engineRef.current?.stepOut();
+                  setBatsmanCreasePosition('step_out');
+                  sound.playClick();
+                  if (hapticsEnabled) haptics.light();
+                  showFootworkAlert('CHARGE DOWN TRACK ⬆️ (+25% POWER)');
+                }}
+                className={`w-28 py-1.5 rounded-xl font-display font-black text-[10px] sm:text-[11px] tracking-wider uppercase flex items-center justify-center gap-1 active:scale-95 transition-all shadow-md cursor-pointer ${
+                  batsmanCreasePosition === 'step_out'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-amber-500/50'
+                    : 'bg-slate-900/90 text-amber-300 border border-amber-500/40 hover:bg-slate-800'
+                }`}
+                title="Step out down pitch (Charge Loft)"
+              >
+                <span>⬆️ CHARGE</span>
+              </button>
+
+              {/* Horizontal Row: ⬅️ OFF | STANCE | LEG ➡️ */}
+              <div className="flex items-center gap-1">
+                {/* ⬅️ OFF (Shuffle Off) */}
                 <button
-                  onClick={handleUserBowl}
-                  className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:brightness-110 active:scale-95 text-slate-950 font-display font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                  onClick={() => {
+                    engineRef.current?.shuffleLeft();
+                    setBatsmanCreasePosition('left');
+                    sound.playClick();
+                    if (hapticsEnabled) haptics.light();
+                    showFootworkAlert('SHUFFLE OFF ⬅️');
+                  }}
+                  className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                    batsmanCreasePosition === 'left'
+                      ? 'bg-cyan-500 text-slate-950 font-black shadow-cyan-500/50'
+                      : 'bg-slate-900/90 text-cyan-300 border border-cyan-500/40 hover:bg-slate-800'
+                  }`}
+                  title="Shuffle Off"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>BOWL (SPACE)</span>
+                  ⬅️ OFF
+                </button>
+
+                {/* STANCE (Reset Crease Stance) */}
+                <button
+                  onClick={() => {
+                    engineRef.current?.resetCrease();
+                    setBatsmanCreasePosition('center');
+                    sound.playClick();
+                    if (hapticsEnabled) haptics.light();
+                    showFootworkAlert('CREASE STANCE ⬇️');
+                  }}
+                  className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                    batsmanCreasePosition === 'center'
+                      ? 'bg-emerald-500 text-slate-950 font-black shadow-emerald-500/50'
+                      : 'bg-slate-900/90 text-emerald-300 border border-emerald-500/40 hover:bg-slate-800'
+                  }`}
+                  title="Reset Stance"
+                >
+                  STANCE
+                </button>
+
+                {/* LEG ➡️ (Shuffle Leg) */}
+                <button
+                  onClick={() => {
+                    engineRef.current?.shuffleRight();
+                    setBatsmanCreasePosition('right');
+                    sound.playClick();
+                    if (hapticsEnabled) haptics.light();
+                    showFootworkAlert('SHUFFLE LEG ➡️');
+                  }}
+                  className={`px-2.5 py-1.5 rounded-xl font-display font-black text-[9px] sm:text-[10px] tracking-wider uppercase active:scale-95 transition-all cursor-pointer ${
+                    batsmanCreasePosition === 'right'
+                      ? 'bg-indigo-500 text-white font-black shadow-indigo-500/50'
+                      : 'bg-slate-900/90 text-indigo-300 border border-indigo-500/40 hover:bg-slate-800'
+                  }`}
+                  title="Shuffle Leg"
+                >
+                  LEG ➡️
                 </button>
               </div>
             </div>
-          </div>
+
+            {/* RIGHT THUMB ZONE: Contextual Action Buttons (RUN & HOLD / SWING BAT / BOWL) */}
+            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-35 pointer-events-auto flex flex-col items-end gap-1.5">
+              {/* If batsmen are running: Dedicated RUN and HOLD buttons */}
+              {engineRef.current?.running?.active ? (
+                <div className="flex items-center gap-1.5 bg-[#0b121e]/95 border border-emerald-500/60 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md">
+                  {/* ✋ HOLD / TURN BACK button */}
+                  <button
+                    onClick={() => {
+                      engineRef.current?.commandHold();
+                      sound.playClick();
+                      if (hapticsEnabled) haptics.medium();
+                      showFootworkAlert('HOLD / TURN BACK ✋');
+                    }}
+                    className="px-3 py-2 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-display font-black text-xs uppercase tracking-wider shadow-lg flex items-center gap-1 cursor-pointer transition-all"
+                    title="Hold Crease or Turn Back"
+                  >
+                    <span>✋ HOLD</span>
+                  </button>
+
+                  {/* 🏃 RUN button (showing current run count) */}
+                  <button
+                    onClick={() => {
+                      const called = engineRef.current?.commandRun();
+                      if (called) {
+                        sound.playRunning();
+                        if (hapticsEnabled) haptics.light();
+                        showFootworkAlert(`RUNNING FOR RUN ${(engineRef.current.running.runsCompleted || 0) + 1} 🏃`);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:brightness-110 active:scale-95 text-slate-950 font-display font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center gap-1 cursor-pointer transition-all animate-pulse"
+                    title="Call Next Run"
+                  >
+                    <span>🏃 RUN</span>
+                    <span className="px-1.5 py-0.2 rounded bg-slate-950 text-emerald-300 font-mono text-[10px]">
+                      {(engineRef.current?.running?.runsCompleted || 0) + 1}
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                /* When not running: SWING BAT button (Batting Mode) or BOWL button (Bowling Mode) */
+                gameRole === 'BATTING' ? (
+                  <button
+                    onClick={() => {
+                      handleBatSwing(null);
+                    }}
+                    className="py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:brightness-110 active:scale-95 text-slate-950 font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-xl shadow-amber-500/40 border border-amber-300 flex items-center gap-1.5 cursor-pointer transition-all"
+                    title="Swing Bat (or Tap Pitch)"
+                  >
+                    <span>🏏 SWING BAT</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleUserBowl}
+                    className="py-2.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 hover:brightness-110 active:scale-95 text-white font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-xl shadow-cyan-500/40 border border-cyan-300 flex items-center gap-1.5 cursor-pointer transition-all"
+                    title="Deliver Ball (SPACE)"
+                  >
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    <span>BOWL</span>
+                  </button>
+                )
+              )}
+            </div>
+          </>
         )}
 
         {/* Free Hit Pulsing Badge */}
@@ -2685,115 +2812,125 @@ export default function CricketGame({
         )}
 
         {/* ================================================================== */}
-        {/* 5. BOTTOM-LEFT CONTROLS & RADAR MINI-MAP (Mobile Responsive)       */}
+        {/* 5. RADAR MINI-MAP & AUDIO CONTROLS (Discreet Collapsible Dock)      */}
         {/* ================================================================== */}
-        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-30 flex flex-col items-start gap-2 pointer-events-auto">
+        <div className="absolute bottom-20 left-3 sm:bottom-24 sm:left-4 z-30 flex flex-col items-start gap-1.5 pointer-events-auto">
           <div className="flex items-center gap-1.5">
-            {/* Circular Pause Button */}
+            {/* Radar Mini-Map Toggle Button */}
             <button
-              onClick={() => setIsPaused(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-90 transition-all cursor-pointer backdrop-blur-sm"
-              title="Pause Match"
+              onClick={() => {
+                sound.playClick();
+                setIsRadarExpanded(prev => !prev);
+              }}
+              className={`px-2 py-1 rounded-xl border text-[10px] font-bold flex items-center gap-1 shadow-lg backdrop-blur-sm cursor-pointer active:scale-95 transition-all ${
+                isRadarExpanded
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                  : 'bg-[#0c1424]/90 border-slate-700/80 text-slate-300 hover:bg-slate-800'
+              }`}
+              title="Toggle Field Radar"
             >
-              <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
+              <span>RADAR</span>
             </button>
 
             {/* Circular Sound Button */}
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-xl active:scale-90 transition-all cursor-pointer backdrop-blur-sm"
+              className="w-7 h-7 rounded-xl bg-[#0c1424]/90 border border-slate-700/80 hover:bg-slate-800 flex items-center justify-center text-white shadow-lg active:scale-90 transition-all cursor-pointer backdrop-blur-sm"
               title={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />}
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-white" />}
             </button>
           </div>
 
-          {/* Radar Mini-Map (Scaled responsively for mobile) */}
-          <div className="w-20 h-20 sm:w-26 sm:h-26 rounded-2xl bg-[#0c1424]/90 border border-slate-700/90 p-1 shadow-2xl relative flex items-center justify-center overflow-hidden backdrop-blur-sm">
-            <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
-              {/* Inner 30-Yard Circle */}
-              <div className="w-[50%] h-[50%] rounded-full border border-dashed border-white/60 pointer-events-none" />
-              {/* Center Pitch Turf */}
-              <div className="w-1.5 h-4 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
+          {/* Radar Mini-Map (Expanded View) */}
+          {isRadarExpanded && (
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#0c1424]/95 border border-slate-700/90 p-1 shadow-2xl relative flex items-center justify-center overflow-hidden backdrop-blur-md animate-fade-in">
+              <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
+                {/* Inner 30-Yard Circle */}
+                <div className="w-[50%] h-[50%] rounded-full border border-dashed border-white/60 pointer-events-none" />
+                {/* Center Pitch Turf */}
+                <div className="w-1.5 h-4 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
 
-              {/* Fielders on Radar (Red Dots) */}
-              {fieldersRef.current?.fielders.map((f, idx) => {
-                const radarRadius = 32;
-                const engine = engineRef.current;
-                const rx = engine ? ((f.x - engine.cx) / engine.boundaryRadius) * radarRadius : 0;
-                const ry = engine ? ((f.y - engine.cy) / engine.boundaryRadius) * radarRadius : 0;
-                return (
+                {/* Fielders on Radar (Red Dots) */}
+                {fieldersRef.current?.fielders.map((f, idx) => {
+                  const radarRadius = 32;
+                  const engine = engineRef.current;
+                  const rx = engine ? ((f.x - engine.cx) / engine.boundaryRadius) * radarRadius : 0;
+                  const ry = engine ? ((f.y - engine.cy) / engine.boundaryRadius) * radarRadius : 0;
+                  return (
+                    <div
+                      key={idx}
+                      className="w-1.5 h-1.5 rounded-full bg-red-500 absolute shadow-sm shadow-red-500 pointer-events-none"
+                      style={{ transform: `translate(${rx}px, ${ry}px)` }}
+                    />
+                  );
+                })}
+
+                {/* Striker Batsman on Radar (Yellow Dot) */}
+                <div
+                  className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-sm pointer-events-none"
+                  style={{
+                    transform: `translate(${
+                      engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32 : 0
+                    }px, ${
+                      engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32 : 0
+                    }px)`
+                  }}
+                />
+
+                {/* Cricket Ball on Radar */}
+                {engineRef.current?.ball.inPlay && (
                   <div
-                    key={idx}
-                    className="w-1.5 h-1.5 rounded-full bg-red-500 absolute shadow-sm shadow-red-500 pointer-events-none"
-                    style={{ transform: `translate(${rx}px, ${ry}px)` }}
+                    className="w-1.5 h-1.5 rounded-full bg-[#facc15] absolute shadow-md shadow-yellow-400 pointer-events-none animate-ping"
+                    style={{
+                      transform: `translate(${
+                        ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32
+                      }px, ${
+                        ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32
+                      }px)`
+                    }}
                   />
-                );
-              })}
+                )}
 
-              {/* Striker Batsman on Radar (Yellow Dot) */}
-              <div
-                className="w-2 h-2 rounded-full bg-yellow-400 absolute shadow-sm pointer-events-none"
-                style={{
-                  transform: `translate(${
-                    engineRef.current ? ((engineRef.current.batsman.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32 : 0
-                  }px, ${
-                    engineRef.current ? ((engineRef.current.batsman.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32 : 0
-                  }px)`
-                }}
-              />
-
-              {/* Cricket Ball on Radar */}
-              {engineRef.current?.ball.inPlay && (
-                <div
-                  className="w-1.5 h-1.5 rounded-full bg-[#facc15] absolute shadow-md shadow-yellow-400 pointer-events-none animate-ping"
-                  style={{
-                    transform: `translate(${
-                      ((engineRef.current.ball.x - engineRef.current.cx) / engineRef.current.boundaryRadius) * 32
-                    }px, ${
-                      ((engineRef.current.ball.y - engineRef.current.cy) / engineRef.current.boundaryRadius) * 32
-                    }px)`
-                  }}
-                />
-              )}
-
-              {/* Camera Viewport Wireframe */}
-              {engineRef.current && (
-                <div
-                  className="absolute border border-yellow-400/80 bg-yellow-400/10 pointer-events-none rounded-[1px]"
-                  style={{
-                    width: `${Math.min(40, Math.max(16, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
-                    height: `${Math.min(40, Math.max(16, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
-                    transform: `translate(${
-                      (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 32
-                    }px, ${
-                      (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 32
-                    }px)`
-                  }}
-                />
-              )}
+                {/* Camera Viewport Wireframe */}
+                {engineRef.current && (
+                  <div
+                    className="absolute border border-yellow-400/80 bg-yellow-400/10 pointer-events-none rounded-[1px]"
+                    style={{
+                      width: `${Math.min(40, Math.max(16, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
+                      height: `${Math.min(40, Math.max(16, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
+                      transform: `translate(${
+                        (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 32
+                      }px, ${
+                        (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 32
+                      }px)`
+                    }}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ================================================================== */}
-        {/* 6. RUNNING INTERFACE CAMERA (Shown ONLY when batsmen are sprinting)*/}
+        {/* 6. RUNNING INTERFACE TRACK (Shown above Action Buttons when running)*/}
         {/* ================================================================== */}
         {runningState?.active && (
-          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 pointer-events-none animate-in fade-in duration-150">
-            <div className="bg-[#0b121e]/90 border border-emerald-500/60 rounded-2xl p-2.5 flex flex-col items-center shadow-2xl backdrop-blur-md">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-xl font-black text-amber-300 font-display">{runningState.runsCompleted}</span>
-                <span className="text-[10px] font-black uppercase tracking-wider text-white">RUNS</span>
+          <div className="absolute bottom-16 right-3 sm:bottom-20 sm:right-4 z-30 pointer-events-none animate-in fade-in duration-150">
+            <div className="bg-[#0b121e]/90 border border-emerald-500/60 rounded-2xl p-2 flex flex-col items-center shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-lg font-black text-amber-300 font-display">{runningState.runsCompleted}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-white">RUNS</span>
               </div>
 
               {/* Mini pitch camera track with animated runner dots */}
-              <div className="w-16 h-20 bg-[#142e13] rounded-lg relative flex flex-col justify-between items-center py-1.5 px-1 border border-emerald-600/40 overflow-hidden my-0.5">
-                <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
-                <div className="text-[7px] font-mono font-bold text-amber-500">TTT</div>
+              <div className="w-14 h-16 bg-[#142e13] rounded-lg relative flex flex-col justify-between items-center py-1 px-1 border border-emerald-600/40 overflow-hidden my-0.5">
+                <div className="text-[6px] font-mono font-bold text-amber-500">TTT</div>
+                <div className="text-[6px] font-mono font-bold text-amber-500">TTT</div>
                 {/* Striker runner dot */}
                 <div
-                  className="absolute w-3 h-3 rounded-full bg-amber-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
+                  className="absolute w-2.5 h-2.5 rounded-full bg-amber-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
                   style={{
                     top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '12%' : '72%',
                     left: '20%'
@@ -2801,7 +2938,7 @@ export default function CricketGame({
                 />
                 {/* Non-striker runner dot */}
                 <div
-                  className="absolute w-3 h-3 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
+                  className="absolute w-2.5 h-2.5 rounded-full bg-cyan-400 border border-white flex items-center justify-center shadow-md transition-all duration-300"
                   style={{
                     top: ((runningState?.runsCompleted || 0) % 2 === 1) ? '72%' : '12%',
                     right: '20%'
@@ -2809,8 +2946,8 @@ export default function CricketGame({
                 />
               </div>
 
-              <div className="text-[8px] font-bold text-emerald-400/90 mt-1 uppercase tracking-wider">
-                TAP: RUN • SWIPE ↓: HOLD
+              <div className="text-[7.5px] font-bold text-emerald-400/90 mt-0.5 uppercase tracking-wider">
+                TAP RUN OR HOLD BELOW
               </div>
             </div>
           </div>
