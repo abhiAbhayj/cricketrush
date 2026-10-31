@@ -48,7 +48,7 @@ const SHOT_TYPES = [
   { id: 'scoop', label: 'Scoop Ramp', key: 'D', aim: 'straight', icon: '🎯', desc: 'Ramps over keeper' }
 ];
 
-import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, getJerseyData, TEAMS, isPlayerLeftHanded } from '../game/TeamData';
+import { GLOBAL_WORLD_BOWLERS, GLOBAL_BATSMEN_LINEUP, getJerseyColor, getJerseyData, TEAMS, getTeam, isPlayerLeftHanded } from '../game/TeamData';
 
 export const WORLD_BOWLERS = GLOBAL_WORLD_BOWLERS;
 export const DEFAULT_BATSMEN_LINEUP = GLOBAL_BATSMEN_LINEUP;
@@ -66,11 +66,11 @@ export default function CricketGame({
   const fieldersRef = useRef(null);
   const animFrameRef = useRef(null);
 
-  // Teams & Match Structure Setup
+  // Teams & Match Structure Setup - Ultra-defensive resolution
   const userTeamCode = matchConfig?.userTeamCode || matchConfig?.teamCode || 'IND';
   const oppTeamCode = matchConfig?.oppTeamCode || matchConfig?.bowlingTeamCode || (userTeamCode === 'AUS' ? 'IND' : 'AUS');
-  const userTeam = TEAMS[userTeamCode] || TEAMS.IND;
-  const oppTeam = TEAMS[oppTeamCode] || TEAMS.AUS;
+  const userTeam = getTeam(userTeamCode);
+  const oppTeam = getTeam(oppTeamCode);
 
   // Match Toss, Innings & Game Role States
   const [showTossModal, setShowTossModal] = useState(matchConfig?.showToss ?? true);
@@ -93,13 +93,13 @@ export default function CricketGame({
   // Dynamic active teams based on gameRole
   const activeBattingTeam = (gameRole === 'BATTING') ? userTeam : oppTeam;
   const activeBowlingTeam = (gameRole === 'BOWLING') ? userTeam : oppTeam;
-  const teamCode = activeBattingTeam.code || userTeamCode;
+  const teamCode = activeBattingTeam?.code || userTeam?.code || userTeamCode || 'IND';
 
-  const battingLineup = (activeBattingTeam.batsmen && activeBattingTeam.batsmen.length > 0)
+  const battingLineup = (activeBattingTeam?.batsmen && activeBattingTeam.batsmen.length > 0)
     ? activeBattingTeam.batsmen
     : (matchConfig?.battingLineup || DEFAULT_BATSMEN_LINEUP);
 
-  const bowlerList = (activeBowlingTeam.bowlers && activeBowlingTeam.bowlers.length > 0)
+  const bowlerList = (activeBowlingTeam?.bowlers && activeBowlingTeam.bowlers.length > 0)
     ? activeBowlingTeam.bowlers
     : (matchConfig?.bowlerList || WORLD_BOWLERS);
 
@@ -1309,7 +1309,7 @@ export default function CricketGame({
           overByOverHistory: finalOversHistory,
           battingScorecard: finalBattingScorecard,
           bowlingScorecard: finalBowlingScorecard,
-          teamCode: activeBattingTeam.code,
+          teamCode: activeBattingTeam?.code || teamCode || 'IND',
           teamScoreBase,
           teamWicketsBase,
           initialBalls,
@@ -2075,8 +2075,8 @@ export default function CricketGame({
     const defaultFieldKit = { color: '#ffcd00', secondaryColor: '#00573d', pantsColor: '#004225', stripeColor: '#00573d' };
 
     // Dynamic Team Kits: Perfectly matches current batting team and current fielding team!
-    const battingKit = getJerseyData(activeBattingTeam.jersey?.id || activeBattingTeam.code) || defaultBatKit;
-    const fieldingKit = getJerseyData(activeBowlingTeam.jersey?.id || activeBowlingTeam.code) || defaultFieldKit;
+    const battingKit = getJerseyData(activeBattingTeam?.jersey?.id || activeBattingTeam?.code || teamCode) || defaultBatKit;
+    const fieldingKit = getJerseyData(activeBowlingTeam?.jersey?.id || activeBowlingTeam?.code || oppTeam?.code || 'AUS') || defaultFieldKit;
     const isUserBowling = (gameRole === 'BOWLING');
     const battingJerseyColor = battingKit?.color || '#0066b2';
     const fieldingJerseyColor = fieldingKit?.color || '#ffcd00';
@@ -3277,9 +3277,9 @@ export default function CricketGame({
         {/* ================================================================== */}
         {showTossModal && (
           <MatchTossModal
-            userTeamCode={userTeam.code}
-            oppTeamCode={oppTeam.code}
-            stadiumName={stadium.name || 'Colosseum Mega Arena'}
+            userTeamCode={userTeam?.code || userTeamCode || 'IND'}
+            oppTeamCode={oppTeam?.code || oppTeamCode || 'AUS'}
+            stadiumName={stadium?.name || 'Colosseum Mega Arena'}
             matchBalls={matchAllowedBalls}
             onTossComplete={handleTossComplete}
             onSkip={() => {
@@ -3299,8 +3299,8 @@ export default function CricketGame({
           selectedIndex={selectedBowlerIndex}
           onSelectBowler={handleSelectBowler}
           bowlingScorecard={bowlingScorecardRef.current}
-          teamName={activeBowlingTeam.name}
-          teamCode={activeBowlingTeam.code}
+          teamName={activeBowlingTeam?.name || 'Bowling Team'}
+          teamCode={activeBowlingTeam?.code || 'BOWL'}
         />
 
         {/* ================================================================== */}
@@ -3308,15 +3308,15 @@ export default function CricketGame({
         {/* ================================================================== */}
         <InningsBreakModal
           isOpen={showInningsBreak}
-          firstInningsTeamCode={activeBattingTeam.code}
-          firstInningsTeamName={activeBattingTeam.name}
+          firstInningsTeamCode={activeBattingTeam?.code || teamCode}
+          firstInningsTeamName={activeBattingTeam?.name || '1st Innings Team'}
           firstInningsScore={firstInningsData?.score ?? currentRunsScored}
           firstInningsWickets={firstInningsData?.wickets ?? currentWicketsLost}
           firstInningsOvers={firstInningsData?.overs ?? `${Math.floor(currentBallsFaced / 6)}.${currentBallsFaced % 6}`}
           targetRuns={(firstInningsData?.score ?? currentRunsScored) + 1}
           ballsAllowed={totalBalls}
-          secondInningsTeamCode={activeBowlingTeam.code}
-          secondInningsTeamName={activeBowlingTeam.name}
+          secondInningsTeamCode={activeBowlingTeam?.code || 'OPP'}
+          secondInningsTeamName={activeBowlingTeam?.name || 'Chasing Team'}
           nextRole={gameRole === 'BOWLING' ? 'BATTING' : 'BOWLING'}
           onStartSecondInnings={handleStartSecondInnings}
         />

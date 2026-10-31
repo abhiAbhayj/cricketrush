@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, Home, AlertTriangle } from 'lucide-react';
+import { RotateCcw, Home, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -29,6 +29,10 @@ export default class ErrorBoundary extends React.Component {
     }
   };
 
+  handleReload = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -40,20 +44,27 @@ export default class ErrorBoundary extends React.Component {
             MATCH DISPLAY GLITCH
           </h2>
           <p className="text-slate-400 max-w-md text-sm mb-6">
-            The match scene encountered a temporary display glitch. Tap Retry to restart the match or return to the main menu.
+            The match scene encountered a temporary display glitch. Tap Retry to restart the match, Reload to refresh, or return to the main menu.
           </p>
           {this.state.error && (
             <div className="bg-black/40 border border-slate-800 rounded-lg p-3 max-w-md text-xs font-mono text-rose-400 mb-6 break-all">
               {this.state.error.message || String(this.state.error)}
             </div>
           )}
-          <div className="flex gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={this.handleRetry}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/40 active:scale-95 transition-all"
             >
               <RotateCcw className="w-4 h-4" />
               Retry Match
+            </button>
+            <button
+              onClick={this.handleReload}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 font-bold text-sm border border-amber-500/50 active:scale-95 transition-all"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reload Page
             </button>
             <button
               onClick={this.handleHome}

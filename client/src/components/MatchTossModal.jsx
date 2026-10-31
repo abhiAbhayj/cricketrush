@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Coins, Zap, Shield, Sparkles, Check, ChevronRight } from 'lucide-react';
-import { TEAMS } from '../game/TeamData';
+import { TEAMS, getTeam } from '../game/TeamData';
 import { sound } from '../game/SoundEffects';
 
 export default function MatchTossModal({
@@ -17,8 +17,8 @@ export default function MatchTossModal({
   const [tossWinner, setTossWinner] = useState(null); // 'USER' or 'OPP'
   const [oppDecision, setOppDecision] = useState(null); // 'BAT' or 'BOWL'
 
-  const userTeam = TEAMS[userTeamCode] || TEAMS.IND;
-  const oppTeam = TEAMS[oppTeamCode] || TEAMS.AUS;
+  const userTeam = getTeam(userTeamCode);
+  const oppTeam = getTeam(oppTeamCode);
 
   const userCaptain = userTeam.batsmen?.[0] || 'Captain';
   const oppCaptain = oppTeam.batsmen?.[0] || 'Opposition Captain';

@@ -23,6 +23,7 @@ export default function App() {
   const [settings, setSettings] = useState(storageService.getSettings());
   const [activeMatchConfig, setActiveMatchConfig] = useState(null);
   const [lastMatchResult, setLastMatchResult] = useState(null);
+  const [matchSessionKey, setMatchSessionKey] = useState(0);
 
   // Check URL hash for shared challenge links (e.g. #challenge=CHASE6)
   useEffect(() => {
@@ -183,10 +184,10 @@ export default function App() {
       bowlerList: GLOBAL_WORLD_BOWLERS,
       userTeamCode: config?.userTeamCode || config?.teamCode || 'IND',
       oppTeamCode: config?.oppTeamCode || config?.bowlingTeamCode || 'AUS',
-      teamCode: 'IND',
-      teamJersey: 'jersey_ind',
-      bowlingTeamCode: 'AUS',
-      bowlingJersey: 'jersey_aus',
+      teamCode: config?.userTeamCode || config?.teamCode || 'IND',
+      teamJersey: config?.teamJersey || 'jersey_ind',
+      bowlingTeamCode: config?.oppTeamCode || config?.bowlingTeamCode || 'AUS',
+      bowlingJersey: config?.bowlingJersey || 'jersey_aus',
       teamScoreBase: 0,
       teamWicketsBase: 0,
       initialBalls: 0,
@@ -194,6 +195,7 @@ export default function App() {
       showToss: config?.showToss ?? false,
       ...config
     };
+    setMatchSessionKey(k => k + 1);
     setActiveMatchConfig(fullConfig);
     setLastMatchResult(null);
     setCurrentScreen('GAME');
@@ -326,10 +328,17 @@ export default function App() {
 
       {currentScreen === 'GAME' && (
         <ErrorBoundary
-          onRetry={() => setActiveMatchConfig(prev => ({ ...prev }))}
-          onHome={() => setCurrentScreen('MENU')}
+          onRetry={() => {
+            setMatchSessionKey(k => k + 1);
+            setActiveMatchConfig(prev => ({ ...prev, _ts: Date.now() }));
+          }}
+          onHome={() => {
+            setMatchSessionKey(k => k + 1);
+            setCurrentScreen('MENU');
+          }}
         >
           <CricketGame
+            key={`match-${matchSessionKey}-${activeMatchConfig?.userTeamCode || activeMatchConfig?.teamCode || 'IND'}`}
             matchConfig={activeMatchConfig}
             onGameOver={handleGameOver}
             onBackToMenu={() => setCurrentScreen('MENU')}

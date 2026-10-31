@@ -1709,9 +1709,13 @@ export const GLOBAL_BATSMEN_LINEUP = [
   'Suryakumar Yadav'
 ];
 
-export function getTeam(teamCode) {
-  if (!teamCode) return TEAMS.IND;
-  const upper = teamCode.toUpperCase();
+export function getTeam(teamIdentifier) {
+  if (!teamIdentifier) return TEAMS.IND;
+  if (typeof teamIdentifier === 'object') {
+    if (teamIdentifier.batsmen && teamIdentifier.bowlers && teamIdentifier.code) return teamIdentifier;
+    teamIdentifier = teamIdentifier.code || teamIdentifier.id || teamIdentifier.teamCode || teamIdentifier.name || 'IND';
+  }
+  const upper = String(teamIdentifier).trim().toUpperCase();
   if (upper === 'NEPAL') return TEAMS.NEP;
   return TEAMS[upper] || TEAMS.IND;
 }
