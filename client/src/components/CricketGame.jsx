@@ -103,6 +103,7 @@ export default function CricketGame({
   const initialBowler = bowlerList[initialBowlerIndex] || bowlerList[0] || WORLD_BOWLERS[0];
   const firstOverTargetBalls = (matchAllowedBalls % 6 === 0) ? 6 : (matchAllowedBalls % 6);
 
+  const [selectedBowlerIndex, setSelectedBowlerIndex] = useState(initialBowlerIndex);
   const [bowlerType, setBowlerType] = useState(initialBowler.type || matchConfig?.bowlerType);
   const [bowlingArm, setBowlingArm] = useState(initialBowler.arm || matchConfig?.bowlingArm);
   const [bowlingAngle, setBowlingAngle] = useState(initialBowler.angle || matchConfig?.bowlingAngle);
@@ -112,7 +113,7 @@ export default function CricketGame({
   const [showMatchIntro, setShowMatchIntro] = useState(true);
 
   // Broadcast Camera & Tactical Fielding Controls
-  const [cameraAngle, setCameraAngle] = useState('BOWLER_END');
+  const [cameraAngle, setCameraAngle] = useState('BATSMAN_END');
   const [tacticalField, setTacticalField] = useState(isDeathOvers ? 'defending' : 'normal'); // 'normal', 'attacking', 'defending'
   const [userLockedField, setUserLockedField] = useState(false);
   const [showOnScreenControls, setShowOnScreenControls] = useState(true);
@@ -1249,15 +1250,15 @@ export default function CricketGame({
   const handleCameraToggle = () => {
     sound.playClick();
     setCameraAngle(prev => {
-      let next = 'BOWLER_END';
-      if (prev === 'BOWLER_END') next = 'BATSMAN_END';
-      else if (prev === 'BATSMAN_END') next = 'BROADCAST';
-      else next = 'BOWLER_END';
+      let next = 'BATSMAN_END';
+      if (prev === 'BATSMAN_END') next = 'BOWLER_END';
+      else if (prev === 'BOWLER_END') next = 'BROADCAST';
+      else next = 'BATSMAN_END';
 
-      const label = next === 'BOWLER_END'
-        ? '🎯 CAMERA: BOWLER END VIEW (BEHIND BOWLER)'
-        : next === 'BATSMAN_END'
-          ? '🏏 CAMERA: BATSMAN END VIEW (BEHIND STRIKER)'
+      const label = next === 'BATSMAN_END'
+        ? '🏏 CAMERA: BATSMAN END VIEW (BEHIND STRIKER)'
+        : next === 'BOWLER_END'
+          ? '🎯 CAMERA: BOWLER END VIEW (BEHIND BOWLER)'
           : '📡 CAMERA: BROADCAST TRACKING VIEW';
       setFootworkNotice(label);
       setTimeout(() => setFootworkNotice(null), 2500);
@@ -1275,13 +1276,6 @@ export default function CricketGame({
     setBowlerAction(b.action || 'high_arm');
 
     const isSpin = isSpinType(b.type);
-    if (isSpin) {
-      setManualVariation('legbreak');
-      setManualSpeedKmh(82);
-    } else {
-      setManualVariation('outswing');
-      setManualSpeedKmh(138);
-    }
 
     const engine = engineRef.current;
     if (engine) {
@@ -1298,49 +1292,67 @@ export default function CricketGame({
 
   const triggerNextDelivery = () => {
     if (gameState === 'FINISHED' || isPaused) return;
+    const engine = engineRef.current;
+    if (!engine) {
+      setTimeout(() => triggerNextDelivery(), 100);
+      return;
+    }
+
     setFeedback(null);
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
     setGameState('BOWLING');
 
-    const engine = engineRef.current;
-    if (engine) {
-      const activeBowlerName = bowlerRef.current?.name || bowler.name;
-      const activeBowlerData = bowlerList[selectedBowlerIndex] || bowlerList.find(b => b.name === activeBowlerName || b.shortName === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
+    const activeBowlerName = bowlerRef.current?.name || bowler.name;
+    const activeBowlerData = bowlerList[selectedBowlerIndex] || bowlerList.find(b => b.name === activeBowlerName || b.shortName === activeBowlerName) || bowlerList[0] || WORLD_BOWLERS[0];
 
-      // Ensure engine has active bowler's appearance and action
-      engine.bowler.skinTone = activeBowlerData.skinTone || '#c68656';
-      engine.bowler.faceStyle = activeBowlerData.faceStyle || 'classic';
-      engine.bowler.actionType = activeBowlerData.action || 'high_arm';
-      engine.bowler.armSide = activeBowlerData.arm || 'right';
+    // Ensure engine has active bowler's appearance and action
+    engine.bowler.skinTone = activeBowlerData.skinTone || '#c68656';
+    engine.bowler.faceStyle = activeBowlerData.faceStyle || 'classic';
+    engine.bowler.actionType = activeBowlerData.action || 'high_arm';
+    engine.bowler.armSide = activeBowlerData.arm || 'right';
 
-      const deliveryPayload = {
-        bowlerType: activeBowlerData.type || bowlerType,
-        bowlingArm: activeBowlerData.arm || bowlingArm || 'right',
-        bowlingAngle: activeBowlerData.angle || bowlingAngle || 'over',
-        bowlerAction: activeBowlerData.action || bowlerAction || 'high_arm',
-        action: activeBowlerData.action || bowlerAction || 'high_arm',
-        skinTone: activeBowlerData.skinTone || '#c68656',
-        faceStyle: activeBowlerData.faceStyle || 'classic',
-        ...(manualDeliveryConfig || {})
-      };
+    const deliveryPayload = {
+      bowlerType: activeBowlerData.type || bowlerType,
+      bowlingArm: activeBowlerData.arm || bowlingArm || 'right',
+      bowlingAngle: activeBowlerData.angle || bowlingAngle || 'over',
+      bowlerAction: activeBowlerData.action || bowlerAction || 'high_arm',
+      action: activeBowlerData.action || bowlerAction || 'high_arm',
+      skinTone: activeBowlerData.skinTone || '#c68656',
+      faceStyle: activeBowlerData.faceStyle || 'classic'
+    };
 
-      const deliveryInfo = engine.startDelivery(deliveryPayload, 1.0);
-      sound.playBowlerRelease();
-      if (deliveryInfo) {
-        setDeliveryVariationNotice(deliveryInfo);
-        const armLabel = (deliveryInfo.bowlingArm === 'left' ? 'LA' : 'RA');
-        const angleLabel = deliveryInfo.bowlingAngle === 'around' ? 'Around' : 'Over';
-        const variationLine = `${activeBowlerData.name || activeBowlerName} (${armLabel} ${angleLabel}) bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
-        setCommentary(variationLine);
-      }
+    const deliveryInfo = engine.startDelivery(deliveryPayload, 1.0);
+    sound.playBowlerRelease();
+    if (deliveryInfo) {
+      setDeliveryVariationNotice(deliveryInfo);
+      const armLabel = (deliveryInfo.bowlingArm === 'left' ? 'LA' : 'RA');
+      const angleLabel = deliveryInfo.bowlingAngle === 'around' ? 'Around' : 'Over';
+      const variationLine = `${activeBowlerData.name || activeBowlerName} (${armLabel} ${angleLabel}) bowls: ${deliveryInfo.label} (${deliveryInfo.speedKmh} km/h, ${deliveryInfo.length.toUpperCase()})`;
+      setCommentary(variationLine);
     }
+  };
+
+  const dismissMatchIntroAndStart = () => {
+    setShowMatchIntro(false);
+    sound.playClick();
+    setTimeout(() => {
+      triggerNextDelivery();
+    }, 200);
   };
 
   // Bat Swing Action with Dynamic Shot Detection & Timing Meter
   const handleBatSwing = (touchX = null) => {
     const engine = engineRef.current;
-    if (!engine || engine.ball.state !== 'BOWLED' || engine.batsman.isSwinging) return;
+    if (!engine) return;
+
+    // If bowler hasn't bowled or is idle at top of mark, tapping immediately commands bowler to bowl!
+    if (!engine.bowler.isBowling && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+      triggerNextDelivery();
+      return;
+    }
+
+    if (engine.ball.state !== 'BOWLED' || engine.batsman.isSwinging) return;
 
     const swingResult = engine.swingBat(touchX);
 
@@ -1402,11 +1414,6 @@ export default function CricketGame({
       if (e.code === 'KeyC' || e.code === 'KeyV') {
         e.preventDefault();
         handleCameraToggle();
-        return;
-      }
-      if (e.code === 'KeyB') {
-        e.preventDefault();
-        handleRoleToggle();
         return;
       }
       if (e.code === 'KeyF') {
@@ -1490,14 +1497,15 @@ export default function CricketGame({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Initial delivery
+  // Initial delivery & auto-commence match
   useEffect(() => {
     if (fieldersRef.current) {
       fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'powerplay', true, isLeftHanded);
     }
     const timer = setTimeout(() => {
+      setShowMatchIntro(false);
       triggerNextDelivery();
-    }, 1000);
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -2363,7 +2371,7 @@ export default function CricketGame({
         {/* TV Broadcast Match Intro Card */}
         {showMatchIntro && (
           <div
-            onClick={() => setShowMatchIntro(false)}
+            onClick={dismissMatchIntroAndStart}
             className="absolute inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer animate-fade-in"
           >
             <div className="bg-[#0b1220] border-2 border-amber-400/60 rounded-3xl p-4 sm:p-5 max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col gap-2.5 sm:gap-3.5 text-center transform transition-transform animate-scale-up">
@@ -2442,8 +2450,7 @@ export default function CricketGame({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  sound.playClick();
-                  setShowMatchIntro(false);
+                  dismissMatchIntroAndStart();
                 }}
                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 active:scale-98 text-slate-950 font-black text-sm uppercase tracking-wider shadow-lg transition-all"
               >

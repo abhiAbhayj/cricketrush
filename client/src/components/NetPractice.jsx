@@ -302,23 +302,25 @@ export default function NetPractice({ onBack, profile, settings }) {
   }, [autoBowl]);
 
   const triggerDelivery = (overrideConfig = null) => {
+    const engine = engineRef.current;
+    if (!engine) {
+      setTimeout(() => triggerDelivery(overrideConfig), 100);
+      return;
+    }
     setFeedback(null);
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
 
     const cfg = overrideConfig || configRef.current;
-    const engine = engineRef.current;
-    if (engine) {
-      engine.startDelivery({
-        bowlerType: cfg.bowlerStyle,
-        length: cfg.deliveryLength,
-        line: cfg.deliveryLine,
-        speedKmh: cfg.speedKmh,
-        bowlingArm: cfg.bowlingArm,
-        bowlingAngle: cfg.bowlingAngle
-      }, 1.0);
-      sound.playBowlerRelease();
-    }
+    engine.startDelivery({
+      bowlerType: cfg.bowlerStyle,
+      length: cfg.deliveryLength,
+      line: cfg.deliveryLine,
+      speedKmh: cfg.speedKmh,
+      bowlingArm: cfg.bowlingArm,
+      bowlingAngle: cfg.bowlingAngle
+    }, 1.0);
+    sound.playBowlerRelease();
   };
 
   const updateDeliveryConfig = (patch) => {
@@ -338,7 +340,15 @@ export default function NetPractice({ onBack, profile, settings }) {
   // Bat Swing Action in Nets with Dynamic Shot Detection
   const handleBatSwing = (touchX = null) => {
     const engine = engineRef.current;
-    if (!engine || engine.ball.state !== 'BOWLED' || engine.batsman.isSwinging) return;
+    if (!engine) return;
+
+    // If bowler hasn't bowled or is idle at top of mark, tapping immediately commands bowler to bowl!
+    if (!engine.bowler.isBowling && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+      triggerDelivery();
+      return;
+    }
+
+    if (engine.ball.state !== 'BOWLED' || engine.batsman.isSwinging) return;
 
     const swingResult = engine.swingBat(touchX);
 
