@@ -93,6 +93,7 @@ export default function CricketGame({
   // Dynamic active teams based on gameRole
   const activeBattingTeam = (gameRole === 'BATTING') ? userTeam : oppTeam;
   const activeBowlingTeam = (gameRole === 'BOWLING') ? userTeam : oppTeam;
+  const teamCode = activeBattingTeam.code || userTeamCode;
 
   const battingLineup = (activeBattingTeam.batsmen && activeBattingTeam.batsmen.length > 0)
     ? activeBattingTeam.batsmen
