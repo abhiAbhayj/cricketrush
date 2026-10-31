@@ -7,11 +7,11 @@ export const STADIUMS = {
     grassStripe: '#162e16',
     pitchColor: '#ca8a04', // dusty clay
     pitchCrease: '#fef08a',
-    boundaryRadiusRatio: 0.92,
+    boundaryRadiusRatio: 1.0,
     swingModifier: 1.0,
     spinModifier: 1.0,
-    boundaryDistanceDesc: 'Long Boundaries (75m)',
-    description: 'Massive iconic bowl where timing and running between wickets count.'
+    boundaryDistanceDesc: 'Vast Boundaries (85m) - Mega Stadium',
+    description: 'Massive iconic bowl with 3-tier grandstands and cavernous outfield.'
   },
   eden: {
     id: 'eden',
@@ -21,11 +21,11 @@ export const STADIUMS = {
     grassStripe: '#0e3119',
     pitchColor: '#b45309', // dry spinning pitch
     pitchCrease: '#ffffff',
-    boundaryRadiusRatio: 0.88,
+    boundaryRadiusRatio: 0.96,
     swingModifier: 0.9,
     spinModifier: 1.35,
-    boundaryDistanceDesc: 'Spin Haven (68m)',
-    description: 'Electric roar of 80,000 fans. Spinners get lethal sharp turn!'
+    boundaryDistanceDesc: 'Grand Coliseum (80m)',
+    description: 'Electric roar of 90,000 fans in packed multi-tier grandstands. Lethal sharp spin!'
   },
   lords: {
     id: 'lords',
@@ -35,11 +35,11 @@ export const STADIUMS = {
     grassStripe: '#15381c',
     pitchColor: '#a16207', // green seaming pitch
     pitchCrease: '#ffffff',
-    boundaryRadiusRatio: 0.90,
+    boundaryRadiusRatio: 0.94,
     swingModifier: 1.4,
     spinModifier: 0.85,
-    boundaryDistanceDesc: 'Swinging Conditions (70m)',
-    description: 'The home of cricket. Overcast skies deliver deadly late in/out swing.'
+    boundaryDistanceDesc: 'Swinging Arena (78m)',
+    description: 'The historic home of cricket. Overcast skies deliver deadly late in/out swing.'
   },
   sharjah: {
     id: 'sharjah',
@@ -49,10 +49,10 @@ export const STADIUMS = {
     grassStripe: '#233d1a',
     pitchColor: '#d97706',
     pitchCrease: '#ffffff',
-    boundaryRadiusRatio: 0.82,
+    boundaryRadiusRatio: 0.88,
     swingModifier: 0.8,
     spinModifier: 1.1,
-    boundaryDistanceDesc: 'Short Boundaries (60m) - Six Hitter Paradise',
-    description: 'Lightning-fast outfield and short ropes. Perfect for maximum sixes!'
+    boundaryDistanceDesc: 'Power-Hitter Arena (72m)',
+    description: 'Lightning-fast outfield and roaring desert colosseum. Perfect for maximum sixes!'
   }
 };

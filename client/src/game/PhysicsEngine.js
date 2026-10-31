@@ -25,6 +25,11 @@ export class CricketPhysics {
     }
   }
 
+  setStadium(stadium) {
+    this.stadium = stadium;
+    this.initDimensions();
+  }
+
   initDimensions() {
     this.cx = this.width / 2;
     this.cy = this.height * 0.52;
@@ -42,10 +47,14 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 34;
       this.stumpsY = this.batsmanCreaseY + 16;
       this.bowlerStumpsY = this.bowlerCreaseY - 16;
-      // Scaled International Stadium Ground & Expanded 30-Yard Circle (50% Ground Radius)
-      this.boundaryRadius = Math.max(560, Math.min(680, Math.max(this.width * 1.25, this.height * 0.78)));
-      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.50);
-      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.53);
+      // Scaled International Stadium Ground (80m-85m Outfield) & Regulation 30-Yard Circle
+      let baseRadius = Math.max(820, Math.min(1050, Math.max(this.width * 2.15, this.height * 1.18)));
+      if (this.stadium && this.stadium.boundaryRadiusRatio) {
+        baseRadius = Math.round(baseRadius * this.stadium.boundaryRadiusRatio);
+      }
+      this.boundaryRadius = baseRadius;
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.40);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.44);
     } else {
       this.pitchWidth = Math.min(136, Math.max(116, this.width * 0.32));
       this.pitchTop = this.height * 0.26;
@@ -56,10 +65,14 @@ export class CricketPhysics {
       this.batsmanCreaseY = this.pitchBottom - 38;
       this.stumpsY = this.batsmanCreaseY + 18;
       this.bowlerStumpsY = this.bowlerCreaseY - 18;
-      // Scaled International Stadium Ground & Expanded 30-Yard Circle (50% Ground Radius)
-      this.boundaryRadius = Math.max(600, Math.min(720, Math.max(this.width * 0.85, this.height * 0.85)));
-      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.50);
-      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.53);
+      // Scaled International Stadium Ground (80m-85m Outfield) & Regulation 30-Yard Circle
+      let baseRadius = Math.max(880, Math.min(1180, Math.max(this.width * 1.18, this.height * 1.25)));
+      if (this.stadium && this.stadium.boundaryRadiusRatio) {
+        baseRadius = Math.round(baseRadius * this.stadium.boundaryRadiusRatio);
+      }
+      this.boundaryRadius = baseRadius;
+      this.innerCircleRadiusX = Math.round(this.boundaryRadius * 0.40);
+      this.innerCircleRadiusY = Math.round(this.boundaryRadius * 0.44);
     }
   }
 
@@ -1296,14 +1309,14 @@ export class CricketPhysics {
     const isLoftedSixStyle = (shotStyle === 'step_out' || shotStyle === 'scoop' || (timingQuality === 'PERFECT' && power >= 0.65 && (shotStyle === 'pull' || shotStyle === 'straight_drive' || shotStyle === 'upper_cut' || shotStyle === 'hook')));
 
     if (isLoftedSixStyle) {
-      // 1. TOWERING MAXIMUM SIX ROCKET (Soars high above stadium stands!)
+      // 1. TOWERING MAXIMUM SIX ROCKET (Soars high above stadium stands across 80m-110m ground!)
       this.ball.isAirborne = true;
       this.ball.isRocketSix = true;
       this.ball.isFourInGap = false;
       this.ball.isAerialFour = false;
-      this.ball.height = 18;
-      this.ball.vz = 15.5; // High towering altitude with slow majestic arc!
-      exitSpeed = 4.2 + (power * 1.8);
+      this.ball.height = 20;
+      this.ball.vz = 17.5; // High towering altitude with slow majestic arc!
+      exitSpeed = 5.2 + (power * 2.8);
       this.screenShake = 7;
       this.createSparks(this.ball.x, this.ball.y, '#f59e0b', 36);
       this.createRocketSmoke(this.ball.x, this.ball.y);
@@ -1334,16 +1347,16 @@ export class CricketPhysics {
       if (altitudeVz <= 5.5) {
         // Ground stroke: either a Bullet Four in Gap or Single/Double/Triple in Gap
         if (shotStyle === 'late_cut' || shotStyle === 'square_cut' || (shotStyle === 'outside_edge' && altitudeVz === 0) || timingQuality === 'PERFECT' || (timingQuality === 'GOOD' && power >= 0.52)) {
-          // 2. BULLET FOUR IN GAP (Pierces the infield between fielders / steers past slips!)
+          // 2. BULLET FOUR IN GAP (Pierces the infield between fielders / steers past slips across big ground!)
           this.ball.isFourInGap = true;
           this.ball.isAerialFour = false;
           this.ball.isAirborne = false;
           this.ball.height = 0;
           this.ball.vz = 0;
-          exitSpeed = 7.6 + (power * 3.4);
+          exitSpeed = 8.8 + (power * 4.2);
           this.screenShake = 3;
           this.createSparks(this.ball.x, this.ball.y, shotStyle === 'late_cut' ? '#f59e0b' : '#10b981', 20);
-          this.ball.distanceMeters = Math.round(72 + power * 14);
+          this.ball.distanceMeters = Math.round(75 + power * 15);
         } else {
           // GAP STROKE FOR 1, 2, or 3 RUNS (Clean ground stroke, fielders chase)
           this.ball.isFourInGap = false;
@@ -1351,9 +1364,9 @@ export class CricketPhysics {
           this.ball.isAirborne = false;
           this.ball.height = 0;
           this.ball.vz = 0;
-          exitSpeed = 4.0 + (power * 2.2);
+          exitSpeed = 4.4 + (power * 2.6);
           this.createSparks(this.ball.x, this.ball.y, '#ffffff', 10);
-          this.ball.distanceMeters = Math.round(35 + power * 25);
+          this.ball.distanceMeters = Math.round(45 + power * 25);
         }
       } else {
         // Lofted stroke: either an Aerial Four over infield or High Top Edge or Single in Deep Gap
@@ -1639,8 +1652,8 @@ export class CricketPhysics {
           this.ball.vy *= 0.82;
         }
       } else {
-        // Flat ground stroke: realistic progressive grass resistance gives time for fielder sprint & slide!
-        const grassFriction = this.ball.isFourInGap ? 0.991 : 0.982;
+        // Flat ground stroke: realistic progressive grass resistance gives time for fielder sprint & slide across large ground!
+        const grassFriction = this.ball.isFourInGap ? 0.9935 : 0.985;
         this.ball.vx *= grassFriction;
         this.ball.vy *= grassFriction;
         if (Math.random() < 0.40 && Math.hypot(this.ball.vx, this.ball.vy) > 1.2) {
@@ -1653,7 +1666,7 @@ export class CricketPhysics {
 
       // Active Bowler Fielding & Chase towards nearby ball!
       const distBowlerToBall = Math.hypot(this.ball.x - this.bowler.x, this.ball.y - this.bowler.y);
-      if (distBowlerToBall < 220 && this.ball.y < this.batsmanCreaseY - 15 && !this.ball.isStoppedByFielder && !this.running.throwActive) {
+      if (distBowlerToBall < 260 && this.ball.y < this.batsmanCreaseY - 15 && !this.ball.isStoppedByFielder && !this.running.throwActive) {
         const bdx = this.ball.x - this.bowler.x;
         const bdy = this.ball.y - this.bowler.y;
         const bdist = Math.hypot(bdx, bdy);
@@ -1691,7 +1704,7 @@ export class CricketPhysics {
             this.running.fielderRole = 'Bowler';
           }
         }
-      } else if (distBowlerToBall >= 220) {
+      } else if (distBowlerToBall >= 260) {
         // Ball hit deep into the outfield: Bowler tracks back to top stumps to receive throw
         this.bowler.x += (this.cx + 8 - this.bowler.x) * 0.05 * dt;
         this.bowler.y += (this.bowlerStumpsY - this.bowler.y) * 0.05 * dt;
@@ -1699,8 +1712,8 @@ export class CricketPhysics {
 
       // Rocket SIX sails deep into the stadium stands among the cheering people!
       if (this.ball.isRocketSix) {
-        const inStands = distFromCenter >= this.boundaryRadius + 20;
-        if (inStands && (this.ball.height <= 4 || distFromCenter >= this.boundaryRadius + 55)) {
+        const inStands = distFromCenter >= this.boundaryRadius + 28;
+        if (inStands && (this.ball.height <= 5 || distFromCenter >= this.boundaryRadius + 75)) {
           this.ball.state = 'DEAD';
           this.screenShake = 9;
           this.sixLanding = {

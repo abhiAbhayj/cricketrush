@@ -383,6 +383,7 @@ export default function CricketGame({
 
       if (!engineRef.current) {
         engineRef.current = new CricketPhysics(width, height);
+        engineRef.current.setStadium(stadium);
         engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
         fieldersRef.current = new FielderManager(
           width,
@@ -394,6 +395,7 @@ export default function CricketGame({
         fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'balanced', true, isLeftHanded);
       } else {
         engineRef.current.resize(width, height);
+        engineRef.current.setStadium(stadium);
         engineRef.current.setBatsmanHand(isLeftHanded ? 'left' : 'right');
         fieldersRef.current.resize(
           width,
@@ -532,19 +534,19 @@ export default function CricketGame({
               cam.mode = 'BOWLER_END';
               cam.targetX = cx;
               cam.targetY = engine.bowlerCreaseY + 68;
-              cam.targetZoom = 1.06;
+              cam.targetZoom = 0.94;
             } else if (cameraAngle === 'BATSMAN_END') {
               // Angle 2: BATSMAN_END - low angle from behind the batsman looking towards the bowler
               cam.mode = 'BATSMAN_END';
               cam.targetX = cx;
               cam.targetY = engine.batsmanCreaseY - 58;
-              cam.targetZoom = 1.06;
+              cam.targetZoom = 0.94;
             } else {
               // Angle 3: BROADCAST - clean centered pitch view
               cam.mode = 'PITCH_CENTER';
               cam.targetX = cx;
               cam.targetY = cy;
-              cam.targetZoom = 0.94;
+              cam.targetZoom = 0.78;
             }
           } else if (engine.ball.state === 'HIT') {
             if (engine.ball.isRocketSix) {
@@ -552,21 +554,21 @@ export default function CricketGame({
               cam.mode = 'SIX_SKYCAM';
               cam.targetX = engine.ball.x * 0.88 + cx * 0.12;
               cam.targetY = engine.ball.y * 0.88 + cy * 0.12;
-              cam.targetZoom = 0.74; // Perfectly balanced broadcast framing showing ball landing in crowd stands!
+              cam.targetZoom = 0.58; // Panoramic broadcast framing showing ball soaring high into upper deck stands!
             } else if (engine.running?.active && engine.running?.isCallingRun) {
               // Angle 3: RUNNING_PITCH - wide broadcast view showing BOTH pitch runners AND active outfield chasers!
               cam.mode = 'RUNNING_PITCH';
               cam.targetX = cx * 0.40 + engine.ball.x * 0.60;
               cam.targetY = cy * 0.40 + engine.ball.y * 0.60;
-              cam.targetZoom = 0.78;
+              cam.targetZoom = 0.62;
             } else if (engine.ball.isAerialFour) {
               // Angle 5: AERIAL_FOUR - dynamic tracking camera tracking lofted boundary clearing infield
               cam.mode = 'AERIAL_FOUR';
               cam.targetX = engine.ball.x;
               cam.targetY = engine.ball.y;
-              cam.targetZoom = 0.74;
+              cam.targetZoom = 0.66;
             } else {
-              // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder across 80m ground
+              // Angle 2: BALL_CHASE - traveling camera following ball and chasing fielder across expansive 85m ground
               cam.mode = 'BALL_CHASE';
               const chaser = fielders.getPrimaryChaser();
               if (chaser) {
@@ -577,22 +579,22 @@ export default function CricketGame({
                 cam.targetY = engine.ball.y;
               }
               const distFromPitch = Math.hypot(engine.ball.x - cx, engine.ball.y - cy);
-              cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 260) ? 0.72 : 0.88;
+              cam.targetZoom = distFromPitch > (engine.innerCircleRadiusX || 340) ? 0.56 : 0.74;
             }
           } else {
             // DEAD / OVER_PAUSE
             if (cameraAngle === 'BOWLER_END') {
               cam.targetX = cx;
               cam.targetY = engine.bowlerCreaseY + 68;
-              cam.targetZoom = 1.04;
+              cam.targetZoom = 0.94;
             } else if (cameraAngle === 'BATSMAN_END') {
               cam.targetX = cx;
               cam.targetY = engine.batsmanCreaseY - 58;
-              cam.targetZoom = 1.04;
+              cam.targetZoom = 0.94;
             } else {
               cam.targetX = cx;
               cam.targetY = cy;
-              cam.targetZoom = 0.94;
+              cam.targetZoom = 0.78;
             }
           }
 
@@ -1613,7 +1615,7 @@ export default function CricketGame({
     }
 
     // 1. Outfield Grass with Vertical Stripes (Expansive coverage for Big Stadium)
-    const outfieldRadius = engine.boundaryRadius + 240;
+    const outfieldRadius = (engine.boundaryRadius || 850) + 520;
     const minGrassX = cx - outfieldRadius;
     const maxGrassX = cx + outfieldRadius;
     const minGrassY = cy - outfieldRadius;
@@ -2847,8 +2849,8 @@ export default function CricketGame({
           {isRadarExpanded && (
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-[#0c1424]/95 border border-slate-700/90 p-1 shadow-2xl relative flex items-center justify-center overflow-hidden backdrop-blur-md animate-fade-in">
               <div className="w-full h-full rounded-full bg-[#183617] border border-emerald-500/40 relative flex items-center justify-center overflow-hidden">
-                {/* Inner 30-Yard Circle */}
-                <div className="w-[50%] h-[50%] rounded-full border border-dashed border-white/60 pointer-events-none" />
+                {/* Regulation 30-Yard Inner Ring (40% x 44% Ratio) */}
+                <div className="w-[40%] h-[44%] rounded-full border border-dashed border-white/60 pointer-events-none" />
                 {/* Center Pitch Turf */}
                 <div className="w-1.5 h-4 bg-[#dfcaa4] rounded-[1px] absolute pointer-events-none" />
 
@@ -2898,12 +2900,12 @@ export default function CricketGame({
                   <div
                     className="absolute border border-yellow-400/80 bg-yellow-400/10 pointer-events-none rounded-[1px]"
                     style={{
-                      width: `${Math.min(40, Math.max(16, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
-                      height: `${Math.min(40, Math.max(16, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 780) * 1.6)) * 52))}px`,
+                      width: `${Math.min(44, Math.max(14, (400 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 920) * 1.6)) * 52))}px`,
+                      height: `${Math.min(44, Math.max(14, (600 / (cameraRef.current.zoom * (engineRef.current.boundaryRadius || 920) * 1.6)) * 52))}px`,
                       transform: `translate(${
-                        (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 780)) * 32
+                        (((cameraRef.current.x || engineRef.current.cx) - engineRef.current.cx) / (engineRef.current.boundaryRadius || 920)) * 32
                       }px, ${
-                        (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 780)) * 32
+                        (((cameraRef.current.y || engineRef.current.cy) - engineRef.current.cy) / (engineRef.current.boundaryRadius || 920)) * 32
                       }px)`
                     }}
                   />

@@ -949,84 +949,99 @@ export const CharacterRenderer = {
     if (!ctx) return;
     try {
       ctx.save();
-      const br = Math.max(100, Number.isFinite(boundaryRadius) ? boundaryRadius : 780);
+      const br = Math.max(100, Number.isFinite(boundaryRadius) ? boundaryRadius : 850);
       const safeCx = Number.isFinite(cx) ? cx : (width ? width / 2 : 200);
       const safeCy = Number.isFinite(cy) ? cy : (height ? height * 0.52 : 300);
       const isCheering = !!(crowdState.isCheering || crowdState.isRocketSix);
       const landing = crowdState.sixLanding || null;
       const now = Date.now();
 
-      // 1. Boundary Rope
+      // 1. Boundary Rope (Thick braided white rope with drop shadow)
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.lineWidth = 4.0;
+      ctx.stroke();
+
       ctx.beginPath();
       ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.4;
+      ctx.lineWidth = 2.6;
       ctx.stroke();
 
       // 2. Green Turf Run-Off Margin behind boundary rope
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = '#225325';
-      ctx.lineWidth = 10;
+      ctx.arc(safeCx, safeCy, br + 7, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1e4822';
+      ctx.lineWidth = 14;
       ctx.stroke();
 
-      // 3. Electronic LED Advertising Ribbon Board (Cyan / Blue rim)
+      // 3. Electronic LED Advertising Ribbon Board (360° Digital Perimeter Ads)
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 14, 0, Math.PI * 2);
+      ctx.arc(safeCx, safeCy, br + 18, 0, Math.PI * 2);
       ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 8;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 11.5, 0, Math.PI * 2);
+      ctx.arc(safeCx, safeCy, br + 15, 0, Math.PI * 2);
       ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.stroke();
 
-      // Sponsor Logo Banners
-      const numSponsorBanners = 24;
+      // Sponsor Logo Banners rotating on the ribbon board
+      const numSponsorBanners = 32;
       for (let b = 0; b < numSponsorBanners; b++) {
-        const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.0003);
-        const bx = safeCx + Math.cos(bAngle) * (br + 14);
-        const by = safeCy + Math.sin(bAngle) * (br + 14);
+        const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.00025);
+        const bx = safeCx + Math.cos(bAngle) * (br + 18);
+        const by = safeCy + Math.sin(bAngle) * (br + 18);
 
         ctx.save();
         ctx.translate(bx, by);
         ctx.rotate(bAngle + Math.PI / 2);
-        if (b % 2 === 0) {
+        if (b % 3 === 0) {
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-8, -2, 16, 4);
+          ctx.fillRect(-10, -2.5, 20, 5);
           ctx.fillStyle = '#0284c7';
-          ctx.fillRect(-6, -1.2, 12, 2.4);
+          ctx.fillRect(-8, -1.5, 16, 3);
+        } else if (b % 3 === 1) {
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(-10, -2.5, 20, 5);
+          ctx.fillStyle = '#1e1b4b';
+          ctx.fillRect(-8, -1.5, 16, 3);
         } else {
-          ctx.fillStyle = '#0284c7';
-          ctx.fillRect(-9, -2, 18, 4);
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(-10, -2.5, 20, 5);
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-7, -1, 14, 2);
+          ctx.fillRect(-8, -1.5, 16, 3);
         }
         ctx.restore();
       }
 
-      // White Tunnel Entrance Gate cutout
+      // White Tunnel Entrance Gate cutout (Players Walkout Tunnel)
       const gateAngle = Math.PI * 0.98;
-      const gx = safeCx + Math.cos(gateAngle) * (br + 13);
-      const gy = safeCy + Math.sin(gateAngle) * (br + 13);
+      const gx = safeCx + Math.cos(gateAngle) * (br + 17);
+      const gy = safeCy + Math.sin(gateAngle) * (br + 17);
       ctx.save();
       ctx.translate(gx, gy);
       ctx.rotate(gateAngle + Math.PI / 2);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-10, -3.5, 20, 7);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-8, -2.5, 16, 5);
+      ctx.fillRect(-14, -4.5, 28, 9);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-11, -3.5, 22, 7);
       ctx.restore();
 
-      // 4. Stadium Grandstand Dimensions
-      const r1_in = br + 18;
-      const r1_out = br + 96;
-      const r_conc_in = br + 96;
-      const r_conc_out = br + 118;
-      const r2_in = br + 118;
-      const r2_out = br + 230;
+      // 4. Stadium Grandstand Dimensions (Vast 3-Tier International Colosseum)
+      const r1_in = br + 24;
+      const r1_out = br + 124;
+      const r_conc1_in = br + 124;
+      const r_conc1_out = br + 154;
+      const r2_in = br + 154;
+      const r2_out = br + 268;
+      const r_conc2_in = br + 268;
+      const r_conc2_out = br + 304;
+      const r3_in = br + 304;
+      const r3_out = br + 424;
 
       // TIER 1 (Lower Grandstand) Base Concrete Bowl
       ctx.beginPath();
@@ -1035,35 +1050,91 @@ export const CharacterRenderer = {
       ctx.lineWidth = r1_out - r1_in;
       ctx.stroke();
 
-      // CONCOURSE PROMENADE
+      // CONCOURSE 1 (Mid Promenade)
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, (r_conc_in + r_conc_out) / 2, 0, Math.PI * 2);
+      ctx.arc(safeCx, safeCy, (r_conc1_in + r_conc1_out) / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = r_conc_out - r_conc_in;
+      ctx.lineWidth = r_conc1_out - r_conc1_in;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, r_conc_in + 1, 0, Math.PI * 2);
+      ctx.arc(safeCx, safeCy, r_conc1_in + 1, 0, Math.PI * 2);
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 1.6;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, r_conc_out - 1, 0, Math.PI * 2);
+      ctx.arc(safeCx, safeCy, r_conc1_out - 1, 0, Math.PI * 2);
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1.6;
       ctx.stroke();
 
-      // TIER 2 (Upper Grandstand) Base Concrete Bowl
+      // TIER 2 (Club & Corporate Suite Tier) Base Concrete Bowl
       ctx.beginPath();
       ctx.arc(safeCx, safeCy, (r2_in + r2_out) / 2, 0, Math.PI * 2);
-      ctx.strokeStyle = '#0d1522';
+      ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = r2_out - r2_in;
       ctx.stroke();
 
-      // 5. Bright Yellow Aisle Staircases
-      const numAisles = 16;
-      const dTheta = 0.034;
+      // Corporate Luxury Hospitality Suite Windows (Illuminated VIP Boxes)
+      const numSuites = 20;
+      for (let s = 0; s < numSuites; s++) {
+        const sAngle = (s / numSuites) * Math.PI * 2;
+        const suiteDist = (r2_in + r2_out) / 2 + 10;
+        const sx = safeCx + Math.cos(sAngle) * suiteDist;
+        const sy = safeCy + Math.sin(sAngle) * suiteDist;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(sAngle + Math.PI / 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(-16, -5, 32, 10);
+        ctx.globalAlpha = 1.0;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.0;
+        ctx.strokeRect(-16, -5, 32, 10);
+        ctx.restore();
+      }
+
+      // CONCOURSE 2 (Upper Promenade & Video Jumbotrons)
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, (r_conc2_in + r_conc2_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = r_conc2_out - r_conc2_in;
+      ctx.stroke();
+
+      // Giant Pavilion Super-Screens / Jumbotrons at North & South ends
+      [-Math.PI / 2, Math.PI / 2].forEach(screenAngle => {
+        const scrDist = (r_conc2_in + r_conc2_out) / 2;
+        const scrX = safeCx + Math.cos(screenAngle) * scrDist;
+        const scrY = safeCy + Math.sin(screenAngle) * scrDist;
+
+        ctx.save();
+        ctx.translate(scrX, scrY);
+        ctx.rotate(screenAngle + Math.PI / 2);
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(-28, -8, 56, 16);
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(-28, -8, 56, 16);
+        ctx.font = 'bold 8px "Inter", sans-serif';
+        ctx.fillStyle = isCheering ? '#ef4444' : '#38bdf8';
+        ctx.textAlign = 'center';
+        ctx.fillText(isCheering ? '⚡ SIX! ⚡' : 'CRICKET RUSH', 0, 3);
+        ctx.restore();
+      });
+
+      // TIER 3 (Upper Grandstand / Sky Deck) Base Concrete Bowl
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, (r3_in + r3_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#090e17';
+      ctx.lineWidth = r3_out - r3_in;
+      ctx.stroke();
+
+      // 5. Bright Yellow Aisle Staircases across all 3 Grandstand Tiers
+      const numAisles = 20;
+      const dTheta = 0.026;
 
       for (let a = 0; a < numAisles; a++) {
         const aisleAngle = (a / numAisles) * Math.PI * 2;
@@ -1078,8 +1149,7 @@ export const CharacterRenderer = {
         ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r1_out - 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r1_out - 2));
         ctx.stroke();
 
-        // Rungs
-        for (let r = r1_in + 6; r < r1_out - 4; r += 12) {
+        for (let r = r1_in + 8; r < r1_out - 4; r += 14) {
           ctx.beginPath();
           ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r, safeCy + Math.sin(aisleAngle - dTheta / 2) * r);
           ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r, safeCy + Math.sin(aisleAngle + dTheta / 2) * r);
@@ -1089,12 +1159,27 @@ export const CharacterRenderer = {
         // Side rails Tier 2
         ctx.beginPath();
         ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r2_in + 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r2_in + 2));
-        ctx.lineTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r2_out, safeCy + Math.sin(aisleAngle - dTheta / 2) * r2_out);
+        ctx.lineTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r2_out - 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r2_out - 2));
         ctx.moveTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r2_in + 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r2_in + 2));
-        ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r2_out, safeCy + Math.sin(aisleAngle + dTheta / 2) * r2_out);
+        ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r2_out - 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r2_out - 2));
         ctx.stroke();
 
-        for (let r = r2_in + 8; r < r2_out - 6; r += 14) {
+        for (let r = r2_in + 10; r < r2_out - 6; r += 16) {
+          ctx.beginPath();
+          ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r, safeCy + Math.sin(aisleAngle - dTheta / 2) * r);
+          ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r, safeCy + Math.sin(aisleAngle + dTheta / 2) * r);
+          ctx.stroke();
+        }
+
+        // Side rails Tier 3 (Upper Deck)
+        ctx.beginPath();
+        ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r3_in + 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r3_in + 2));
+        ctx.lineTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * (r3_out - 2), safeCy + Math.sin(aisleAngle - dTheta / 2) * (r3_out - 2));
+        ctx.moveTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r3_in + 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r3_in + 2));
+        ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * (r3_out - 2), safeCy + Math.sin(aisleAngle + dTheta / 2) * (r3_out - 2));
+        ctx.stroke();
+
+        for (let r = r3_in + 10; r < r3_out - 6; r += 16) {
           ctx.beginPath();
           ctx.moveTo(safeCx + Math.cos(aisleAngle - dTheta / 2) * r, safeCy + Math.sin(aisleAngle - dTheta / 2) * r);
           ctx.lineTo(safeCx + Math.cos(aisleAngle + dTheta / 2) * r, safeCy + Math.sin(aisleAngle + dTheta / 2) * r);
@@ -1102,38 +1187,40 @@ export const CharacterRenderer = {
         }
       }
 
-      // 6. Realistic Stadium Audience Spectators (Tiered Seating with Animated Individual Fans)
-      const fanJerseys = ['#1d4ed8', '#facc15', '#dc2626', '#16a34a', '#ea580c', '#38bdf8', '#ffffff', '#9333ea'];
+      // 6. Realistic Multi-Tier Stadium Spectators (Animated Fans with Flags & Flashes)
+      const fanJerseys = ['#1d4ed8', '#facc15', '#dc2626', '#16a34a', '#ea580c', '#38bdf8', '#ffffff', '#9333ea', '#059669', '#f97316'];
       const skinTones = ['#fcd34d', '#d97706', '#b45309', '#fbcfe8', '#fef08a'];
-      const tier1Rows = [br + 32, br + 60];
-      const tier2Rows = [br + 136, br + 168];
 
-      const drawCrowdTier = (rows, isUpper) => {
+      const tier1Rows = [br + 46, br + 74, br + 102];
+      const tier2Rows = [br + 186, br + 232];
+      const tier3Rows = [br + 328, br + 364, br + 400];
+
+      const drawCrowdTier = (rows, benchColor) => {
         rows.forEach((rowDist, rIdx) => {
           // Concrete stepped bench
           ctx.beginPath();
           ctx.arc(safeCx, safeCy, rowDist, 0, Math.PI * 2);
-          ctx.strokeStyle = isUpper ? '#111b2b' : '#182438';
-          ctx.lineWidth = 14;
+          ctx.strokeStyle = benchColor;
+          ctx.lineWidth = 15;
           ctx.stroke();
 
           // Seat backrest rail
           ctx.beginPath();
-          ctx.arc(safeCx, safeCy, rowDist - 4, 0, Math.PI * 2);
+          ctx.arc(safeCx, safeCy, rowDist - 5, 0, Math.PI * 2);
           ctx.strokeStyle = '#0b1320';
-          ctx.lineWidth = 1.8;
+          ctx.lineWidth = 1.6;
           ctx.stroke();
 
-          // Individual Spectators spaced evenly around the circumference
+          // Individual Spectators spaced evenly around circumference
           const circumference = Math.PI * 2 * rowDist;
-          const spectatorCount = Math.floor(circumference / 52); // ~60-70 fans per row (ultra fast & clean)
+          const spectatorCount = Math.floor(circumference / 46);
           const angleStep = (Math.PI * 2) / spectatorCount;
 
           for (let i = 0; i < spectatorCount; i++) {
             const angle = i * angleStep;
             // Skip spectators in aisle gaps
-            const aisleCheck = ((angle + Math.PI * 2) % ((Math.PI * 2) / 16));
-            if (aisleCheck < 0.06 || aisleCheck > ((Math.PI * 2) / 16) - 0.06) continue;
+            const aisleCheck = ((angle + Math.PI * 2) % ((Math.PI * 2) / numAisles));
+            if (aisleCheck < 0.05 || aisleCheck > ((Math.PI * 2) / numAisles) - 0.05) continue;
 
             const cosA = Math.cos(angle);
             const sinA = Math.sin(angle);
@@ -1143,100 +1230,156 @@ export const CharacterRenderer = {
             const sx = safeCx + cosA * rowDist;
             const sy = safeCy + sinA * rowDist;
 
-            // Seeded hash for consistent properties
-            const hash = (i * 37 + rIdx * 101) % 1000;
+            // Hash for stable randomized look
+            const hash = (i * 41 + rIdx * 113) % 1000;
             const jerseyColor = fanJerseys[hash % fanJerseys.length];
             const skinTone = skinTones[(hash >> 2) % skinTones.length];
 
-            const cheerBob = isCheering ? Math.sin(now * 0.012 + i * 0.5) * 2.5 : 0;
+            const cheerBob = isCheering ? Math.sin(now * 0.012 + i * 0.45) * 2.8 : 0;
 
             // Torso (facing pitch center)
             ctx.fillStyle = jerseyColor;
             ctx.beginPath();
-            ctx.arc(sx, sy + cheerBob, 3.8, 0, Math.PI * 2);
+            ctx.arc(sx, sy + cheerBob, 4.0, 0, Math.PI * 2);
             ctx.fill();
 
             // Head (facing center of the pitch)
             ctx.fillStyle = skinTone;
             ctx.beginPath();
-            ctx.arc(sx - cosA * 2.2, sy - sinA * 2.2 + cheerBob, 2.2, 0, Math.PI * 2);
+            ctx.arc(sx - cosA * 2.4, sy - sinA * 2.4 + cheerBob, 2.3, 0, Math.PI * 2);
             ctx.fill();
 
             // Cheering raised arms
             if (isCheering) {
               ctx.strokeStyle = skinTone;
-              ctx.lineWidth = 1.2;
+              ctx.lineWidth = 1.3;
               ctx.beginPath();
-              ctx.moveTo(sx - perpX * 3, sy - perpY * 3);
-              ctx.lineTo(sx - perpX * 4 - cosA * 3.5, sy - perpY * 4 - sinA * 3.5);
-              ctx.moveTo(sx + perpX * 3, sy + perpY * 3);
-              ctx.lineTo(sx + perpX * 4 - cosA * 3.5, sy + perpY * 4 - sinA * 3.5);
+              ctx.moveTo(sx - perpX * 3.2, sy - perpY * 3.2);
+              ctx.lineTo(sx - perpX * 4.4 - cosA * 3.8, sy - perpY * 4.4 - sinA * 3.8);
+              ctx.moveTo(sx + perpX * 3.2, sy + perpY * 3.2);
+              ctx.lineTo(sx + perpX * 4.4 - cosA * 3.8, sy + perpY * 4.4 - sinA * 3.8);
               ctx.stroke();
             }
 
-            // Every 10th fan waves a team flag
-            if (hash % 10 === 0) {
-              const flagWave = Math.sin(now * 0.008 + i) * 3;
+            // Every 12th fan waves a team flag
+            if (hash % 12 === 0) {
+              const flagWave = Math.sin(now * 0.008 + i) * 3.5;
               const flagColor = (hash % 3 === 0) ? '#ff9933' : (hash % 3 === 1) ? '#facc15' : '#38bdf8';
               ctx.strokeStyle = '#e2e8f0';
-              ctx.lineWidth = 1;
+              ctx.lineWidth = 1.1;
               ctx.beginPath();
               ctx.moveTo(sx, sy);
-              ctx.lineTo(sx - cosA * 7 + flagWave, sy - sinA * 7);
+              ctx.lineTo(sx - cosA * 8 + flagWave, sy - sinA * 8);
               ctx.stroke();
 
               ctx.fillStyle = flagColor;
-              ctx.fillRect(sx - cosA * 7 + flagWave, sy - sinA * 7 - 3, 5, 3.5);
+              ctx.fillRect(sx - cosA * 8 + flagWave, sy - sinA * 8 - 3.5, 6, 4);
             }
 
             // Twinkling mobile phone camera flashes in the crowd
-            if ((hash + Math.floor(now / 160)) % 37 === 0) {
+            if ((hash + Math.floor(now / 150)) % 33 === 0) {
               ctx.fillStyle = '#ffffff';
               ctx.beginPath();
-              ctx.arc(sx, sy - 2, 2.5, 0, Math.PI * 2);
+              ctx.arc(sx, sy - 2.5, 2.6, 0, Math.PI * 2);
               ctx.fill();
             }
           }
         });
       };
 
-      drawCrowdTier(tier1Rows, false);
-      drawCrowdTier(tier2Rows, true);
+      drawCrowdTier(tier1Rows, '#162235');
+      drawCrowdTier(tier2Rows, '#111b2b');
+      drawCrowdTier(tier3Rows, '#0b1320');
 
-      // 7. Corner Stadium Floodlight Towers
-      const floodlightAngles = [Math.PI * 0.25, Math.PI * 0.75, Math.PI * 1.25, Math.PI * 1.75];
+      // 7. Modern Cantilever Stadium Canopy Roof (Tier 3 Overhang)
+      const r_roof_in = br + 372;
+      const r_roof_out = br + 452;
+
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, (r_roof_in + r_roof_out) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.lineWidth = r_roof_out - r_roof_in;
+      ctx.stroke();
+
+      // Canopy Inner Fascia Ring with Neon Edge
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, r_roof_in, 0, Math.PI * 2);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // Cantilever Structural Steel Trusses radiating outwards
+      const numTrusses = 24;
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2.2;
+      for (let t = 0; t < numTrusses; t++) {
+        const tAngle = (t / numTrusses) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(safeCx + Math.cos(tAngle) * r_roof_in, safeCy + Math.sin(tAngle) * r_roof_in);
+        ctx.lineTo(safeCx + Math.cos(tAngle) * (r_roof_out + 6), safeCy + Math.sin(tAngle) * (r_roof_out + 6));
+        ctx.stroke();
+      }
+
+      // Outer Stadium Perimeter Ring
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, r_roof_out + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+
+      // 8. 6 Giant World-Class Stadium Floodlight Towers
+      const floodlightAngles = [
+        Math.PI * 0.16,
+        Math.PI * 0.50,
+        Math.PI * 0.84,
+        Math.PI * 1.16,
+        Math.PI * 1.50,
+        Math.PI * 1.84
+      ];
+
       floodlightAngles.forEach(fAngle => {
-        const flDist = br + 245;
+        const flDist = br + 474;
         const flX = safeCx + Math.cos(fAngle) * flDist;
         const flY = safeCy + Math.sin(fAngle) * flDist;
 
-        drawRoundRect(ctx, flX - 12, flY - 12, 24, 24, 4, '#1e293b', '#475569', 1.5);
+        // Floodlight Gantry Housing
+        drawRoundRect(ctx, flX - 18, flY - 14, 36, 28, 5, '#0f172a', '#64748b', 2.0);
 
+        // Halogen Matrix (4x3 Bright Halogen Lights)
         ctx.fillStyle = '#fef08a';
-        for (let lx = -7; lx <= 7; lx += 7) {
-          for (let ly = -7; ly <= 7; ly += 7) {
+        for (let lx = -12; lx <= 12; lx += 8) {
+          for (let ly = -8; ly <= 8; ly += 8) {
             ctx.beginPath();
-            ctx.arc(flX + lx, flY + ly, 2.8, 0, Math.PI * 2);
+            ctx.arc(flX + lx, flY + ly, 2.6, 0, Math.PI * 2);
             ctx.fill();
           }
         }
+
+        // Halogen Beam Ambient Glow
+        const flGlow = ctx.createRadialGradient(flX, flY, 12, flX, flY, 48);
+        flGlow.addColorStop(0, 'rgba(254, 240, 138, 0.28)');
+        flGlow.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = flGlow;
+        ctx.beginPath();
+        ctx.arc(flX, flY, 48, 0, Math.PI * 2);
+        ctx.fill();
       });
 
-      // 8. Ball Landing Impact Shockwave in the Stands
+      // 9. Ball Landing Impact Shockwave in the Stands
       if (landing && landing.active && Number.isFinite(landing.x) && Number.isFinite(landing.y)) {
         const lx = landing.x;
         const ly = landing.y;
 
         ctx.beginPath();
-        ctx.arc(lx, ly, 22 + Math.sin(now * 0.015) * 8, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(250, 204, 21, 0.9)';
-        ctx.lineWidth = 3;
+        ctx.arc(lx, ly, 28 + Math.sin(now * 0.015) * 10, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.95)';
+        ctx.lineWidth = 3.5;
         ctx.stroke();
 
-        ctx.font = '900 12px "Inter", sans-serif';
+        ctx.font = '900 13px "Inter", sans-serif';
         ctx.fillStyle = '#fef08a';
         ctx.textAlign = 'center';
-        ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 24);
+        ctx.fillText('🚀 CROWD CATCH IN THE STANDS!', lx, ly - 28);
       }
 
       ctx.restore();
