@@ -274,7 +274,7 @@ export default function MainMenu({
               }}
               className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#f95738] via-[#fa4f33] to-[#ef4444] hover:brightness-110 active:scale-98 text-white font-display font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 shadow-xl shadow-orange-600/30 transition-all cursor-pointer"
             >
-              <Coins className="w-4 h-4 fill-amber-300 text-amber-300" /> TOSS & PLAY
+              <Play className="w-4 h-4 fill-white" /> PLAY THE CHASE
             </button>
 
             <button

@@ -162,7 +162,6 @@ export default function App() {
       bowlerList: BOWLER_ROSTER,
       userTeamCode: battingTeam.code,
       oppTeamCode: bowlingTeam.code,
-      showToss: true,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
@@ -192,7 +191,6 @@ export default function App() {
       teamWicketsBase: 0,
       initialBalls: 0,
       stadiumKey: 'colosseum',
-      showToss: config?.showToss ?? false,
       ...config
     };
     setMatchSessionKey(k => k + 1);
