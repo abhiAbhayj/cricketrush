@@ -159,6 +159,9 @@ export default function App() {
       nonStrikerName,
       battingLineup: BATSMEN_LINEUP,
       bowlerList: BOWLER_ROSTER,
+      userTeamCode: battingTeam.code,
+      oppTeamCode: bowlingTeam.code,
+      showToss: true,
       stadiumKey: 'colosseum',
       matchPhase,
       roundTitle,
@@ -178,6 +181,8 @@ export default function App() {
       nonStrikerName: 'Virat Kohli',
       battingLineup: GLOBAL_BATSMEN_LINEUP,
       bowlerList: GLOBAL_WORLD_BOWLERS,
+      userTeamCode: config?.userTeamCode || config?.teamCode || 'IND',
+      oppTeamCode: config?.oppTeamCode || config?.bowlingTeamCode || 'AUS',
       teamCode: 'IND',
       teamJersey: 'jersey_ind',
       bowlingTeamCode: 'AUS',
@@ -186,6 +191,7 @@ export default function App() {
       teamWicketsBase: 0,
       initialBalls: 0,
       stadiumKey: 'colosseum',
+      showToss: config?.showToss ?? false,
       ...config
     };
     setActiveMatchConfig(fullConfig);
