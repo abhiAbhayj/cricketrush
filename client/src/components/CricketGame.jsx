@@ -65,6 +65,7 @@ export default function CricketGame({
   const animFrameRef = useRef(null);
   const nextDeliveryTimeoutRef = useRef(null);
   const introTimerRef = useRef(null);
+  const lastBoundarySaveRef = useRef(null);
 
   // Teams & Match Structure Setup - Ultra-defensive resolution
   const userTeamCode = matchConfig?.userTeamCode || matchConfig?.teamCode || 'IND';
@@ -661,8 +662,13 @@ export default function CricketGame({
                     edgeType: engine.ball.edgeType,
                     shotStyle: engine.batsman.shotStyle
                   });
+                } else if (interception.type === 'STOP') {
+                  // For 'STOP', fielder slides/stops ball cleanly and throws to stumps/keeper
+                  if (interception.isBoundarySave && !lastBoundarySaveRef.current) {
+                    lastBoundarySaveRef.current = interception;
+                    triggerSpecialCelebration('save', 'SAVED AT THE ROPE! ⚡', `GREAT SLIDING STOP BY ${interception.fielder.toUpperCase()}`);
+                  }
                 }
-                // For 'STOP', fielder throws ball to stumps/keeper; engine.running resolves running/run-outs!
               }
             }
           }
@@ -781,9 +787,17 @@ export default function CricketGame({
       runsScored = outcome.runs;
       sound.playCoin();
       if (hapticsEnabled) haptics.medium();
-      badgeText = `${runsScored} RUN${runsScored > 1 ? 'S' : ''} 🏃`;
-      badgeType = 'good';
-      commentaryLine = `Pushed into the gap, swift running between wickets for ${runsScored}!`;
+      if (lastBoundarySaveRef.current) {
+        const savedFielder = lastBoundarySaveRef.current.fielder || 'Fielder';
+        badgeText = `${runsScored} RUN${runsScored > 1 ? 'S' : ''} (SAVED ON ROPE!) ⚡`;
+        badgeType = 'good';
+        commentaryLine = `SUPERB BOUNDARY SAVE! Full-length diving slide on the rope by ${savedFielder} saves 2 runs!`;
+        lastBoundarySaveRef.current = null;
+      } else {
+        badgeText = `${runsScored} RUN${runsScored > 1 ? 'S' : ''} 🏃`;
+        badgeType = 'good';
+        commentaryLine = `Pushed into the gap, swift running between wickets for ${runsScored}!`;
+      }
     } else if (outcome.event === 'BOWLED') {
       isWicket = true;
       sound.playWicket();
@@ -1363,6 +1377,7 @@ export default function CricketGame({
       return;
     }
 
+    lastBoundarySaveRef.current = null;
     setFeedback(null);
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
