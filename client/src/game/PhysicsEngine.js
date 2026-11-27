@@ -446,6 +446,7 @@ export class CricketPhysics {
     this.bowler.isBowling = true;
     this.bowler.runUpProgress = 0;
     this.ball.state = 'RUN_UP';
+    this.ball.inPlay = false;
 
     // 1. Authentic Crease Positioning based on Arm & Over/Around the wicket
     // 1. Authentic Crease Positioning based on Arm & Over/Around the wicket
@@ -774,6 +775,10 @@ export class CricketPhysics {
       // Bowler AI calculates bounce spot so arrival hits targetCreaseX
       this.ball.bounceSpotX = targetCreaseX - postBounceTurnAtCrease - swingDriftTotal;
     }
+
+    // Keep bounce spot safely within the pitch surface (margin 14px from turf edge, never pitch off pitch)
+    const halfPitch = (this.pitchWidth || 116) / 2;
+    this.ball.bounceSpotX = Math.max(this.cx - halfPitch + 14, Math.min(this.cx + halfPitch - 14, this.ball.bounceSpotX));
 
     if (config.bowlerAction || config.action) {
       this.bowler.actionType = config.bowlerAction || config.action;

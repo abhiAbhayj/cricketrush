@@ -63,6 +63,8 @@ export default function CricketGame({
   const engineRef = useRef(null);
   const fieldersRef = useRef(null);
   const animFrameRef = useRef(null);
+  const nextDeliveryTimeoutRef = useRef(null);
+  const introTimerRef = useRef(null);
 
   // Teams & Match Structure Setup - Ultra-defensive resolution
   const userTeamCode = matchConfig?.userTeamCode || matchConfig?.teamCode || 'IND';
@@ -1259,7 +1261,10 @@ export default function CricketGame({
         });
       }, 1500);
     } else {
-      setTimeout(() => {
+      if (nextDeliveryTimeoutRef.current) {
+        clearTimeout(nextDeliveryTimeoutRef.current);
+      }
+      nextDeliveryTimeoutRef.current = setTimeout(() => {
         triggerNextDelivery();
       }, isWide ? 1400 : 1800);
     }
@@ -1339,6 +1344,25 @@ export default function CricketGame({
       return;
     }
 
+    // Always clear existing pending timeouts to prevent duplicate deliveries
+    if (nextDeliveryTimeoutRef.current) {
+      clearTimeout(nextDeliveryTimeoutRef.current);
+      nextDeliveryTimeoutRef.current = null;
+    }
+    if (introTimerRef.current) {
+      clearTimeout(introTimerRef.current);
+      introTimerRef.current = null;
+    }
+
+    // Guard: Never reset or interrupt an active delivery while ball is in flight or in play!
+    if (engine.ball.state === 'BOWLED' || engine.ball.state === 'HIT') {
+      return;
+    }
+    // Guard: Never double-start if bowler is already running up
+    if (engine.bowler.isBowling && engine.ball.state === 'RUN_UP') {
+      return;
+    }
+
     setFeedback(null);
     setTimingMeterProgress(0);
     setTimingDeltaRecord(null);
@@ -1376,10 +1400,12 @@ export default function CricketGame({
 
   const dismissMatchIntroAndStart = () => {
     setShowMatchIntro(false);
+    if (introTimerRef.current) {
+      clearTimeout(introTimerRef.current);
+      introTimerRef.current = null;
+    }
     sound.playClick();
-    setTimeout(() => {
-      triggerNextDelivery();
-    }, 200);
+    triggerNextDelivery();
   };
 
   // Bat Swing Action with Dynamic Shot Detection & Timing Meter
@@ -1387,12 +1413,13 @@ export default function CricketGame({
     const engine = engineRef.current;
     if (!engine) return;
 
-    // If bowler hasn't bowled or is idle at top of mark, tapping immediately commands bowler to bowl!
-    if (!engine.bowler.isBowling && engine.ball.state !== 'BOWLED' && engine.ball.state !== 'HIT') {
+    // Only allow manual start if match is idle at beginning
+    if (gameState === 'READY' && engine.ball.state === 'IDLE' && !engine.bowler.isBowling) {
       triggerNextDelivery();
       return;
     }
 
+    // Only swing if ball is genuinely in flight towards batsman
     if (engine.ball.state !== 'BOWLED' || engine.batsman.isSwinging) return;
 
     const swingResult = engine.swingBat(touchX);
@@ -1427,6 +1454,14 @@ export default function CricketGame({
 
   // Restart match handler (resets score cleanly from 0)
   const handleRestartChase = () => {
+    if (introTimerRef.current) {
+      clearTimeout(introTimerRef.current);
+      introTimerRef.current = null;
+    }
+    if (nextDeliveryTimeoutRef.current) {
+      clearTimeout(nextDeliveryTimeoutRef.current);
+      nextDeliveryTimeoutRef.current = null;
+    }
     setIsPaused(false);
     setShowPhaseBanner(true);
     setCurrentRunsScored(0);
@@ -1553,11 +1588,20 @@ export default function CricketGame({
     if (fieldersRef.current) {
       fieldersRef.current.applyFieldPreset(isDeathOvers ? 'death_overs' : 'powerplay', true, isLeftHanded);
     }
-    const timer = setTimeout(() => {
+    introTimerRef.current = setTimeout(() => {
       setShowMatchIntro(false);
       triggerNextDelivery();
     }, 2000);
-    return () => clearTimeout(timer);
+    return () => {
+      if (introTimerRef.current) {
+        clearTimeout(introTimerRef.current);
+        introTimerRef.current = null;
+      }
+      if (nextDeliveryTimeoutRef.current) {
+        clearTimeout(nextDeliveryTimeoutRef.current);
+        nextDeliveryTimeoutRef.current = null;
+      }
+    };
   }, []);
 
   // --------------------------------------------------------------------------
