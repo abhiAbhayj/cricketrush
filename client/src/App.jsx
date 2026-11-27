@@ -54,7 +54,14 @@ export default function App() {
   }, []);
 
   // Quick Play Match Launcher with authentic team rosters (Abhishek, Rohit, Virat, Rickelton, Markram, Klaasen, etc.)
-  const startQuickPlay = (selectedBalls = null, battingTeamKey = 'IND', bowlingTeamKey = 'SA') => {
+  const startQuickPlay = (
+    selectedBalls = null,
+    battingTeamKey = 'IND',
+    bowlingTeamKey = 'SA',
+    stadiumKey = 'colosseum',
+    timeOfDay = 'day',
+    weather = 'sunny'
+  ) => {
     // Resolve batting & bowling teams from comprehensive TEAMS registry
     const battingTeam = TEAMS[battingTeamKey] || TEAMS.IND;
     const bowlingTeam = TEAMS[bowlingTeamKey] || (battingTeamKey === 'SA' ? TEAMS.IND : TEAMS.SA);
@@ -162,7 +169,9 @@ export default function App() {
       bowlerList: BOWLER_ROSTER,
       userTeamCode: battingTeam.code,
       oppTeamCode: bowlingTeam.code,
-      stadiumKey: 'colosseum',
+      stadiumKey: stadiumKey || 'colosseum',
+      timeOfDay: timeOfDay || 'day',
+      weather: weather || 'sunny',
       matchPhase,
       roundTitle,
       teamCode: battingTeam.code,

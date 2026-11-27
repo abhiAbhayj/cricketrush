@@ -10,7 +10,10 @@ export default function PauseModal({
   onToggleMute,
   hapticsEnabled,
   onToggleHaptics,
-  matchStats
+  matchStats,
+  currentStadium,
+  currentTimeOfDay,
+  onOpenStadiumModal
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -77,6 +80,29 @@ export default function PauseModal({
 
         {/* Action Buttons */}
         <div className="space-y-2.5">
+          {/* Venue & Lighting Selector (12 Arenas) */}
+          {onOpenStadiumModal && (
+            <button
+              onClick={() => { sound.playClick(); onOpenStadiumModal(); }}
+              className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-teal-950/90 hover:from-emerald-900 hover:to-teal-900 border border-emerald-500/40 text-xs font-bold text-emerald-300 flex items-center justify-between shadow-md cursor-pointer transition-all active:scale-95"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-base">{currentStadium?.flag || '🏟️'}</span>
+                <div className="text-left">
+                  <span className="text-white block font-black text-xs leading-tight">
+                    {currentStadium?.name || 'Change Venue'}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    {currentTimeOfDay ? `${currentTimeOfDay.toUpperCase()} LIGHTING` : '12 World Arenas'}
+                  </span>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase">
+                CHANGE
+              </span>
+            </button>
+          )}
+
           {/* Resume Match */}
           <button
             onClick={() => { sound.playClick(); onResume(); }}

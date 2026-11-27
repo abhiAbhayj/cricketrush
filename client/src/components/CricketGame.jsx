@@ -6,6 +6,7 @@ import { STADIUMS, getStadium, TIME_OF_DAY_CONFIGS, WEATHER_CONFIGS, ALL_STADIUM
 import { sound } from '../game/SoundEffects';
 import { haptics } from '../services/haptics';
 import PauseModal from './PauseModal';
+import StadiumModal from './StadiumModal';
 import {
   Volume2,
   VolumeX,
@@ -1702,19 +1703,21 @@ export default function CricketGame({
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
-    // Off-side wide guideline (32px outside off, extended length)
-    const offWideX = isLeftHanded ? (cx - 32) : (cx + 32);
-    ctx.moveTo(offWideX, pb - 68); ctx.lineTo(offWideX, pb - 10);
-    // Tick marks on off-side wide line
-    ctx.moveTo(offWideX - 3, pb - 68); ctx.lineTo(offWideX + 3, pb - 68);
-    ctx.moveTo(offWideX - 3, pb - 10); ctx.lineTo(offWideX + 3, pb - 10);
+    // Off-side wide guideline (38px outside off, extended length covering good length & crease)
+    const offWideX = isLeftHanded ? (cx - 38) : (cx + 38);
+    ctx.moveTo(offWideX, pb - 110); ctx.lineTo(offWideX, pb - 6);
+    // 3 Tick marks on off-side wide line (top, popping crease, base)
+    ctx.moveTo(offWideX - 3.5, pb - 110); ctx.lineTo(offWideX + 3.5, pb - 110);
+    ctx.moveTo(offWideX - 3.5, pb - 46); ctx.lineTo(offWideX + 3.5, pb - 46);
+    ctx.moveTo(offWideX - 3.5, pb - 6); ctx.lineTo(offWideX + 3.5, pb - 6);
 
-    // Leg-side wide guideline (20px down leg, extended length)
-    const legWideX = isLeftHanded ? (cx + 20) : (cx - 20);
-    ctx.moveTo(legWideX, pb - 68); ctx.lineTo(legWideX, pb - 10);
-    // Tick marks on leg-side wide line
-    ctx.moveTo(legWideX - 3, pb - 68); ctx.lineTo(legWideX + 3, pb - 68);
-    ctx.moveTo(legWideX - 3, pb - 10); ctx.lineTo(legWideX + 3, pb - 10);
+    // Leg-side wide guideline (26px down leg, extended length)
+    const legWideX = isLeftHanded ? (cx + 26) : (cx - 26);
+    ctx.moveTo(legWideX, pb - 110); ctx.lineTo(legWideX, pb - 6);
+    // 3 Tick marks on leg-side wide line (top, popping crease, base)
+    ctx.moveTo(legWideX - 3.5, pb - 110); ctx.lineTo(legWideX + 3.5, pb - 110);
+    ctx.moveTo(legWideX - 3.5, pb - 46); ctx.lineTo(legWideX + 3.5, pb - 46);
+    ctx.moveTo(legWideX - 3.5, pb - 6); ctx.lineTo(legWideX + 3.5, pb - 6);
     ctx.stroke();
 
     // Batsman Crease Footwork Marker (Clear visual indicator of current foot stance)
@@ -2224,14 +2227,14 @@ export default function CricketGame({
                   sound.playClick();
                   setShowStadiumModal(true);
                 }}
-                className="p-1 sm:px-1.5 sm:py-0.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 font-bold border border-emerald-500/40 flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm"
+                className="px-2 py-1 rounded-xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/50 hover:border-emerald-400 text-emerald-300 font-black flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-md flex-shrink-0"
                 title={`Venue: ${currentStadium?.name} • ${TIME_OF_DAY_CONFIGS[timeOfDay]?.name || timeOfDay} (Click to change, Key Y cycle, Key T lighting)`}
               >
-                <span className="text-[11px]">{currentStadium?.flag || '🏟️'}</span>
-                <span className="text-[9px] font-bold hidden sm:inline max-w-[65px] truncate">
+                <span className="text-xs">{currentStadium?.flag || '🏟️'}</span>
+                <span className="text-[10px] text-white font-black truncate max-w-[55px] sm:max-w-[85px]">
                   {currentStadium?.shortName || currentStadium?.name}
                 </span>
-                <span className="text-[9px] text-emerald-400">
+                <span className="text-[10px]">
                   {timeOfDay === 'night' ? '🌙' : timeOfDay === 'sunset' ? '🌅' : timeOfDay === 'afternoon' ? '🌤️' : '☀️'}
                 </span>
               </button>
@@ -2780,189 +2783,24 @@ export default function CricketGame({
         {/* ================================================================== */}
         {/* 6.5. STADIUM & ATMOSPHERE SELECTOR MODAL                           */}
         {/* ================================================================== */}
-        {showStadiumModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-2xl bg-gradient-to-b from-[#0f172a] to-[#090d16] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              {/* Modal Header */}
-              <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">🏟️</span>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-black text-white tracking-wide flex items-center gap-2">
-                      WORLD STADIUMS & ATMOSPHERE
-                    </h3>
-                    <p className="text-[10px] sm:text-xs text-slate-400">
-                      Iconic international venues • Pitch turf physics • Day / Afternoon / Sunset / Night
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowStadiumModal(false)}
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Pro Vector Cricketers Engine Active Badge */}
-              <div className="px-5 py-2 bg-emerald-950/40 border-b border-emerald-500/20 flex items-center justify-between text-[10px] text-emerald-300 font-bold">
-                <div className="flex items-center gap-1.5">
-                  <span>✨</span>
-                  <span>PRO BROADCAST CRICKETERS & VENUES</span>
-                  <span className="text-emerald-400 font-normal hidden sm:inline">• Crisp vector models, lighting shadows & authentic stances</span>
-                </div>
-                <span className="text-slate-400 text-[9px] font-mono">[T] Light • [Y] Stadium</span>
-              </div>
-
-              {/* Scrollable Content */}
-              <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
-                {/* 1. Time of Day / Atmosphere */}
-                <div>
-                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <span>🕒</span> Time of Day & Lighting
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {Object.entries(TIME_OF_DAY_CONFIGS).map(([key, cfg]) => {
-                      const isSelected = timeOfDay === key;
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setTimeOfDay(key);
-                            sound.playClick();
-                          }}
-                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                            isSelected
-                              ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-500/10'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-sm mb-0.5">
-                            <span>{cfg.icon}</span>
-                            <span className="font-black text-xs">{cfg.name}</span>
-                          </div>
-                          <div className="text-[9px] text-slate-400 line-clamp-1">{cfg.desc}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Weather Conditions */}
-                <div>
-                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <span>🌤️</span> Pitch Weather Conditions
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {Object.entries(WEATHER_CONFIGS).map(([key, cfg]) => {
-                      const isSelected = weather === key;
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => {
-                            setWeather(key);
-                            sound.playClick();
-                          }}
-                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
-                            isSelected
-                              ? 'bg-sky-500/20 border-sky-400 text-sky-200 shadow-md shadow-sky-500/10'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-sm mb-0.5">
-                            <span>{cfg.icon}</span>
-                            <span className="font-black text-xs">{cfg.name}</span>
-                          </div>
-                          <div className="text-[9px] text-slate-400 line-clamp-1">{cfg.desc}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 3. Stadium Selection (12 Venues) */}
-                <div>
-                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <span>🏟️</span> Select Match Venue ({ALL_STADIUMS.length} Arenas)
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-semibold">
-                      Current: {currentStadium?.name}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                    {ALL_STADIUMS.map((st) => {
-                      const isSelected = stadiumKey === st.id;
-                      const pitchBadge =
-                        st.pitchType === 'grass_green' ? '🟢 Green Seamer' :
-                        st.pitchType === 'dusty_turner' ? '🟡 Dusty Turner' :
-                        st.pitchType === 'bouncy_clay' ? '🔴 Bouncy Clay' :
-                        st.pitchType === 'red_soil' ? '🟠 Red Soil' :
-                        st.pitchType === 'compact_turf' ? '🟤 Compact Turf' : '⚪ Hard Surface';
-
-                      return (
-                        <button
-                          key={st.id}
-                          onClick={() => handleSelectStadium(st.id)}
-                          className={`p-3 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between gap-2 ${
-                            isSelected
-                              ? 'bg-gradient-to-br from-emerald-950/70 to-slate-900/90 border-emerald-400 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400'
-                              : 'bg-slate-900/70 border-slate-800/90 hover:border-slate-700 hover:bg-slate-800/60 text-slate-300'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-start justify-between gap-1 mb-1">
-                              <div className="font-black text-white text-xs flex items-center gap-1.5">
-                                <span className="text-base">{st.flag}</span>
-                                <span className="line-clamp-1">{st.name}</span>
-                              </div>
-                              {isSelected && (
-                                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-black font-black text-[8px] uppercase tracking-wider flex-shrink-0">
-                                  ACTIVE
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1 mb-1.5">
-                              <span>📍</span>
-                              <span>{st.location}</span>
-                              <span className="text-slate-600">•</span>
-                              <span>👥 {st.capacity}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-800/60 text-[9px]">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-amber-300 font-semibold border border-amber-500/20">
-                              {pitchBadge}
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-cyan-300 font-semibold border border-cyan-500/20">
-                              {st.boundaryRadiusRatio >= 1.05 ? '🏟️ Big' : st.boundaryRadiusRatio <= 0.95 ? '⚡ Compact' : '🎯 Standard'}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/70 flex items-center justify-between">
-                <div className="text-[10px] text-slate-400 flex items-center gap-2">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: currentStadium?.pitchColor || '#dfcaa4' }} />
-                  <span>Pitch: <strong className="text-white">{currentStadium?.pitchType?.replace('_', ' ').toUpperCase()}</strong></span>
-                  <span className="text-slate-600">•</span>
-                  <span>Mow: <strong className="text-white">{currentStadium?.grassPattern?.toUpperCase()}</strong></span>
-                </div>
-                <button
-                  onClick={() => setShowStadiumModal(false)}
-                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs tracking-wide shadow-md cursor-pointer transition-all active:scale-95"
-                >
-                  CONFIRM & RESUME
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <StadiumModal
+          isOpen={showStadiumModal}
+          onClose={() => setShowStadiumModal(false)}
+          stadiumKey={stadiumKey}
+          onSelectStadium={handleSelectStadium}
+          timeOfDay={timeOfDay}
+          onChangeTimeOfDay={(tod) => {
+            setTimeOfDay(tod);
+            showFootworkAlert(`🕒 LIGHTING: ${tod.toUpperCase()}`);
+          }}
+          weather={weather}
+          onChangeWeather={(w) => {
+            setWeather(w);
+            showFootworkAlert(`🌤️ WEATHER: ${w.toUpperCase()}`);
+          }}
+          title="WORLD STADIUMS & ATMOSPHERE"
+          confirmLabel="CONFIRM & RESUME"
+        />
 
         {/* ================================================================== */}
         {/* 7. IN-GAME PAUSE MODAL                                             */}
@@ -2976,6 +2814,9 @@ export default function CricketGame({
             onToggleMute={() => setIsMuted(prev => !prev)}
             hapticsEnabled={hapticsEnabled}
             onToggleHaptics={() => setHapticsEnabled(prev => !prev)}
+            currentStadium={currentStadium}
+            currentTimeOfDay={timeOfDay}
+            onOpenStadiumModal={() => setShowStadiumModal(true)}
             matchStats={{
               score: `${totalTeamScore}-${totalTeamWickets}`,
               runsNeeded: runsRemaining,

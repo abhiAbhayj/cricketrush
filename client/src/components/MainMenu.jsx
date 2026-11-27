@@ -22,6 +22,8 @@ import {
   Plus
 } from 'lucide-react';
 import { TEAMS } from '../game/TeamData';
+import StadiumModal from './StadiumModal';
+import { ALL_STADIUMS, getStadium, TIME_OF_DAY_CONFIGS, WEATHER_CONFIGS } from '../game/Stadiums';
 
 const RIVALRIES = [
   { bat: 'IND', bowl: 'AUS', label: 'IND vs AUS', badge: '🇮🇳 v 🇦🇺' },
@@ -99,6 +101,12 @@ export default function MainMenu({
   // Selected format for the featured Chase Card (default 18 balls matching Reference Image 2)
   const [selectedBalls, setSelectedBalls] = useState(18);
 
+  // Stadium & Atmosphere Selection State (12 Venues, Day/Night Lighting, Weather)
+  const [selectedStadiumKey, setSelectedStadiumKey] = useState('colosseum');
+  const [selectedTimeOfDay, setSelectedTimeOfDay] = useState('day');
+  const [selectedWeather, setSelectedWeather] = useState('sunny');
+  const [showStadiumModal, setShowStadiumModal] = useState(false);
+
   // Team Selector Modal State
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [teamModalTab, setTeamModalTab] = useState('batting'); // 'batting' or 'bowling'
@@ -107,6 +115,7 @@ export default function MainMenu({
   const currentBattingTeam = TEAMS[battingTeamKey] || TEAMS.IND;
   const currentBowlingTeam = TEAMS[bowlingTeamKey] || TEAMS.SA;
   const currentFormat = CHASE_FORMATS[selectedBalls] || CHASE_FORMATS[18];
+  const currentStadium = getStadium(selectedStadiumKey) || ALL_STADIUMS[0];
 
   const teamList = Object.values(TEAMS);
   const filteredTeams = teamCategoryFilter === 'all'
@@ -265,12 +274,56 @@ export default function MainMenu({
             </div>
           </div>
 
+          {/* Interactive Venue & Atmosphere Selector Bar */}
+          <div
+            onClick={() => { sound.playClick(); setShowStadiumModal(true); }}
+            className="my-3 bg-[#121c16]/95 hover:bg-[#1a2920] border border-emerald-500/30 hover:border-emerald-400/60 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer transition-all active:scale-98 group shadow-lg"
+            title="Click to Choose Match Venue, Day/Night Lighting & Weather"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-xl flex-shrink-0">{currentStadium?.flag || '🏟️'}</span>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                    {currentStadium?.name}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-amber-300 font-bold flex-shrink-0 border border-amber-500/20">
+                    {currentStadium?.pitchType?.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span className="flex items-center gap-1">
+                    <span>{TIME_OF_DAY_CONFIGS[selectedTimeOfDay]?.icon || '☀️'}</span>
+                    <span className="capitalize">{TIME_OF_DAY_CONFIGS[selectedTimeOfDay]?.name || selectedTimeOfDay}</span>
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="flex items-center gap-1">
+                    <span>{WEATHER_CONFIGS[selectedWeather]?.icon || '🌤️'}</span>
+                    <span className="capitalize">{selectedWeather}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 text-[10px] font-black text-emerald-400 group-hover:text-emerald-300 flex-shrink-0 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-xl">
+              <span>ARENA</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
           {/* Action Buttons: ▶ PLAY THE CHASE + ◎ Nets */}
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-2 mt-2">
             <button
               onClick={() => {
                 sound.playClick();
-                onStartQuickPlay(selectedBalls, battingTeamKey, bowlingTeamKey);
+                onStartQuickPlay(
+                  selectedBalls,
+                  battingTeamKey,
+                  bowlingTeamKey,
+                  selectedStadiumKey,
+                  selectedTimeOfDay,
+                  selectedWeather
+                );
               }}
               className="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#f95738] via-[#fa4f33] to-[#ef4444] hover:brightness-110 active:scale-98 text-white font-display font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 shadow-xl shadow-orange-600/30 transition-all cursor-pointer"
             >
@@ -630,6 +683,25 @@ export default function MainMenu({
           </div>
         </div>
       )}
+
+      {/* World Stadiums & Atmosphere Modal */}
+      <StadiumModal
+        isOpen={showStadiumModal}
+        onClose={() => setShowStadiumModal(false)}
+        stadiumKey={selectedStadiumKey}
+        onSelectStadium={(key) => {
+          setSelectedStadiumKey(key);
+          const st = getStadium(key);
+          if (st?.defaultTimeOfDay) setSelectedTimeOfDay(st.defaultTimeOfDay);
+          if (st?.defaultWeather) setSelectedWeather(st.defaultWeather);
+        }}
+        timeOfDay={selectedTimeOfDay}
+        onChangeTimeOfDay={setSelectedTimeOfDay}
+        weather={selectedWeather}
+        onChangeWeather={setSelectedWeather}
+        title="SELECT MATCH VENUE & ATMOSPHERE"
+        confirmLabel="CONFIRM VENUE"
+      />
     </div>
   );
 }
