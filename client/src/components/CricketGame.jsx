@@ -2804,12 +2804,12 @@ export default function CricketGame({
                 </button>
               </div>
 
-              {/* 3D Pixel Engine Active Badge */}
+              {/* Pro Vector Cricketers Engine Active Badge */}
               <div className="px-5 py-2 bg-emerald-950/40 border-b border-emerald-500/20 flex items-center justify-between text-[10px] text-emerald-300 font-bold">
                 <div className="flex items-center gap-1.5">
-                  <span>🧱</span>
-                  <span>3D PIXEL ART ENGINE ACTIVE</span>
-                  <span className="text-emerald-400 font-normal hidden sm:inline">• Voxel lighting, pitch shadows & player models</span>
+                  <span>✨</span>
+                  <span>PRO BROADCAST CRICKETERS & VENUES</span>
+                  <span className="text-emerald-400 font-normal hidden sm:inline">• Crisp vector models, lighting shadows & authentic stances</span>
                 </div>
                 <span className="text-slate-400 text-[9px] font-mono">[T] Light • [Y] Stadium</span>
               </div>

@@ -1,11 +1,12 @@
 // ============================================================================
-// CRICKET RUSH - Authentic 3D Pixel Art Character & Dynamic Stadium Engine
-// True Voxel/Pixel-Art Aesthetic with Isometric 3D Shading, Dynamic Lighting,
-// Multi-Tier Architecture, Diverse Pitch Profiles, and Weather / Time-of-Day Atmosphere
+// CRICKET RUSH - Clean Vector-Arcade Character & Stadium Presentation Engine
+// Authentic High-Definition Cricketers: Striker Batsman, Bowler with High-Arm Action
+// & Afro Hair, Wicket-Keeper, Non-Striker, Sprinting Runners, Diving Fielders,
+// Dynamic Multi-Tier Stadium Crowd Stands & Regulation 30-Yard Circle
 // ============================================================================
 
 /**
- * Universal color shading helper for 3D pixel voxel faces (lighten top face, darken side face)
+ * Universal color shading helper for stadium seats and lighting
  */
 export function shadeColor(color, percent) {
   if (!color || typeof color !== 'string' || !color.startsWith('#')) return color || '#888888';
@@ -26,7 +27,7 @@ export function shadeColor(color, percent) {
 }
 
 /**
- * Helper to resolve kit safely from either a kit object or a color string
+ * Helper to resolve kit safely from either a kit object or a color string without external dependencies
  */
 function resolveKit(kitOrColor, fallbackColor = '#0066b2') {
   if (kitOrColor && typeof kitOrColor === 'object') {
@@ -55,215 +56,148 @@ function resolveKit(kitOrColor, fallbackColor = '#0066b2') {
 }
 
 /**
- * Core 3D Pixel Voxel Block Renderer
- * Renders an isometric/pseudo-3D voxel block with 3 distinct lighting faces:
- * - Front face: base color with crisp pixel texture
- * - Top face: lightened face (+22% brightness) for overhead stadium/sunlight
- * - Side face: darkened face (-26% brightness) for authentic 3D blocky volume
- * - Pixel outline: crisp dark border (#070b12) for that iconic retro-modern arcade aesthetic
+ * Universal fallback for canvas rounded rectangle
  */
-export function drawVoxel(ctx, x, y, w, h, depth = 2.5, color = '#ffffff', options = {}) {
-  if (!ctx || w <= 0 || h <= 0) return;
-  const {
-    topColor = null,
-    sideColor = null,
-    outlineColor = '#070b12',
-    side = 'right', // 'right' or 'left' side extrusion
-    showGrid = false
-  } = options;
-
-  const rx = Math.round(x);
-  const ry = Math.round(y);
-  const rw = Math.round(w);
-  const rh = Math.round(h);
-  const d = Math.max(1, Math.round(depth));
-
-  const baseCol = color || '#ffffff';
-  const topCol = topColor || shadeColor(baseCol, 24);
-  const sideCol = sideColor || shadeColor(baseCol, -28);
-
-  ctx.save();
-
-  // 1. Top Isometric Voxel Face (Lightened highlight face)
-  ctx.fillStyle = topCol;
-  ctx.beginPath();
-  if (side === 'right') {
-    ctx.moveTo(rx, ry);
-    ctx.lineTo(rx + d, ry - d);
-    ctx.lineTo(rx + rw + d, ry - d);
-    ctx.lineTo(rx + rw, ry);
-  } else {
-    ctx.moveTo(rx, ry);
-    ctx.lineTo(rx - d, ry - d);
-    ctx.lineTo(rx + rw - d, ry - d);
-    ctx.lineTo(rx + rw, ry);
-  }
+function drawRoundRectFallback(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-  ctx.fill();
-  if (outlineColor) {
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-  }
-
-  // 2. Side Isometric Voxel Face (Darkened shadow face for 3D depth)
-  ctx.fillStyle = sideCol;
-  ctx.beginPath();
-  if (side === 'right') {
-    ctx.moveTo(rx + rw, ry);
-    ctx.lineTo(rx + rw + d, ry - d);
-    ctx.lineTo(rx + rw + d, ry + rh - d);
-    ctx.lineTo(rx + rw, ry + rh);
-  } else {
-    ctx.moveTo(rx, ry);
-    ctx.lineTo(rx - d, ry - d);
-    ctx.lineTo(rx - d, ry + rh - d);
-    ctx.lineTo(rx, ry + rh);
-  }
-  ctx.closePath();
-  ctx.fill();
-  if (outlineColor) {
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-  }
-
-  // 3. Front Voxel Face (Base color with pixel border)
-  ctx.fillStyle = baseCol;
-  ctx.fillRect(rx, ry, rw, rh);
-
-  // Crisp retro pixel border
-  if (outlineColor) {
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth = 1.0;
-    ctx.strokeRect(rx, ry, rw, rh);
-  }
-
-  // Subtle interior pixel-grid highlight texture
-  if (showGrid && rw >= 4 && rh >= 4) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
-    ctx.fillRect(rx + 1, ry + 1, rw - 2, 1);
-  }
-
-  ctx.restore();
 }
 
 /**
- * Draw a crisp pixel-art rectangle with optional pixel bevel
+ * Helper to draw clean rounded rectangles with stroke and 100% crash protection
  */
-function drawPixelRect(ctx, x, y, w, h, fill, stroke = null, lineWidth = 1) {
+function drawRoundRect(ctx, x, y, w, h, radius, fill, stroke = null, lineWidth = 1.5) {
   if (!ctx || w <= 0 || h <= 0) return;
-  const rx = Math.round(x);
-  const ry = Math.round(y);
-  const rw = Math.round(w);
-  const rh = Math.round(h);
+  const r = Math.max(0, Math.min(Math.min(w / 2, h / 2), typeof radius === 'number' ? radius : 0));
   ctx.save();
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    try {
+      ctx.roundRect(x, y, w, h, r);
+    } catch {
+      drawRoundRectFallback(ctx, x, y, w, h, r);
+    }
+  } else {
+    drawRoundRectFallback(ctx, x, y, w, h, r);
+  }
   if (fill) {
     ctx.fillStyle = fill;
-    ctx.fillRect(rx, ry, rw, rh);
+    ctx.fill();
   }
   if (stroke) {
     ctx.strokeStyle = stroke;
     ctx.lineWidth = lineWidth;
-    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.stroke();
   }
   ctx.restore();
 }
 
 /**
- * 3D Pixel Art Dynamic Ground Shadow
- * Automatically responds to Time-of-Day / Weather:
- * - Night: 4 distinct pixelated quad-shadows radiating outward under stadium floodlights
- * - Sunset: elongated warm amber-shaded pixel shadow
- * - Afternoon: angled soft shadow
- * - Day: crisp directional pixel shadow
+ * Helper to draw clean ellipses with stroke and 100% crash protection
  */
-export function drawPixelShadow(ctx, x, y, rx, ry, alpha = 0.35, timeOfDay = 'day') {
-  if (!ctx) return;
-  const cx = Math.round(x);
-  const cy = Math.round(y);
-  const w = Math.round(rx);
-  const h = Math.round(ry);
-
+function drawEllipse(ctx, cx, cy, rx, ry, fill, stroke = null, lineWidth = 1.5) {
+  if (!ctx || !Number.isFinite(cx) || !Number.isFinite(cy)) return;
+  const safeRx = Math.max(0.1, Math.abs(typeof rx === 'number' && Number.isFinite(rx) ? rx : 1));
+  const safeRy = Math.max(0.1, Math.abs(typeof ry === 'number' && Number.isFinite(ry) ? ry : 1));
   ctx.save();
-
-  if (timeOfDay === 'night') {
-    // 4-point floodlight shadows cast outward from 4 stadium corners
-    const floodlightOffsets = [
-      { dx: -w * 0.45, dy: -h * 0.35 },
-      { dx: w * 0.45, dy: -h * 0.35 },
-      { dx: -w * 0.45, dy: h * 0.45 },
-      { dx: w * 0.45, dy: h * 0.45 }
-    ];
-    ctx.fillStyle = `rgba(3, 7, 18, ${alpha * 0.45})`;
-    floodlightOffsets.forEach(({ dx, dy }) => {
-      ctx.fillRect(cx + dx - w * 0.5, cy + dy - h * 0.3, w, h * 0.7);
-    });
-    // Core center shadow
-    ctx.fillStyle = `rgba(3, 7, 18, ${alpha * 0.75})`;
-    ctx.fillRect(cx - w * 0.55, cy - h * 0.4, w * 1.1, h * 0.8);
-  } else if (timeOfDay === 'sunset') {
-    // Elongated golden-hour shadow stretched towards east
-    ctx.fillStyle = `rgba(26, 12, 4, ${alpha * 0.85})`;
-    ctx.fillRect(cx - w * 0.4, cy - h * 0.3, w * 1.8, h * 0.7);
-    ctx.fillRect(cx + w * 0.6, cy - h * 0.2, w * 0.8, h * 0.5);
-  } else if (timeOfDay === 'afternoon') {
-    // Angled afternoon sun shadow
-    ctx.fillStyle = `rgba(5, 12, 22, ${alpha})`;
-    ctx.fillRect(cx - w * 0.4 + 3, cy - h * 0.3 + 4, w * 1.2, h * 0.8);
+  ctx.beginPath();
+  if (typeof ctx.ellipse === 'function') {
+    try {
+      ctx.ellipse(cx, cy, safeRx, safeRy, 0, 0, Math.PI * 2);
+    } catch {
+      ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
+    }
   } else {
-    // Crisp clean daytime pixel shadow
-    ctx.fillStyle = `rgba(5, 12, 22, ${alpha})`;
-    // Stepped pixelated oval
-    ctx.fillRect(cx - w * 0.6, cy - h * 0.35, w * 1.2, h * 0.7);
-    ctx.fillRect(cx - w * 0.45, cy - h * 0.55, w * 0.9, h * 1.1);
+    ctx.arc(cx, cy, (safeRx + safeRy) / 2, 0, Math.PI * 2);
   }
-
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
 /**
- * 3D Pixel Art Batting Pad (Leg Guard) with 3D knee-roll voxel, cane shin blocks, and spiked shoes
+ * Dynamic Atmospheric Ground Shadow:
+ * - Night: 4-Corner Halogen Floodlight multi-directional soft shadows
+ * - Sunset: Elongated warm dusk shadow extending down-right
+ * - Afternoon: Angled crisp directional shadow
+ * - Day: Centered overhead sun ground shadow
  */
-function drawPixelBattingPad(ctx, x, y, isFrontFoot = false, strapColor = '#0a0e17') {
+function drawLightingShadow(ctx, timeOfDay = 'day', rx = 11, ry = 4.5, cyOffset = 11) {
   ctx.save();
-  ctx.translate(Math.round(x), Math.round(y));
+  if (timeOfDay === 'night') {
+    // 4-corner multi-directional floodlight shadows from stadium towers
+    const quadOffsets = [
+      { dx: -6.5, dy: 3.5, rx: rx * 0.9, ry: ry * 0.85, a: 0.18 },
+      { dx: 6.5, dy: 3.5, rx: rx * 0.9, ry: ry * 0.85, a: 0.18 },
+      { dx: -4.5, dy: -3.0, rx: rx * 0.8, ry: ry * 0.8, a: 0.14 },
+      { dx: 4.5, dy: -3.0, rx: rx * 0.8, ry: ry * 0.8, a: 0.14 }
+    ];
+    quadOffsets.forEach(({ dx, dy, rx: srx, ry: sry, a }) => {
+      drawEllipse(ctx, dx, cyOffset + dy, srx, sry, `rgba(0, 0, 0, ${a})`);
+    });
+  } else if (timeOfDay === 'sunset') {
+    // Warm elongated golden-hour dusk shadow stretching to bottom-right
+    drawEllipse(ctx, 6.0, cyOffset + 4.0, rx * 1.35, ry * 1.15, 'rgba(40, 15, 5, 0.38)');
+  } else if (timeOfDay === 'afternoon') {
+    // Angled crisp shadow
+    drawEllipse(ctx, 3.5, cyOffset + 2.0, rx * 1.1, ry, 'rgba(0, 0, 0, 0.35)');
+  } else {
+    // Standard midday sunlight shadow
+    drawEllipse(ctx, 0, cyOffset, rx, ry, 'rgba(0, 0, 0, 0.36)');
+  }
+  ctx.restore();
+}
 
-  // 1. Upper Knee Roll (3D Voxel with embossed horizontal pixel ridge)
-  drawVoxel(ctx, -1, 0, 7, 3, 2, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-  drawPixelRect(ctx, 0, 1, 5, 1, '#f1f5f9');
-
-  // 2. Shin Guard Section (White vertical 3D pixel cane blocks)
-  drawVoxel(ctx, 0, 3, 6, 8, 2, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-  // Vertical cane spine pixel line
-  drawPixelRect(ctx, 2.5, 3.5, 1, 7, '#94a3b8');
-
-  // 3. Colored Team Accent Pad Straps (Horizontal pixel bands)
-  drawPixelRect(ctx, 0.5, 5, 5, 1, strapColor);
-  drawPixelRect(ctx, 0.5, 8, 5, 1, strapColor);
-
-  // 4. 3D Spiked Cricket Shoe Block with Team Color Trim & White Studded Sole
-  drawVoxel(ctx, -0.5, 11, 7, 3, 2, '#0f2942', '#1e40af', '#0a192f', '#070b12');
-  drawPixelRect(ctx, -0.5, 13, 7, 1.2, '#ffffff');
-
+/**
+ * Helper to draw an authentic cricket batting pad with knee roll & spikes
+ */
+function drawBattingPad(ctx, x, y, isFrontFoot = false, strapColor = '#0a0e17') {
+  ctx.save();
+  ctx.translate(x, y);
+  // Pad Body: Clean white rounded shin guard matching reference screenshot
+  drawRoundRect(ctx, 0, 0, 5.4, 11.0, 2.0, '#ffffff', '#0a0e17', 1.3);
+  // Vertical cane spine shadow for 3D depth
+  drawRoundRect(ctx, 3.4, 1.0, 1.0, 8.5, 0.5, '#cbd5e1');
+  // Horizontal Knee Roll: rounded pill contour across knee
+  drawRoundRect(ctx, -0.4, 2.8, 6.2, 2.4, 1.0, '#f1f5f9', '#94a3b8', 0.8);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0.6, 3.2, 4.2, 0.8);
+  // Team Accent Pad Straps
+  ctx.strokeStyle = strapColor || '#0a0e17';
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(0.4, 6.5); ctx.lineTo(5.0, 6.5);
+  ctx.moveTo(0.4, 9.0); ctx.lineTo(5.0, 9.0);
+  ctx.stroke();
+  // Cricket Shoe with Team Dark Blue Trim (matching reference screenshot)
+  drawRoundRect(ctx, -0.4, 10.8, 6.2, 2.8, 1.0, '#0f3460', '#0a0e17', 1.0);
+  drawRoundRect(ctx, -0.4, 12.4, 6.2, 1.2, 0.5, '#ffffff');
   ctx.restore();
 }
 
 export const CharacterRenderer = {
-  // Helper exposure for external modules
-  drawVoxel,
-  shadeColor,
-  drawPixelShadow,
-
   /**
-   * 3D PIXEL ART STRIKER BATSMAN
-   * Authentic 3D Voxel Batsman matching classic arcade voxel soul:
-   * - 3D pixel helmet with visor brim, metallic grille bars, and expressive pixel eyes
-   * - 3D voxel jersey torso with team collar and side flank panels
-   * - 3D pixel batting leg pads with knee rolls, cane spines, and spiked shoes
-   * - 3D wooden willow cricket bat with rubber wrapped grip handle & sponsor sticker
-   * - Perfectly mirrored for Left-Handed Batsmen (LHB points down-left at ~43°) vs RHB (points down-right at ~43°)
-   * - Smoothly rotates through dynamic 3D swing arcs for Cover Drive, Pull, Loft, Flick, Scoop, etc.
+   * Draw Striker Batsman in Clean Vector-Arcade Style (matching User Reference Screenshot):
+   * Clean egg-shaped white helmet dome with bold dark outline, blue team jersey,
+   * white batting pads with dark blue shoes, and thick wooden bat with bold dark outline:
+   * - Points DOWN-RIGHT at ~43° for Right-Handed batsmen (RHB)
+   * - Points DOWN-LEFT at ~43° for Left-Handed batsmen (LHB, exact match to screenshot)
+   * - 100% symmetric mirroring!
    */
   drawBatsman(ctx, x, y, {
     isSwinging = false,
@@ -281,7 +215,7 @@ export const CharacterRenderer = {
     kit = null,
     skinTone = '#f5d0b0',
     timeOfDay = 'day'
-  }) {
+  } = {}) {
     ctx.save();
 
     const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
@@ -294,39 +228,39 @@ export const CharacterRenderer = {
     const visualY = Math.round(y - (isSteppingOut ? stepOutOffset : 0));
     ctx.translate(visualX, visualY);
 
-    // Left-handed batsman mirrors the 3D voxel stance naturally
-    // RHB points down-right (~43°); LHB points down-left (~43°)!
+    // Left-handed batsman mirrors the stance naturally across the pitch
+    // RHB points down-right; LHB points down-left!
     if (isLeftHanded) {
       ctx.scale(-1, 1);
     }
 
-    // 1. 3D Pixel Ground Shadow
-    drawPixelShadow(ctx, 0, 11, 13, 5, 0.40, timeOfDay);
+    // 1. Dynamic Ground Shadow (adapts to stadium lighting: night floodlights, sunset, day)
+    drawLightingShadow(ctx, timeOfDay, 11, 4.5, 11);
 
-    // 2. Batting Leg Pads & Spikes (3D Pixel Voxel Stance)
-    let backPadX = -3.2;
-    let frontPadX = 1.2;
+    // 2. Batting Leg Pads & Spikes (Clean side-on stance matching reference screenshot)
+    let backPadX = -2.6;
+    let frontPadX = 0.8;
     let backPadY = 1.0;
-    let frontPadY = 2.8;
+    let frontPadY = 2.5;
 
     if (isSteppingOut) {
       frontPadY = -4.5;
-      backPadY = 5.0;
-      frontPadX = 2.0;
-      backPadX = -2.5;
+      backPadY = 4.5;
+      frontPadX = 1.5;
+      backPadX = -2.0;
     } else if (shotStyle === 'pull') {
-      frontPadX = 0.5;
-      backPadX = -3.8;
+      frontPadX = 0.2;
+      backPadX = -3.2;
     } else if (!isSwinging) {
       frontPadY += triggerTap * 0.25;
     }
 
-    // Back 3D Pixel Pad
-    drawPixelBattingPad(ctx, backPadX, backPadY, false, stripeCol);
-    // Front 3D Pixel Pad (stepped forward slightly)
-    drawPixelBattingPad(ctx, frontPadX, frontPadY, true, stripeCol);
+    // Back leg pad
+    drawBattingPad(ctx, backPadX, backPadY, false, stripeCol);
+    // Front leg pad (stepped forward slightly)
+    drawBattingPad(ctx, frontPadX, frontPadY, true, stripeCol);
 
-    // 3. 3D Pixel Torso in Team Jersey (Sculpted Voxel Chest & Shoulders)
+    // 3. Torso in Team Jersey (Compact side-on posture)
     ctx.save();
     let bodyRotation = isSwinging ? 0 : -0.15;
     if (isSwinging) {
@@ -337,142 +271,145 @@ export const CharacterRenderer = {
     }
     ctx.rotate(bodyRotation);
 
-    // Main Torso Voxel Block (Width 11, Height 11, Depth 2.5)
-    drawVoxel(ctx, -5.5, -6.5, 11, 11, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12', { showGrid: true });
-
-    // Team Contrast Trim (Side Flank Voxels & V-neck Collar)
-    drawPixelRect(ctx, 3.5, -5.5, 1.8, 9, secColor);
-    drawPixelRect(ctx, -5.0, -5.5, 1.8, 9, secColor);
-    drawPixelRect(ctx, -1.5, -6.5, 3, 2, secColor); // V-neck collar pixel
-
-    // Team Chest Emblem / Badge Voxel (e.g. golden/white crest)
-    drawPixelRect(ctx, 0.5, -3.5, 2.5, 2.5, '#facc15', '#070b12', 0.8);
+    // Clean Jersey Body with Bold Dark Outline (matching screenshot)
+    drawRoundRect(ctx, -4.5, -6.5, 9.0, 9.5, 2.5, topColor, '#0a0e17', 1.4);
+    // White contrast accents on collar/trim
+    drawRoundRect(ctx, 2.5, -5.5, 1.2, 8.0, 0.5, secColor);
+    drawRoundRect(ctx, -3.8, -5.5, 1.2, 8.0, 0.5, secColor);
     ctx.restore();
 
-    // 4. 3D Pixel Helmet & Player Face
+    // 4. White Batting Helmet (Clean egg-shaped dome with bold dark outline, matching screenshot)
     ctx.save();
-    const headY = -13.5;
-    // 3D Neck Voxel Block
-    drawVoxel(ctx, -1.8, headY + 6.0, 3.6, 2.5, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
+    const headY = -13.0;
+    // Neck
+    drawRoundRect(ctx, -1.4, headY + 5.5, 2.8, 2.2, 0.8, skinTone, '#0a0e17', 0.9);
 
-    // 3D Helmet Cubic Dome Voxel (Width 8.5, Height 7.5, Depth 3)
-    drawVoxel(ctx, -4.2, headY - 1.5, 8.5, 7.5, 3.0, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
+    // Egg-shaped White Helmet Dome
+    drawEllipse(ctx, 0, headY, 4.8, 6.2, '#ffffff', '#0a0e17', 1.5);
 
-    // Helmet Gloss Top Specular Line
-    drawPixelRect(ctx, -2.5, headY - 3.5, 5, 1, 'rgba(255, 255, 255, 0.9)');
-
-    // Dark Visor Brim Peak Block
-    drawPixelRect(ctx, -4.2, headY + 3.8, 8.5, 2.0, '#0f172a', '#070b12', 0.8);
-
-    // Face Opening Slit (Skin tone with 3D pixel eyes)
-    drawPixelRect(ctx, -2.2, headY + 3.2, 4.4, 2.0, skinTone);
-    // Expressive 3D Pixel Eyes
-    drawPixelRect(ctx, -1.2, headY + 3.6, 1.2, 1.2, '#070b12');
-    drawPixelRect(ctx, 0.6, headY + 3.6, 1.2, 1.2, '#070b12');
-
-    // Metallic Silver Visor Grille Bars
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 0.9;
+    // Glossy specular highlight curve on top of helmet
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = 1.0;
     ctx.beginPath();
-    ctx.moveTo(-2.5, headY + 4.8); ctx.lineTo(2.5, headY + 4.8);
-    ctx.moveTo(-1.0, headY + 4.0); ctx.lineTo(-1.0, headY + 5.5);
-    ctx.moveTo(1.0, headY + 4.0); ctx.lineTo(1.0, headY + 5.5);
+    ctx.arc(-0.6, headY - 1.2, 3.4, Math.PI * 0.85, Math.PI * 1.8);
     ctx.stroke();
+
+    // Dark Visor Peak Rim around bottom curve
+    drawRoundRect(ctx, -3.4, headY + 3.8, 6.8, 2.2, 1.0, '#0a0e17');
+    // Skin Tone face slit
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(-1.8, headY + 3.4, 3.6, 1.4);
     ctx.restore();
 
-    // 5. 3D Pixel Arms, White Batting Gloves & Wooden Willow Cricket Bat
+    // 5. Arms, White Batting Gloves & Cricket Bat (Exact Match to Screenshot!)
     ctx.save();
-    let batAngle = 0.75; // ~43° default side-on stance backlift
-    let batGripX = 4.2;
-    let batGripY = -2.5;
+    let reachX = 1.0;
+    let reachY = 1.0;
+    // In unmirrored space (RHB), batAngle = -0.75 points DOWN and to the RIGHT (+9.5px X, +10.2px Y).
+    // In mirrored space (LHB: ctx.scale(-1, 1)), it points DOWN and to the LEFT (-9.5px X, +10.2px Y),
+    // matching the user's uploaded reference screenshot with left-hander M. Sarkhel L!
+    let batAngle = -0.75;
 
     if (isSwinging) {
+      const p = swingProgress;
       if (shotStyle === 'cover_drive') {
-        batAngle = -0.65 + swingProgress * 1.55;
-        batGripX = 2.0 + swingProgress * 3.0;
-        batGripY = -1.0 + swingProgress * 3.5;
-      } else if (shotStyle === 'pull') {
-        batAngle = -2.35 + swingProgress * 2.85;
-        batGripX = -1.0 + swingProgress * 4.0;
-        batGripY = -3.0 + swingProgress * 2.0;
-      } else if (shotStyle === 'straight_drive') {
-        batAngle = -0.30 + swingProgress * 1.70;
-        batGripX = 1.0 + swingProgress * 3.0;
-        batGripY = -1.5 + swingProgress * 4.0;
-      } else if (shotStyle === 'upper_cut') {
-        batAngle = -1.55 + swingProgress * 2.05;
-        batGripX = 3.0 + swingProgress * 2.0;
-        batGripY = -4.0 + swingProgress * 3.0;
-      } else if (shotStyle === 'flick') {
-        batAngle = 0.15 + swingProgress * 1.65;
-        batGripX = 2.0 + swingProgress * 2.5;
-        batGripY = -1.0 + swingProgress * 3.0;
-      } else if (shotStyle === 'reverse_sweep') {
-        batAngle = -2.60 + swingProgress * 2.50;
-        batGripX = -2.0 + swingProgress * 3.0;
-        batGripY = -2.0 + swingProgress * 3.0;
-      } else if (shotStyle === 'scoop') {
-        batAngle = -2.85 + swingProgress * 2.15;
-        batGripX = 1.0;
-        batGripY = -3.0 - swingProgress * 4.0;
+        reachX = 1.0 - p * 8.5;
+        reachY = 1.0 - p * 11.0;
+        batAngle = -0.75 - p * 3.4;
+      } else if (shotStyle === 'square_cut' || shotStyle === 'late_cut') {
+        reachX = 1.0 + p * 8.0;
+        reachY = 1.0 - p * 6.0;
+        batAngle = -0.35 - p * 1.8;
+      } else if (shotStyle === 'pull' || shotStyle === 'hook') {
+        reachX = 1.0 + Math.sin(p * Math.PI) * 7.0;
+        reachY = 1.0 - p * 7.5;
+        batAngle = -0.75 + p * 2.8;
+      } else if (shotStyle === 'sweep' || shotStyle === 'paddle_sweep') {
+        reachX = -2.0 - p * 7.0;
+        reachY = 2.0 - p * 6.0;
+        batAngle = -0.40 + p * 2.2;
+      } else if (shotStyle === 'step_out') {
+        reachX = 1.0;
+        reachY = 1.0 - p * 15.0;
+        batAngle = -0.65 - p * 3.6;
       } else {
-        batAngle = -0.50 + swingProgress * 1.80;
-        batGripX = 2.0 + swingProgress * 3.0;
-        batGripY = -1.5 + swingProgress * 3.5;
+        // Straight Drive / Loft
+        reachX = 1.0 - p * 3.0;
+        reachY = 1.0 - p * 13.0;
+        batAngle = -0.75 - p * 3.5;
       }
     } else {
-      // Dynamic idle backlift breathing
-      batAngle += Math.sin(Date.now() * 0.005) * 0.04;
+      // READY STANCE: Angled down-right at ~43° for RHB, down-left at ~43° for LHB
+      reachX = 1.0;
+      reachY = 1.0 + (triggerTap * 0.35);
+      batAngle = -0.75 - (triggerTap * 0.06);
     }
 
-    ctx.translate(batGripX, batGripY);
+    // Dynamic hand attachment positions based on bat handle angle
+    const sinA = Math.sin(batAngle);
+    const cosA = Math.cos(batAngle);
+    const upperHandX = reachX + 3.6 * sinA;
+    const upperHandY = reachY - 3.6 * cosA;
+    const lowerHandX = reachX + 1.6 * sinA;
+    const lowerHandY = reachY - 1.6 * cosA;
+
+    // Arms in jersey sleeves extending from shoulders to hands
+    ctx.strokeStyle = topColor;
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    // Back arm
+    ctx.beginPath();
+    ctx.moveTo(3.5, -3.5);
+    ctx.lineTo(upperHandX, upperHandY);
+    ctx.stroke();
+    // Front arm
+    ctx.beginPath();
+    ctx.moveTo(-3.5, -3.5);
+    ctx.lineTo(lowerHandX, lowerHandY);
+    ctx.stroke();
+
+    // Move to bat center
+    ctx.translate(reachX, reachY);
     ctx.rotate(batAngle);
 
-    // 3D Pixel Arms & White Batting Gloves (holding the bat handle)
-    // Left glove (top hand)
-    drawVoxel(ctx, -2.5, -2.0, 3.8, 3.2, 1.5, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    drawPixelRect(ctx, -1.8, -1.5, 2.4, 1.2, topColor); // Glove finger-ridge color accent
+    // Rubber Grip Handle (held inside gloves)
+    drawRoundRect(ctx, -1.2, -5.0, 2.4, 5.5, 0.8, '#ef4444', '#0a0e17', 0.9);
+    // Spiral grip texture lines
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(-1.0, -3.5); ctx.lineTo(1.0, -3.5);
+    ctx.moveTo(-1.0, -1.8); ctx.lineTo(1.0, -1.8);
+    ctx.stroke();
+    // Top pommel
+    drawRoundRect(ctx, -1.6, -6.0, 3.2, 1.2, 0.6, '#ffffff', '#0a0e17', 0.8);
 
-    // Right glove (bottom hand)
-    drawVoxel(ctx, -2.5, 2.0, 3.8, 3.2, 1.5, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    drawPixelRect(ctx, -1.8, 2.5, 2.4, 1.2, topColor);
+    // White Batting Gloves securely gripping the handle
+    drawRoundRect(ctx, -1.8, -4.5, 3.6, 2.8, 1.0, '#ffffff', '#0a0e17', 1.0);
+    drawRoundRect(ctx, -1.8, -2.4, 3.6, 2.8, 1.0, '#ffffff', '#0a0e17', 1.0);
 
-    // 3D Pixel Wooden Cricket Bat:
-    // A. Rubber Wrapped Grip Handle (Pixel striped bands)
-    drawPixelRect(ctx, -1.2, -5.5, 2.4, 6.0, '#ffffff', '#070b12', 0.8);
-    drawPixelRect(ctx, -1.2, -4.5, 2.4, 1.2, '#ef4444');
-    drawPixelRect(ctx, -1.2, -2.5, 2.4, 1.2, '#ef4444');
-
-    // B. Cane Shoulders Voxel Taper
-    drawVoxel(ctx, -2.2, 0.5, 4.4, 2.5, 2.0, '#cca052', '#fef3c7', '#92400e', '#070b12');
-
-    // C. 3D Wooden Willow Blade (Width 5.5, Height 17.5, Depth 2.5)
-    // Wood Face: light honey grain (#fef3c7) | Wood Side: deep golden grain (#92400e)
-    const batWoodFront = batSkin === 'carbon' ? '#1e293b' : batSkin === 'gold' ? '#facc15' : '#fef3c7';
-    const batWoodTop = batSkin === 'carbon' ? '#334155' : batSkin === 'gold' ? '#fef08a' : '#ffffff';
-    const batWoodSide = batSkin === 'carbon' ? '#0f172a' : batSkin === 'gold' ? '#ca8a04' : '#92400e';
-
-    drawVoxel(ctx, -2.7, 3.0, 5.5, 17.5, 2.5, batWoodFront, batWoodTop, batWoodSide, '#070b12', { showGrid: true });
-
-    // D. Authentic Maker's Pixel Sticker Badge (e.g. Kookaburra / MRF / SS style sticker)
-    drawPixelRect(ctx, -2.0, 4.5, 4.0, 4.5, '#dc2626', '#070b12', 0.6);
-    drawPixelRect(ctx, -1.2, 5.5, 2.4, 2.0, '#facc15');
-
-    // E. Bat Willow Grain Center Spine Line
-    drawPixelRect(ctx, -0.4, 9.5, 0.8, 9.0, '#d97706');
+    // Willow Blade: Thick rounded wooden paddle pointing DOWN-RIGHT for RHB, DOWN-LEFT for LHB!
+    // Dimensions: 6.8px wide by 14.0px long with bold dark outline #0a0e17 (matching screenshot!)
+    drawRoundRect(ctx, -3.4, 0.5, 6.8, 14.0, 2.2, '#deb887', '#0a0e17', 1.5);
+    // Honey willow sweet spot face
+    drawRoundRect(ctx, -2.8, 3.5, 5.6, 8.0, 1.4, '#d49b55', '#b45309', 0.6);
+    // Subtle center spine line
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(0, 1.5); ctx.lineTo(0, 13.0);
+    ctx.stroke();
+    // Dark toe guard at tip
+    drawRoundRect(ctx, -3.4, 13.5, 6.8, 1.4, 0.6, '#0a0e17');
 
     ctx.restore();
     ctx.restore();
   },
 
   /**
-   * 3D PIXEL ART BOWLER
-   * Authentic 3D Voxel Bowler with High-Arm Windmill Action:
-   * - 3D pixel athletic legs with team-colored trousers, side racing stripe voxels, and running shoes
-   * - High-knee 3D running stride animation during run-up
-   * - 3D pixel jersey torso with V-neck collar & side accent panels
-   * - 3D pixel head with afro hairstyle & signature red temple bead (or turban / beard / headband)
-   * - 3D pixel windmill bowling arm carrying a red 3D pixel cricket ball with white seam pixels
+   * Draw Bowler with High-Arm Action, Authentic Afro Hairstyle with signature Red Temple Bead,
+   * Team-specific Jersey & Trousers with outer racing stripes (matching Reference Screenshot left player):
+   * Supports team-to-team kit colors (CSK yellow/black, SA green/gold, IND blue/orange, etc.).
    */
   drawBowler(ctx, x, y, {
     runUpProgress = 0,
@@ -487,7 +424,7 @@ export const CharacterRenderer = {
     isFielding = false,
     hasBall = false,
     timeOfDay = 'day'
-  }) {
+  } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
@@ -497,222 +434,324 @@ export const CharacterRenderer = {
     const pantsCol = resolvedKit.pantsColor || topColor;
     const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
-    // 1. Dynamic 3D Pixel Ground Shadow
-    drawPixelShadow(ctx, 0, 12, 14, 5.5, 0.40, timeOfDay);
+    // 1. Dynamic Ground Shadow
+    drawLightingShadow(ctx, timeOfDay, 12, 5, 12);
 
-    // 2. Athletic Stride & Team Trousers with 3D Side Racing Stripes
+    // 2. Athletic Stride & Team Trousers with Outer Racing Stripes
     const isRunning = runUpProgress > 0 && runUpProgress < 1.0;
     const stride = isRunning ? Math.sin(runUpProgress * Math.PI * 8) * 5.0 : (isFielding ? Math.sin(Date.now() * 0.015) * 5.0 : 0);
     const isFollowingThrough = followThroughProgress > 0;
     const leanY = isFollowingThrough ? followThroughProgress * 3 : (isFielding ? 2 : 0);
 
-    // Left 3D Voxel Leg
+    // Left Leg in Team Pants Color
     ctx.save();
     const leftLegY = 2 - stride + leanY;
-    drawVoxel(ctx, -6.5, leftLegY, 5.5, 11, 2, pantsCol, shadeColor(pantsCol, 22), shadeColor(pantsCol, -26), '#070b12');
-    // Outer racing stripe down leg seam
-    drawPixelRect(ctx, -5.8, leftLegY + 1, 1.4, 9, stripeCol);
-    // 3D Athletic shoe with white studded sole
-    drawVoxel(ctx, -7.0, leftLegY + 10, 6.5, 3.2, 1.5, '#0f172a', '#1e293b', '#020617', '#070b12');
-    drawPixelRect(ctx, -7.0, leftLegY + 12, 6.5, 1.2, '#ffffff');
+    drawRoundRect(ctx, -6.5, leftLegY, 5.5, 11, 2.5, pantsCol, '#090e17', 1.4);
+    // Outer racing stripe down leg seam (matching reference screenshot)
+    ctx.strokeStyle = stripeCol;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-5.8, leftLegY + 1); ctx.lineTo(-5.8, leftLegY + 10);
+    ctx.stroke();
+    // Athletic shoe with white sole
+    drawRoundRect(ctx, -7.0, leftLegY + 10, 6.5, 3.2, 1.3, '#090e17');
+    drawRoundRect(ctx, -7.0, leftLegY + 12, 6.5, 1.2, 0.8, '#ffffff');
     ctx.restore();
 
-    // Right 3D Voxel Leg
+    // Right Leg in Team Pants Color
     ctx.save();
     const rightLegY = 2 + stride + leanY * 0.5;
-    drawVoxel(ctx, 1.2, rightLegY, 5.5, 11, 2, pantsCol, shadeColor(pantsCol, 22), shadeColor(pantsCol, -26), '#070b12');
-    // Outer racing stripe down leg seam
-    drawPixelRect(ctx, 6.0, rightLegY + 1, 1.4, 9, stripeCol);
-    // 3D Athletic shoe with white studded sole
-    drawVoxel(ctx, 0.8, rightLegY + 10, 6.5, 3.2, 1.5, '#0f172a', '#1e293b', '#020617', '#070b12');
-    drawPixelRect(ctx, 0.8, rightLegY + 12, 6.5, 1.2, '#ffffff');
+    drawRoundRect(ctx, 1.2, rightLegY, 5.5, 11, 2.5, pantsCol, '#090e17', 1.4);
+    // Outer racing stripe down leg seam (matching reference screenshot)
+    ctx.strokeStyle = stripeCol;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(6.0, rightLegY + 1); ctx.lineTo(6.0, rightLegY + 10);
+    ctx.stroke();
+    // Athletic shoe with white sole
+    drawRoundRect(ctx, 0.8, rightLegY + 10, 6.5, 3.2, 1.3, '#090e17');
+    drawRoundRect(ctx, 0.8, rightLegY + 12, 6.5, 1.2, 0.8, '#ffffff');
     ctx.restore();
 
-    // 3. 3D Voxel Team Jersey Torso
+    // 3. Team Jersey Torso
     ctx.save();
     const torsoY = -8 + leanY;
-    drawVoxel(ctx, -7.5, torsoY, 15, 12, 3, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12', { showGrid: true });
-
+    drawRoundRect(ctx, -7.5, torsoY, 15, 12, 3.5, topColor, '#090e17', 1.5);
     // Team secondary contrast accents on flanks
-    drawPixelRect(ctx, 5.2, torsoY + 1, 1.8, 10, secColor);
-    drawPixelRect(ctx, -7.0, torsoY + 1, 1.8, 10, secColor);
-
-    // Team V-neck collar pixel trim
-    drawPixelRect(ctx, -2.5, torsoY, 5, 2.5, secColor);
+    drawRoundRect(ctx, 5.2, torsoY + 1, 1.8, 10, 0.8, secColor);
+    drawRoundRect(ctx, -7.0, torsoY + 1, 1.8, 10, 0.8, secColor);
+    // Team V-neck collar & button placket
+    ctx.fillStyle = secColor;
+    ctx.beginPath();
+    ctx.moveTo(-3, torsoY); ctx.lineTo(0, torsoY + 3.8); ctx.lineTo(3, torsoY);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
 
-    // 4. Head, Focused Face & 3D Pixel Hairstyle
+    // 4. Head, Focused Face & Afro Hairstyle with Signature Red Temple Bead
     ctx.save();
     const headY = -16 + leanY;
-    // 3D Neck Voxel
-    drawVoxel(ctx, -2.2, headY + 6.5, 4.4, 3.2, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
+    // Neck
+    drawRoundRect(ctx, -2.2, headY + 6.5, 4.4, 3.2, 1.2, skinTone, '#090e17', 1.1);
 
-    // 3D Pixel Head Voxel
-    drawVoxel(ctx, -4.5, headY, 9, 8, 2.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
+    // Rounded Face
+    drawEllipse(ctx, 0, headY + 3.0, 5.8, 5.2, skinTone, '#090e17', 1.4);
 
-    // Focused 3D Pixel Eyes
-    drawPixelRect(ctx, -2.5, headY + 3.0, 1.5, 1.5, '#070b12');
-    drawPixelRect(ctx, 1.0, headY + 3.0, 1.5, 1.5, '#070b12');
+    // Focused Eyes looking down the pitch
+    ctx.fillStyle = '#090e17';
+    ctx.fillRect(-2.8, headY + 2.5, 1.8, 1.5);
+    ctx.fillRect(1.0, headY + 2.5, 1.8, 1.5);
 
-    // Authentic Hairstyle Options in 3D Pixel Art:
-    if (faceStyle === 'afro') {
-      // 3D Afro Puff Voxels
-      drawVoxel(ctx, -5.5, headY - 4.5, 11, 5.5, 3.0, '#1c1917', '#292524', '#0c0a09', '#070b12');
-      drawVoxel(ctx, -6.5, headY - 1.5, 2.5, 4.5, 2.0, '#1c1917', '#292524', '#0c0a09', '#070b12');
-      drawVoxel(ctx, 4.0, headY - 1.5, 2.5, 4.5, 2.0, '#1c1917', '#292524', '#0c0a09', '#070b12');
-      // Signature Red Temple Bead
-      drawPixelRect(ctx, 5.5, headY + 0.5, 2.2, 2.2, '#ef4444', '#7f1d1d', 0.8);
-    } else if (faceStyle === 'turban') {
-      // 3D Patka / Turban Voxel
-      drawVoxel(ctx, -5.0, headY - 5.0, 10, 6.0, 3.0, '#f97316', '#fb923c', '#c2410c', '#070b12');
-      drawPixelRect(ctx, -1.5, headY - 6.5, 3.0, 2.0, '#f97316'); // Top knot
-    } else if (faceStyle === 'headband') {
-      // 3D Headband
-      drawVoxel(ctx, -4.5, headY - 3.5, 9, 4.5, 2.5, '#451a03', '#78350f', '#292524', '#070b12');
-      drawPixelRect(ctx, -4.5, headY + 0.5, 9, 1.8, '#ffffff'); // White headband
-    } else if (faceStyle === 'beard') {
-      // 3D Hair & Jawline Beard
-      drawVoxel(ctx, -4.5, headY - 3.5, 9, 4.5, 2.5, '#1e293b', '#334155', '#0f172a', '#070b12');
-      drawPixelRect(ctx, -3.5, headY + 5.5, 7, 2.5, '#1e293b'); // Beard
+    // Textured Curly Afro Dome on top (matching reference screenshot left player)
+    drawEllipse(ctx, 0, headY - 0.5, 6.8, 5.4, '#111827', '#090e17', 1.5);
+    // Textured curl nubs on crown for 3D depth
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(-3.5, headY - 1.2, 2.2, 0, Math.PI * 2);
+    ctx.arc(3.5, headY - 1.2, 2.2, 0, Math.PI * 2);
+    ctx.arc(0, headY - 3.2, 2.4, 0, Math.PI * 2);
+    ctx.arc(-2.0, headY - 2.8, 2.0, 0, Math.PI * 2);
+    ctx.arc(2.0, headY - 2.8, 2.0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Signature Red Accessory Bead on temple (prominent in reference screenshot)
+    drawEllipse(ctx, -5.2, headY + 1.0, 1.6, 1.6, '#ef4444', '#090e17', 0.9);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-5.6, headY + 0.6, 0.8, 0.8);
+    ctx.restore();
+
+    // 5. Arms with High-Arm Bowling Action or Fielding Reach
+    if (isFielding) {
+      // Reaching forward to scoop or catch the ball!
+      ctx.strokeStyle = skinTone;
+      ctx.lineWidth = 3.0;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-2, 8);
+      ctx.moveTo(6, -4); ctx.lineTo(2, 8);
+      ctx.stroke();
     } else {
-      // Classic 3D Pixel Hair
-      drawVoxel(ctx, -4.5, headY - 3.5, 9, 4.5, 2.5, '#3b2512', '#58361b', '#24160a', '#070b12');
+      // Non-Bowling Arm (Left Arm):
+      ctx.save();
+      ctx.strokeStyle = topColor;
+      ctx.lineWidth = 3.0;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (isRunning && runUpProgress > 0.65) {
+        const guideProgress = (runUpProgress - 0.65) / 0.35;
+        const guideArmY = -4 - Math.sin(guideProgress * Math.PI) * 9;
+        ctx.moveTo(-6, -4 + leanY);
+        ctx.lineTo(-10, guideArmY + leanY);
+      } else {
+        ctx.moveTo(-6, -4 + leanY);
+        ctx.lineTo(-3, 2 + leanY);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Bowling Arm (Right Arm) with High-Arm Windmill & Overhead Delivery:
+      ctx.save();
+      const shoulderX = 6.8;
+      const shoulderY = -5 + leanY;
+      ctx.translate(shoulderX, shoulderY);
+
+      let effectiveAngle = 0;
+      if (isFollowingThrough) {
+        effectiveAngle = Math.PI * 0.35 + followThroughProgress * Math.PI * 0.45;
+      } else if (isRunning) {
+        if (runUpProgress < 0.65) {
+          effectiveAngle = Math.sin(runUpProgress * Math.PI * 8) * 0.35;
+        } else {
+          const windRatio = (runUpProgress - 0.65) / 0.35;
+          effectiveAngle = -Math.PI * (0.2 + windRatio * 0.8);
+        }
+      } else {
+        effectiveAngle = bowlingArmAngle || 0;
+      }
+
+      ctx.rotate(effectiveAngle);
+
+      // Upper arm in team jersey color
+      ctx.strokeStyle = topColor;
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(0, -6.5);
+      ctx.stroke();
+
+      // Forearm in skin tone
+      ctx.strokeStyle = skinTone;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(0, -6.5); ctx.lineTo(0, -14);
+      ctx.stroke();
+
+      // Red Cricket ball with white seam during run-up!
+      if (isRunning && runUpProgress < 1.0) {
+        drawEllipse(ctx, 0, -16.5, 3.0, 3.0, '#dc2626', '#090e17', 1.0);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-2.2, -16.5); ctx.lineTo(2.2, -16.5);
+        ctx.stroke();
+      } else {
+        drawEllipse(ctx, 0, -15, 2.0, 2.0, skinTone);
+      }
+
+      ctx.restore();
     }
-    ctx.restore();
 
-    // 5. 3D Pixel Windmill Bowling Arm & Cricket Ball
-    ctx.save();
-    const shoulderX = armSide === 'left' ? -6.5 : 6.5;
-    const shoulderY = -5 + leanY;
-
-    // Non-bowling arm (counter-balance pump)
-    const nonBowlShoulderX = -shoulderX;
-    drawVoxel(ctx, nonBowlShoulderX - 2, shoulderY - 2, 4, 9, 2, topColor, shadeColor(topColor, 20), shadeColor(topColor, -25), '#070b12');
-    drawVoxel(ctx, nonBowlShoulderX - 1.5, shoulderY + 7, 3, 3, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-
-    // Bowling Arm with 360° Windmill Rotation
-    ctx.translate(shoulderX, shoulderY);
-
-    let effectiveArmAngle = bowlingArmAngle || 0;
-    if (isRunning) {
-      effectiveArmAngle = Math.sin(runUpProgress * Math.PI * 6) * 0.45;
-    }
-    ctx.rotate(effectiveArmAngle);
-
-    // Upper arm in team jersey sleeve
-    drawVoxel(ctx, -2, 0, 4.5, 7, 2, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12');
-    // Forearm in skin tone
-    drawVoxel(ctx, -1.8, 7, 4.0, 7, 2, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-
-    // 3D Crimson Leather Cricket Ball with stitched white seam pixels (held in hand before release)
-    if (hasBall || isRunning || (runUpProgress < 0.98 && !isFollowingThrough)) {
-      drawVoxel(ctx, -2.5, 14, 5.2, 5.2, 2.5, '#dc2626', '#ef4444', '#991b1b', '#450a0a');
-      drawPixelRect(ctx, -0.5, 14, 1.2, 5.2, '#ffffff'); // White stitched seam
-    }
-
-    ctx.restore();
     ctx.restore();
   },
 
   /**
-   * 3D PIXEL ART WICKET-KEEPER
-   * Crouching 3D voxel stance behind the stumps with giant webbed keeping gloves!
+   * Draw Wicket-Keeper in crouching stance directly behind stumps (matching Reference Screenshot)
    */
-  drawWicketKeeper(ctx, x, y, {
-    skinTone = '#f5d0b0',
-    isStumping = false,
-    jerseyColor = '#ef4444',
-    kit = null,
-    timeOfDay = 'day'
-  }) {
+  drawWicketKeeper(ctx, x, y, { skinTone = '#f5d0b0', isStumping = false, jerseyColor = '#0066b2', kit = null, timeOfDay = 'day' } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
-    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_sa');
     const topColor = resolvedKit.color;
-    const pantsCol = resolvedKit.pantsColor || topColor;
+    const secColor = resolvedKit.secondaryColor || '#ffffff';
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
-    // Ground shadow
-    drawPixelShadow(ctx, 0, 10, 12, 4.5, 0.38, timeOfDay);
+    // Ground Shadow
+    drawLightingShadow(ctx, timeOfDay, 13, 5, 12);
 
-    // Crouching 3D Voxel Legs & Pads
-    drawVoxel(ctx, -5.5, 2, 5, 8, 2, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    drawVoxel(ctx, 0.5, 2, 5, 8, 2, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
+    // Crouched Bent Legs & White Keeper Pads with team-colored straps
+    drawBattingPad(ctx, -8.0, 0, false, stripeCol);
+    drawBattingPad(ctx, 1.5, 0, false, stripeCol);
 
-    // Crouching 3D Voxel Torso
-    drawVoxel(ctx, -6.0, -6, 12, 9, 2.5, topColor, shadeColor(topColor, 20), shadeColor(topColor, -25), '#070b12');
+    // Torso in Fielding Team Jersey
+    const torsoY = isStumping ? -13 : -9;
+    drawRoundRect(ctx, -7.5, torsoY, 15, 11, 3.2, topColor, '#090e17', 1.4);
+    ctx.fillStyle = secColor;
+    ctx.beginPath();
+    ctx.moveTo(-2.5, torsoY); ctx.lineTo(0, torsoY + 3); ctx.lineTo(2.5, torsoY);
+    ctx.closePath();
+    ctx.fill();
 
-    // 3D Head & Cap
-    drawVoxel(ctx, -3.5, -12, 7, 6, 2.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-    drawVoxel(ctx, -4.0, -14, 8, 3, 2.5, topColor, shadeColor(topColor, 20), shadeColor(topColor, -25), '#070b12'); // Cap
+    // White Helmet & Visor Peak (Visor peak angled forward towards bowler)
+    const headY = isStumping ? -18 : -14;
+    drawEllipse(ctx, 0, headY + 2.5, 6.5, 6.0, '#ffffff', '#090e17', 1.5);
+    drawRoundRect(ctx, -4.8, headY - 0.5, 8.0, 2.5, 1.2, '#090e17');
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(-2.5, headY + 1.2, 5.0, 1.8);
 
-    // 3D Wicket-Keeping Gloves with Webbing Triangles
-    const gloveY = isStumping ? -2 : 0;
-    // Left keeper glove
-    drawVoxel(ctx, -8.5, gloveY, 4.5, 4.5, 2, '#facc15', '#fef08a', '#ca8a04', '#070b12');
-    drawPixelRect(ctx, -5.5, gloveY + 1, 2.0, 2.5, '#ef4444'); // Webbing
-    // Right keeper glove
-    drawVoxel(ctx, 4.0, gloveY, 4.5, 4.5, 2, '#facc15', '#fef08a', '#ca8a04', '#070b12');
-    drawPixelRect(ctx, 3.5, gloveY + 1, 2.0, 2.5, '#ef4444');
+    // Wicket-Keeping Gloves with Team Trim Webbing
+    const gloveY = isStumping ? -21 : -11;
+    // Left Glove
+    drawRoundRect(ctx, -12, gloveY, 6.0, 5.5, 1.8, '#1d4ed8', '#090e17', 1.2);
+    drawRoundRect(ctx, -13, gloveY + 1.2, 2.2, 3.0, 0.8, secColor);
+    // Right Glove (reaching forward on stumping)
+    const rGloveX = isStumping ? 1 : 6;
+    drawRoundRect(ctx, rGloveX, gloveY, 6.0, 5.5, 1.8, '#1d4ed8', '#090e17', 1.2);
+    drawRoundRect(ctx, rGloveX + 4.0, gloveY + 1.2, 2.2, 3.0, 0.8, secColor);
 
     ctx.restore();
   },
 
   /**
-   * 3D PIXEL ART NON-STRIKER
-   * 3D Voxel Non-Striker standing at the bowling crease with grounded 1-handed bat in backing-up posture!
+   * Draw Non-Striker Batsman in upright alert stance with bat grounded vertically down by side
+   * (matching Reference Screenshot top-right batsman at bowling crease)
    */
   drawNonStriker(ctx, x, y, {
+    skinTone = '#f5d0b0',
     jerseyColor = '#0066b2',
     kit = null,
     pitchCenterX = null,
     isLeftHanded = false,
-    skinTone = '#f5d0b0',
     timeOfDay = 'day'
-  }) {
+  } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
     const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
     const topColor = resolvedKit.color;
     const secColor = resolvedKit.secondaryColor || '#ffffff';
-    const pantsCol = resolvedKit.pantsColor || topColor;
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
-    // Ground shadow
-    drawPixelShadow(ctx, 0, 10, 11, 4.5, 0.38, timeOfDay);
+    // Mirror stance according to handedness and pitch side (so LHB holds bat with left hand)
+    const isLeftSide = pitchCenterX !== null ? (x < pitchCenterX) : false;
+    const shouldMirror = isLeftHanded ? !isLeftSide : isLeftSide;
+    if (shouldMirror) {
+      ctx.scale(-1, 1);
+    }
 
-    // 3D Voxel Legs & Shoes
-    drawVoxel(ctx, -4.5, 1, 4.5, 10, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-    drawVoxel(ctx, 0.5, 1, 4.5, 10, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-    drawPixelRect(ctx, -5.0, 11, 5, 1.5, '#ffffff');
-    drawPixelRect(ctx, 0.0, 11, 5, 1.5, '#ffffff');
+    // 1. Ground Shadow (Clean soft shadow under feet)
+    drawLightingShadow(ctx, timeOfDay, 12, 4.5, 13);
 
-    // 3D Voxel Torso in Team Jersey
-    drawVoxel(ctx, -5.5, -7, 11, 9, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12', { showGrid: true });
-    drawPixelRect(ctx, 3.5, -6, 1.5, 7, secColor);
-    drawPixelRect(ctx, -5.0, -6, 1.5, 7, secColor);
+    // 2. Leg Pads & Spikes (Both pads planted upright facing down-pitch towards striker)
+    drawBattingPad(ctx, -5.0, 0.5, true, stripeCol);
+    drawBattingPad(ctx, 1.8, 1.2, false, stripeCol);
 
-    // 3D Helmet Dome
-    drawVoxel(ctx, -3.8, -13, 7.6, 6.5, 2.5, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    drawPixelRect(ctx, -3.8, -8.5, 7.6, 1.8, '#0f172a');
+    // 3. Torso in Team Jersey (Upright stance facing down-pitch towards striker)
+    drawRoundRect(ctx, -6.5, -9, 13, 11, 3.0, topColor, '#090e17', 1.4);
+    // Contrast accents on flanks
+    drawRoundRect(ctx, 4.2, -8, 1.6, 9, 0.6, secColor);
+    drawRoundRect(ctx, -5.8, -8, 1.6, 9, 0.6, secColor);
+    // V-neck collar
+    ctx.fillStyle = secColor;
+    ctx.beginPath();
+    ctx.moveTo(-2.0, -9);
+    ctx.lineTo(0, -6.0);
+    ctx.lineTo(2.0, -9);
+    ctx.closePath();
+    ctx.fill();
 
-    // 1-Handed Grounded 3D Pixel Bat resting across crease
-    const batSide = pitchCenterX && x < pitchCenterX ? 1 : -1;
-    ctx.save();
-    ctx.translate(batSide * 5, -2);
-    // Glove
-    drawVoxel(ctx, -1.5, 0, 3.2, 3.2, 1.5, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    // Bat handle & blade
-    drawPixelRect(ctx, -1.0, -4, 2.0, 4.5, '#ffffff', '#070b12', 0.8);
-    drawVoxel(ctx, -2.0, 2, 4.5, 13, 2, '#fef3c7', '#ffffff', '#92400e', '#070b12');
-    ctx.restore();
+    // 4. White Helmet: Visor pointing DOWN THE PITCH towards striker
+    const headY = -16.5;
+    drawEllipse(ctx, 0, headY + 2.5, 6.2, 5.8, '#ffffff', '#090e17', 1.5);
+    drawRoundRect(ctx, -2.5, headY - 0.5, 5.0, 2.0, 0.8, topColor);
+    // Visor turned down the track
+    drawRoundRect(ctx, -4.2, headY + 4.5, 8.4, 2.5, 1.1, '#090e17');
+    ctx.fillStyle = skinTone;
+    ctx.fillRect(-2.5, headY + 3.8, 5.0, 1.6);
+
+    // 5. Arms & Bat (Holding bat vertically down along side, matching Reference Screenshot):
+    // Left arm: resting relaxed along side
+    ctx.strokeStyle = topColor;
+    ctx.lineWidth = 3.0;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-5.0, -4.0);
+    ctx.lineTo(-6.0, 2.0);
+    ctx.stroke();
+
+    // Right arm: holding bat straight down along side
+    ctx.beginPath();
+    ctx.moveTo(5.0, -4.0);
+    ctx.lineTo(5.8, 2.0);
+    ctx.stroke();
+
+    // White batting glove gripping the bat handle
+    drawRoundRect(ctx, 4.0, 1.0, 4.2, 4.2, 1.2, '#ffffff', '#090e17', 1.0);
+
+    // Bat held vertically down:
+    // Handle extends UP from hand:
+    drawRoundRect(ctx, 4.8, -6.5, 2.2, 7.5, 0.8, '#ef4444', '#090e17', 0.9);
+    drawRoundRect(ctx, 4.4, -7.5, 3.0, 1.2, 0.6, '#ffffff', '#090e17', 0.8);
+
+    // Willow Blade extends DOWN onto crease turf:
+    drawRoundRect(ctx, 3.2, 3.5, 5.6, 17.0, 1.6, '#eab308', '#090e17', 1.2);
+    // Sweet spot face block
+    drawRoundRect(ctx, 3.6, 7.5, 4.8, 7.0, 1.0, '#deb887', '#92400e', 0.8);
+    // Center spine crease
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(6.0, 4.5);
+    ctx.lineTo(6.0, 19.5);
+    ctx.stroke();
+    // Dark rubber toe guard on turf
+    drawRoundRect(ctx, 3.2, 19.5, 5.6, 1.4, 0.6, '#090e17');
 
     ctx.restore();
   },
 
   /**
-   * 3D PIXEL ART SPRINTING RUNNER
-   * Dynamic sprinting voxel cycle between wickets with churning legs, leaning torso, and grounded bat!
+   * Draw Runner sprinting between wickets with pumping legs and bat slide
    */
   drawRunner(ctx, x, y, {
     isStriker = true,
@@ -723,279 +762,309 @@ export const CharacterRenderer = {
     kit = null,
     skinTone = '#f5d0b0',
     timeOfDay = 'day'
-  }) {
+  } = {}) {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
     const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_ind');
     const topColor = resolvedKit.color;
-    const pantsCol = resolvedKit.pantsColor || topColor;
+    const stripeCol = resolvedKit.stripeColor || '#ffffff';
 
-    // Ground shadow
-    drawPixelShadow(ctx, 0, 11, 13, 5, 0.40, timeOfDay);
-
-    // Sprinting cycle: alternating legs
-    const legPhase = (runProgress * Math.PI * 10) % (Math.PI * 2);
-    const leg1Offset = Math.sin(legPhase) * 5.0;
-    const leg2Offset = -leg1Offset;
-
-    // Back leg
-    drawVoxel(ctx, -4.5, 1 + leg2Offset, 4.5, 9, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-    // Front leg
-    drawVoxel(ctx, 0.5, 1 + leg1Offset, 4.5, 9, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-
-    // Leaning forward Torso
-    const leanAngle = isSliding ? 0.45 * runDirection : 0.20 * runDirection;
+    // Sprint lean angle
+    const leanAngle = runDirection > 0 ? -0.20 : 0.20;
     ctx.rotate(leanAngle);
 
-    drawVoxel(ctx, -5.5, -7, 11, 9, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12', { showGrid: true });
+    // Ground Shadow
+    drawLightingShadow(ctx, timeOfDay, 12, 5, 12);
 
-    // 3D Helmet Dome
-    drawVoxel(ctx, -3.8, -13, 7.6, 6.5, 2.5, '#ffffff', '#ffffff', '#cbd5e1', '#070b12');
-    drawPixelRect(ctx, -3.8, -8.5, 7.6, 1.8, '#0f172a');
+    // Alternating Running Legs with White Batting Pads
+    const stride = Math.sin(runProgress * Math.PI * 10) * 6.0;
+    drawBattingPad(ctx, -6.5, 1 - stride, false, stripeCol);
+    drawBattingPad(ctx, 1.2, 1 + stride, false, stripeCol);
 
-    // Grounded sliding bat in sprint
+    // Jersey Torso
+    drawRoundRect(ctx, -7.5, -9, 15, 11, 3.2, topColor, '#090e17', 1.5);
+
+    // White Helmet
+    const headY = -16;
+    drawEllipse(ctx, 0, headY + 2.5, 6.5, 6.0, '#ffffff', '#090e17', 1.5);
+    const visorY = runDirection > 0 ? headY + 1 : headY + 4;
+    drawRoundRect(ctx, -4.5, visorY, 8.0, 2.5, 1.2, '#090e17');
+
+    // Arms & Outstretched Bat sliding along the turf!
     ctx.save();
-    ctx.translate(4 * runDirection, -1);
-    ctx.rotate(isSliding ? 1.4 * runDirection : 0.7 * runDirection);
-    drawVoxel(ctx, -2.0, 0, 4.5, 14, 2, '#fef3c7', '#ffffff', '#92400e', '#070b12');
-    ctx.restore();
+    const batReachY = runDirection > 0 ? (isSliding ? -20 : -14) : (isSliding ? 16 : 10);
+    const batAngle = runDirection > 0 ? (isSliding ? -Math.PI / 2 - 0.2 : -Math.PI / 2 + 0.3) : (isSliding ? Math.PI / 2 + 0.2 : Math.PI / 2 - 0.3);
 
+    // Pumping arm
+    ctx.strokeStyle = topColor;
+    ctx.lineWidth = 3.0;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-6, -4);
+    ctx.lineTo(-10, stride > 0 ? 4 : -7);
+    ctx.stroke();
+
+    // Arm holding bat
+    ctx.beginPath();
+    ctx.moveTo(6, -4);
+    ctx.lineTo(7, batReachY + (runDirection > 0 ? 7 : -7));
+    ctx.stroke();
+
+    // Batting Glove
+    drawRoundRect(ctx, 5.5, batReachY + (runDirection > 0 ? 4 : -6), 4.5, 4.5, 1.8, '#ffffff', '#090e17', 1.2);
+
+    // Grounded Cricket Bat
+    ctx.translate(7, batReachY);
+    ctx.rotate(batAngle);
+    drawRoundRect(ctx, -1.4, -6, 2.8, 6, 1, '#ef4444', '#090e17', 1.0);
+    drawRoundRect(ctx, -3.0, 0, 6.0, 17, 1.8, '#eab308', '#090e17', 1.2);
+
+    ctx.restore();
     ctx.restore();
   },
 
   /**
-   * 3D PIXEL ART FIELDER
-   * Authentic 3D Voxel Fielder with Ready Stance, Sprinting Chases, Horizontal Diving Slides, and Catch Celebrations!
+   * Draw Fielder in Clean Vector-Arcade style (alert posture, diving slide, or leaping catch)
+   * Full support for team-specific jersey color, pants color, and outer racing stripes.
    */
   drawFielder(ctx, x, y, role, jerseyColor = '#ef4444', isDiving = false, isCatching = false, vx = 0, vy = 0, isFielding = false, kit = null, timeOfDay = 'day') {
     ctx.save();
     ctx.translate(Math.round(x), Math.round(y));
 
-    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_aus');
+    const resolvedKit = resolveKit(kit || jerseyColor, 'jersey_sa');
     const topColor = resolvedKit.color;
     const secColor = resolvedKit.secondaryColor || '#ffffff';
     const pantsCol = resolvedKit.pantsColor || topColor;
-    const skinTone = '#f5d0b0';
+    const stripeCol = resolvedKit.stripeColor || secColor || '#ffffff';
 
-    // 1. Dynamic Ground Shadow
-    drawPixelShadow(ctx, 0, 10, isDiving ? 18 : 11, 4.5, 0.38, timeOfDay);
-
-    if (isDiving) {
-      // Spectacular Horizontal 3D Pixel Diving Slide!
-      const diveAngle = Math.atan2(vy, vx) || 0;
+    if (isCatching) {
+      // Leaping Catch in Air
+      drawLightingShadow(ctx, timeOfDay, 12, 4, 16);
+      ctx.translate(0, -9);
+      // Legs in pants color
+      drawRoundRect(ctx, -5.5, 2, 4.8, 9, 2, pantsCol, '#090e17', 1.2);
+      drawRoundRect(ctx, 1.2, 2, 4.8, 9, 2, pantsCol, '#090e17', 1.2);
+      // Torso in team jersey
+      drawRoundRect(ctx, -7.5, -8, 15, 11, 3, topColor, '#090e17', 1.4);
+      // Head
+      drawEllipse(ctx, 0, -14, 5.5, 5.0, '#c68656', '#090e17', 1.2);
+      drawRoundRect(ctx, -4.5, -16.5, 9, 3.0, 1.2, '#090e17');
+      // Raised arms catching ball
+      ctx.strokeStyle = '#c68656';
+      ctx.lineWidth = 2.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-5, -4); ctx.lineTo(-2, -17);
+      ctx.moveTo(5, -4); ctx.lineTo(2, -17);
+      ctx.stroke();
+      drawRoundRect(ctx, -3, -19, 3.2, 3.2, 1, '#ffffff', '#090e17', 1.0);
+      drawRoundRect(ctx, 1, -19, 3.2, 3.2, 1, '#ffffff', '#090e17', 1.0);
+      // Ball in palms!
+      drawEllipse(ctx, 0, -19, 2.8, 2.8, '#dc2626', '#090e17', 1.0);
+    } else if (isDiving) {
+      // Full Horizontal Diving Slide on Turf (matching live cricket diving stops!)
+      const diveAngle = Math.atan2(vy || 0, vx || 1);
       ctx.rotate(diveAngle);
+      // Elongated turf shadow
+      drawLightingShadow(ctx, timeOfDay, 18, 5, 4);
 
-      // Grass skid dust particles
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.fillRect(-14, 3, 5, 2);
-      ctx.fillRect(-9, 5, 4, 2);
-
-      // Trailing 3D pixel legs
-      drawVoxel(ctx, -14, -2, 7, 4, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-      // Horizontal Torso
-      drawVoxel(ctx, -7, -3.5, 10, 7, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12');
-      // Head & Cap
-      drawVoxel(ctx, 3, -3, 5, 5, 2, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-      drawPixelRect(ctx, 4, -4, 4, 2, topColor);
-      // Outstretched Reaching Arms
-      drawVoxel(ctx, 8, -2, 7, 3, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-    } else if (isCatching) {
-      // 3D Pixel Catching Celebration: Two raised arms aloft!
-      drawVoxel(ctx, -4.5, 1, 4.5, 10, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-      drawVoxel(ctx, 0.5, 1, 4.5, 10, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-
-      drawVoxel(ctx, -5.5, -7, 11, 9, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12');
-      drawVoxel(ctx, -3.8, -13, 7.6, 6.5, 2.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-      drawPixelRect(ctx, -4.2, -14.5, 8.4, 2.5, topColor); // Team Cap
-
-      // Two arms raised high in victory!
-      drawVoxel(ctx, -8.5, -16, 3.5, 8, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-      drawVoxel(ctx, 5.0, -16, 3.5, 8, 1.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
+      // Trailing legs in pants color
+      drawRoundRect(ctx, -11, 1, 9, 4.8, 1.8, pantsCol, '#090e17', 1.2);
+      // Horizontal torso in team jersey
+      drawRoundRect(ctx, -5.5, -4, 15, 8.5, 2.8, topColor, '#090e17', 1.4);
+      // Outstretched arms scooping the ball
+      ctx.strokeStyle = '#c68656';
+      ctx.lineWidth = 2.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(7, -1); ctx.lineTo(16, -2);
+      ctx.moveTo(7, 2); ctx.lineTo(16, 1);
+      ctx.stroke();
+      // White fielding hands
+      drawRoundRect(ctx, 16, -4, 4, 3.5, 1, '#ffffff', '#090e17', 1.0);
+      // Head looking forward along turf
+      drawEllipse(ctx, -9, -6.5, 4.8, 4.5, '#090e17');
     } else {
-      // Athletic Ready Stance / Sprinting Chaser
-      const isMoving = Math.hypot(vx, vy) > 0.5;
-      const step = isMoving ? Math.sin(Date.now() * 0.018) * 3.5 : 0;
+      // Alert Ready Stance or Athletic Chase Sprint
+      const isRunning = Math.hypot(vx, vy) > 0.4 || isFielding;
+      const stride = isRunning ? Math.sin(Date.now() * 0.016) * 4.5 : 0;
+      const armSwing = isRunning ? Math.sin(Date.now() * 0.016) * 5.0 : 0;
 
-      // 3D Voxel Legs in Team Pants
-      drawVoxel(ctx, -4.5, 1 - step, 4.5, 9, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-      drawVoxel(ctx, 0.5, 1 + step, 4.5, 9, 2, pantsCol, shadeColor(pantsCol, 20), shadeColor(pantsCol, -25), '#070b12');
-      drawPixelRect(ctx, -5.0, 10 - step, 5, 1.2, '#ffffff');
-      drawPixelRect(ctx, 0.0, 10 + step, 5, 1.2, '#ffffff');
+      // Ground Shadow
+      drawLightingShadow(ctx, timeOfDay, isRunning ? 14 : 12, 4.8, 12);
 
-      // 3D Voxel Torso
-      drawVoxel(ctx, -5.5, -7, 11, 9, 2.5, topColor, shadeColor(topColor, 22), shadeColor(topColor, -26), '#070b12', { showGrid: true });
-      drawPixelRect(ctx, 3.5, -6, 1.5, 7, secColor);
-      drawPixelRect(ctx, -5.0, -6, 1.5, 7, secColor);
+      // Legs in team pants with outer racing stripes
+      drawRoundRect(ctx, -6.0, 2 - stride, 5.0, 10.5, 2.2, pantsCol, '#090e17', 1.3);
+      drawRoundRect(ctx, 1.2, 2 + stride, 5.0, 10.5, 2.2, pantsCol, '#090e17', 1.3);
+      // Outer stripe down leg
+      ctx.strokeStyle = stripeCol;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-5.5, 3 - stride); ctx.lineTo(-5.5, 11 - stride);
+      ctx.moveTo(5.5, 3 + stride); ctx.lineTo(5.5, 11 + stride);
+      ctx.stroke();
+      // Shoes
+      drawRoundRect(ctx, -6.0, 11.5 - stride, 5.0, 2.8, 1, '#090e17');
+      drawRoundRect(ctx, 1.2, 11.5 + stride, 5.0, 2.8, 1, '#090e17');
 
-      // 3D Head & Team Cap
-      drawVoxel(ctx, -3.8, -13, 7.6, 6.5, 2.5, skinTone, shadeColor(skinTone, 15), shadeColor(skinTone, -20), '#070b12');
-      drawVoxel(ctx, -4.2, -14.5, 8.4, 2.8, 2, topColor, shadeColor(topColor, 20), shadeColor(topColor, -25), '#070b12');
-      // Cap Visor
-      drawPixelRect(ctx, -4.5, -12, 9, 1.4, '#070b12');
+      // Team Jersey Torso
+      drawRoundRect(ctx, -7.5, -8, 15, 11, 3.2, topColor, '#090e17', 1.4);
+      // Contrast side panels
+      drawRoundRect(ctx, 5.2, -7, 1.6, 9, 0.6, secColor);
+      drawRoundRect(ctx, -6.8, -7, 1.6, 9, 0.6, secColor);
+
+      // Arms in athletic stance or pumping
+      ctx.strokeStyle = topColor;
+      ctx.lineWidth = 2.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-6, -4); ctx.lineTo(-9, isRunning ? (1 + armSwing) : 1);
+      ctx.moveTo(6, -4); ctx.lineTo(9, isRunning ? (1 - armSwing) : 1);
+      ctx.stroke();
+      // Hands
+      drawRoundRect(ctx, -10.5, isRunning ? (1 + armSwing - 1.5) : -0.5, 3.2, 3.2, 1, '#ffffff', '#090e17', 0.8);
+      drawRoundRect(ctx, 7.5, isRunning ? (1 - armSwing - 1.5) : -0.5, 3.2, 3.2, 1, '#ffffff', '#090e17', 0.8);
+
+      // Head & Team Cap / Hair
+      drawEllipse(ctx, 0, -14, 5.2, 4.8, '#c68656', '#090e17', 1.3);
+      drawEllipse(ctx, 0, -16, 5.8, 4.0, '#111827', '#090e17', 1.2);
     }
 
     ctx.restore();
   },
 
   /**
-   * Regulation 30-Yard Inner Circle with painted white marker discs on outfield grass
+   * Regulation 30-Yard Inner Circle with Painted Marker Discs on Outfield Turf
    */
   draw30YardCircle(ctx, cx, cy, rx = 270, ry = 310) {
     if (!ctx) return;
+    const safeRx = Math.max(100, Math.min(600, rx));
+    const safeRy = Math.max(120, Math.min(650, ry));
+
     ctx.save();
-    // Soft outer shadow of the ring line
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
-    ctx.lineWidth = 3.0;
-    ctx.stroke();
+    // 1. Subtle grass tint differential inside inner circle
+    drawEllipse(ctx, cx, cy, safeRx, safeRy, 'rgba(255, 255, 255, 0.035)');
 
-    // Regulation Painted White 30-Yard Line
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([8, 8]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 16 White Circular Painted Discs positioned along the 30-yard ring perimeter
-    const numDiscs = 16;
+    // 2. Regulation white field marker discs spaced every 18 degrees around the ellipse
+    const numDiscs = 20;
     for (let i = 0; i < numDiscs; i++) {
-      const angle = (i / numDiscs) * Math.PI * 2;
-      const dx = cx + Math.cos(angle) * rx;
-      const dy = cy + Math.sin(angle) * ry;
+      const theta = (i / numDiscs) * Math.PI * 2;
+      const dx = cx + Math.cos(theta) * safeRx;
+      const dy = cy + Math.sin(theta) * safeRy;
 
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
+      // Soft disc drop shadow on grass turf
+      drawEllipse(ctx, dx, dy + 1, 3.2, 2.2, 'rgba(0, 0, 0, 0.45)');
+      // Regulation white disc with crisp boundary edge
+      drawEllipse(ctx, dx, dy, 3.0, 2.2, '#ffffff', '#0f172a', 1.0);
     }
     ctx.restore();
   },
 
   /**
-   * DYNAMIC STADIUM ARCHITECTURE & SPECTATOR PRESENTATION
-   * Dynamically renders grandstands, canopies, pavilions, LED ribbon boards,
-   * floodlights, and crowd matching the selected Stadium, Architecture, and Weather!
+   * Draw Realistic Multi-Tier Stadium Crowd Stands, Advertising Boundary,
+   * Cheering Spectators & Halogen Floodlights tailored to each of the 12 Iconic Venues
    */
-  drawStadiumCrowdStands(ctx, cx, cy, boundaryRadius, width, height, crowdState = {}, stadium = null, timeOfDay = 'day', weather = 'sunny') {
+  drawStadiumCrowdStands(ctx, cx, cy, boundaryRadius, width, height, crowdState = {}) {
     if (!ctx) return;
+    const br = boundaryRadius || 850;
+    const safeCx = Number.isFinite(cx) ? cx : (width || 400) / 2;
+    const safeCy = Number.isFinite(cy) ? cy : (height || 600) * 0.52;
+    const isCheering = !!crowdState.isCheering;
+    const landing = crowdState.sixLanding;
+    const stadium = crowdState.stadium;
+    const timeOfDay = crowdState.timeOfDay || 'day';
+    const weather = crowdState.weather || 'sunny';
+    const isNightOrDusk = timeOfDay === 'night' || timeOfDay === 'sunset' || weather === 'floodlights';
+    const now = Date.now();
+
+    ctx.save();
     try {
-      ctx.save();
-      const br = Math.max(100, Number.isFinite(boundaryRadius) ? boundaryRadius : 850);
-      const safeCx = Number.isFinite(cx) ? cx : (width ? width / 2 : 200);
-      const safeCy = Number.isFinite(cy) ? cy : (height ? height * 0.52 : 300);
-      const isCheering = !!(crowdState.isCheering || crowdState.isRocketSix);
-      const landing = crowdState.sixLanding || null;
-      const now = Date.now();
+      // Stadium architectural custom styling
+      const seatColor1 = stadium?.seatColor || '#1e3a8a';
+      const seatColor2 = stadium?.seatColorDark || '#0f2452';
+      const canopyColor = stadium?.canopyColor || '#334155';
+      const ledColor = stadium?.ledColor || '#00ffcc';
 
-      const arch = stadium?.architecture || 'colosseum';
-      const seatColor1 = stadium?.seatColor1 || '#162235';
-      const seatColor2 = stadium?.seatColor2 || '#111b2b';
-      const canopyColor = stadium?.canopyColor || '#0f172a';
-      const ledColor = stadium?.ledColor || '#38bdf8';
-      const isNightOrDusk = timeOfDay === 'night' || timeOfDay === 'sunset';
-
-      // 1. Boundary Rope (Thick braided white rope with drop shadow)
-      ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.lineWidth = 4.0;
-      ctx.stroke();
-
+      // 1. Outfield Boundary Rope & Sponge Toblerone Cushions
       ctx.beginPath();
       ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.6;
+      ctx.lineWidth = 4.2;
       ctx.stroke();
 
-      // 2. Green Turf Run-Off Margin behind boundary rope
+      // Rope twisted texture markings
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 7, 0, Math.PI * 2);
-      ctx.strokeStyle = stadium?.grassColor ? shadeColor(stadium.grassColor, -15) : '#1e4822';
-      ctx.lineWidth = 14;
+      ctx.arc(safeCx, safeCy, br, 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6, 6]);
       ctx.stroke();
+      ctx.setLineDash([]);
 
-      // 3. Electronic LED Advertising Ribbon Board (360° Digital Perimeter Ads)
+      // 2. High-Density Dynamic LED Boundary Advertising Ribbon Board
+      const ledInner = br + 4;
+      const ledOuter = br + 18;
       ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 18, 0, Math.PI * 2);
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 8;
+      ctx.arc(safeCx, safeCy, (ledInner + ledOuter) / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#050b14';
+      ctx.lineWidth = ledOuter - ledInner;
       ctx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(safeCx, safeCy, br + 15, 0, Math.PI * 2);
-      ctx.strokeStyle = ledColor;
-      ctx.lineWidth = 2.4;
-      ctx.stroke();
+      // Animated LED Sponsor Segments
+      const numSegments = 36;
+      const dAngle = (Math.PI * 2) / numSegments;
+      const sponsorBrands = ['EMIRATES', 'PEPSI', 'TATA', 'MRF TYRES', 'DREAM11', 'ARAMCO', 'HYUNDAI', 'BOOKING.COM', 'MASTERCARD', 'OAKLEY'];
 
-      // Sponsor Logo Banners rotating on the ribbon board
-      const numSponsorBanners = 32;
-      for (let b = 0; b < numSponsorBanners; b++) {
-        const bAngle = (b / numSponsorBanners) * Math.PI * 2 + (now * 0.00025);
-        const bx = safeCx + Math.cos(bAngle) * (br + 18);
-        const by = safeCy + Math.sin(bAngle) * (br + 18);
+      for (let i = 0; i < numSegments; i++) {
+        const segAngle = i * dAngle + (now * 0.0003);
+        const midR = (ledInner + ledOuter) / 2;
+        const brand = sponsorBrands[i % sponsorBrands.length];
 
         ctx.save();
-        ctx.translate(bx, by);
-        ctx.rotate(bAngle + Math.PI / 2);
-        if (b % 3 === 0) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-10, -2.5, 20, 5);
-          ctx.fillStyle = '#0284c7';
-          ctx.fillRect(-8, -1.5, 16, 3);
-        } else if (b % 3 === 1) {
-          ctx.fillStyle = '#f59e0b';
-          ctx.fillRect(-10, -2.5, 20, 5);
-          ctx.fillStyle = '#1e1b4b';
-          ctx.fillRect(-8, -1.5, 16, 3);
-        } else {
-          ctx.fillStyle = '#10b981';
-          ctx.fillRect(-10, -2.5, 20, 5);
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(-8, -1.5, 16, 3);
-        }
+        ctx.translate(safeCx + Math.cos(segAngle) * midR, safeCy + Math.sin(segAngle) * midR);
+        ctx.rotate(segAngle + Math.PI / 2);
+
+        ctx.fillStyle = i % 2 === 0 ? ledColor : '#ff0055';
+        ctx.fillRect(-22, -4.5, 44, 9);
+
+        ctx.fillStyle = '#050b14';
+        ctx.font = '900 6.5px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(brand, 0, 0);
         ctx.restore();
       }
 
-      // Players Walkout Tunnel Gate cutout
-      const gateAngle = Math.PI * 0.98;
-      const gx = safeCx + Math.cos(gateAngle) * (br + 17);
-      const gy = safeCy + Math.sin(gateAngle) * (br + 17);
-      ctx.save();
-      ctx.translate(gx, gy);
-      ctx.rotate(gateAngle + Math.PI / 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-14, -4.5, 28, 9);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-11, -3.5, 22, 7);
-      ctx.restore();
+      // Outer boundary fence
+      ctx.beginPath();
+      ctx.arc(safeCx, safeCy, br + 22, 0, Math.PI * 2);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
 
-      // 4. Grandstand Tiers based on Architecture
-      const r1_in = br + 24;
-      const r1_out = br + 124;
-      const r_conc1_in = br + 124;
+      // 3. Multi-Tier Grandstand Architecture (Tiers 1, 2, 3 with Aisles & Overhangs)
+      const r1_in = br + 26;
+      const r1_out = br + 130;
+      const r_conc1_in = br + 130;
       const r_conc1_out = br + 154;
-      const r2_in = br + 154;
-      const r2_out = br + 268;
-      const r_conc2_in = br + 268;
-      const r_conc2_out = br + 304;
-      const r3_in = br + 304;
-      const r3_out = br + 424;
 
-      // TIER 1 Lower Bowl
+      const r2_in = br + 154;
+      const r2_out = br + 295;
+      const r_conc2_in = br + 295;
+      const r_conc2_out = br + 325;
+
+      const r3_in = br + 325;
+      const r3_out = br + 460;
+
+      // TIER 1 (Lower Bowl)
       ctx.beginPath();
       ctx.arc(safeCx, safeCy, (r1_in + r1_out) / 2, 0, Math.PI * 2);
       ctx.strokeStyle = seatColor1;
       ctx.lineWidth = r1_out - r1_in;
       ctx.stroke();
 
-      // CONCOURSE 1 (Mid Promenade)
+      // Concourse 1
       ctx.beginPath();
       ctx.arc(safeCx, safeCy, (r_conc1_in + r_conc1_out) / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#1e293b';
@@ -1190,7 +1259,7 @@ export const CharacterRenderer = {
         const flY = safeCy + Math.sin(fAngle) * flDist;
 
         // Floodlight Gantry Housing
-        drawVoxel(ctx, flX - 18, flY - 14, 36, 28, 4, '#0f172a', '#1e293b', '#020617', '#64748b');
+        drawRoundRect(ctx, flX - 18, flY - 14, 36, 28, 5, '#0f172a', '#64748b', 2.0);
 
         // Halogen Matrix (4x3 Bright Halogen Lights)
         const isLit = isNightOrDusk || weather === 'floodlights';
