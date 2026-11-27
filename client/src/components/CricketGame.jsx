@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { CricketPhysics } from '../game/PhysicsEngine';
 import { FielderManager } from '../game/Fielders';
 import { CharacterRenderer } from '../game/CharacterRenderer';
-import { STADIUMS } from '../game/Stadiums';
+import { STADIUMS, getStadium, TIME_OF_DAY_CONFIGS, WEATHER_CONFIGS, ALL_STADIUMS } from '../game/Stadiums';
 import { sound } from '../game/SoundEffects';
 import { haptics } from '../services/haptics';
 import PauseModal from './PauseModal';
@@ -108,7 +108,11 @@ export default function CricketGame({
   const [bowlingArm, setBowlingArm] = useState(initialBowler.arm || matchConfig?.bowlingArm);
   const [bowlingAngle, setBowlingAngle] = useState(initialBowler.angle || matchConfig?.bowlingAngle);
   const [bowlerAction, setBowlerAction] = useState(initialBowler.action || matchConfig?.bowlerAction);
-  const [stadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
+  const [stadiumKey, setStadiumKey] = useState(matchConfig?.stadiumKey || 'colosseum');
+  const currentStadium = getStadium(stadiumKey);
+  const [timeOfDay, setTimeOfDay] = useState(matchConfig?.timeOfDay || currentStadium?.defaultTimeOfDay || 'day');
+  const [weather, setWeather] = useState(matchConfig?.weather || currentStadium?.defaultWeather || 'sunny');
+  const [showStadiumModal, setShowStadiumModal] = useState(false);
   const [isFreeHit, setIsFreeHit] = useState(false);
   const [showMatchIntro, setShowMatchIntro] = useState(true);
 
@@ -362,7 +366,43 @@ export default function CricketGame({
     return () => clearTimeout(timer);
   }, []);
 
-  const stadium = STADIUMS[stadiumKey] || STADIUMS.colosseum;
+  const stadium = currentStadium || STADIUMS[stadiumKey] || STADIUMS.colosseum;
+
+  const handleSelectStadium = (key) => {
+    setStadiumKey(key);
+    const st = getStadium(key);
+    if (st?.defaultTimeOfDay) setTimeOfDay(st.defaultTimeOfDay);
+    if (st?.defaultWeather) setWeather(st.defaultWeather);
+    if (engineRef.current) {
+      engineRef.current.setStadium(st);
+      if (fieldersRef.current) {
+        fieldersRef.current.resize(
+          engineRef.current.width,
+          engineRef.current.height,
+          engineRef.current.boundaryRadius,
+          engineRef.current.innerCircleRadiusX,
+          engineRef.current.innerCircleRadiusY
+        );
+      }
+    }
+    sound.playClick();
+    showFootworkAlert(`🏟️ ${st.name.toUpperCase()} (${st.location})`);
+  };
+
+  const handleToggleTimeOfDay = () => {
+    const cycle = ['day', 'afternoon', 'sunset', 'night'];
+    const next = cycle[(cycle.indexOf(timeOfDay) + 1) % cycle.length];
+    setTimeOfDay(next);
+    sound.playClick();
+    const name = TIME_OF_DAY_CONFIGS[next]?.name || next;
+    showFootworkAlert(`🕒 LIGHTING: ${name.toUpperCase()}`);
+  };
+
+  const handleCycleStadium = () => {
+    const keys = ALL_STADIUMS.map(s => s.id);
+    const nextIdx = (keys.indexOf(stadiumKey) + 1) % keys.length;
+    handleSelectStadium(keys[nextIdx]);
+  };
 
   // Canvas Resize and Setup with ResizeObserver & Dimensions Safeguard
   useEffect(() => {
@@ -640,7 +680,7 @@ export default function CricketGame({
 
     animFrameRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isPaused, stadium, profile, currentRunsScored, currentBallsFaced, currentWicketsLost, striker, selectedShot]);
+  }, [isPaused, stadium, profile, currentRunsScored, currentBallsFaced, currentWicketsLost, striker, selectedShot, timeOfDay, weather]);
 
   // Handle Ball Outcome & Trigger Celebrations
   const handleBallOutcome = useCallback((outcome) => {
@@ -1416,6 +1456,16 @@ export default function CricketGame({
         handleCameraToggle();
         return;
       }
+      if (e.code === 'KeyT') {
+        e.preventDefault();
+        handleToggleTimeOfDay();
+        return;
+      }
+      if (e.code === 'KeyY') {
+        e.preventDefault();
+        handleCycleStadium();
+        return;
+      }
       if (e.code === 'KeyF') {
         e.preventDefault();
         const presets = ['normal', 'attacking', 'defending'];
@@ -1495,7 +1545,7 @@ export default function CricketGame({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [timeOfDay, stadiumKey, tacticalField, cameraAngle]);
 
   // Initial delivery & auto-commence match
   useEffect(() => {
@@ -1539,24 +1589,51 @@ export default function CricketGame({
       ctx.translate(shakeX, shakeY);
     }
 
-    // 1. Outfield Grass with Vertical Stripes (Expansive coverage for Big Stadium)
+    // 1. Outfield Grass with Custom Stadium Mow Pattern (Stripes, Checkerboard, or Concentric)
     const outfieldRadius = (engine.boundaryRadius || 850) + 520;
     const minGrassX = cx - outfieldRadius;
     const maxGrassX = cx + outfieldRadius;
     const minGrassY = cy - outfieldRadius;
     const grassHeight = outfieldRadius * 2;
-    const stripeWidth = Math.max(34, width / 14);
-    const numStripes = Math.ceil((maxGrassX - minGrassX) / stripeWidth) + 1;
-    for (let i = 0; i < numStripes; i++) {
-      ctx.fillStyle = i % 2 === 0 ? '#2e5b27' : '#35682d';
-      ctx.fillRect(minGrassX + i * stripeWidth, minGrassY, stripeWidth, grassHeight);
+    const grassColor = currentStadium?.grassColor || '#2e5b27';
+    const grassStripe = currentStadium?.grassStripe || '#35682d';
+    const mowPattern = currentStadium?.grassPattern || 'stripes';
+
+    if (mowPattern === 'checker') {
+      const checkSize = Math.max(48, width / 10);
+      const cols = Math.ceil((maxGrassX - minGrassX) / checkSize) + 1;
+      const rows = Math.ceil(grassHeight / checkSize) + 1;
+      for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows; r++) {
+          ctx.fillStyle = (c + r) % 2 === 0 ? grassColor : grassStripe;
+          ctx.fillRect(minGrassX + c * checkSize, minGrassY + r * checkSize, checkSize, checkSize);
+        }
+      }
+    } else if (mowPattern === 'concentric') {
+      const ringStep = 45;
+      for (let r = outfieldRadius; r > 0; r -= ringStep) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = (Math.floor(r / ringStep) % 2 === 0) ? grassColor : grassStripe;
+        ctx.fill();
+      }
+    } else {
+      const stripeWidth = Math.max(34, width / 14);
+      const numStripes = Math.ceil((maxGrassX - minGrassX) / stripeWidth) + 1;
+      for (let i = 0; i < numStripes; i++) {
+        ctx.fillStyle = i % 2 === 0 ? grassColor : grassStripe;
+        ctx.fillRect(minGrassX + i * stripeWidth, minGrassY, stripeWidth, grassHeight);
+      }
     }
 
     // 2. Realistic Stadium Crowd Stands & Advertising Boundary with Cheering Spectators & Crowd Catch Reaction
     CharacterRenderer.drawStadiumCrowdStands(ctx, cx, engine.cy, engine.boundaryRadius, width, height, {
       isCheering: isCrowdCheering || celebrationOverlay?.type === 'six' || celebrationOverlay?.type === 'four',
       isRocketSix: celebrationOverlay?.type === 'six' || engine.ball.isRocketSix,
-      sixLanding: engine.sixLanding
+      sixLanding: engine.sixLanding,
+      stadium: currentStadium,
+      timeOfDay,
+      weather
     });
 
     // 2.5 Regulation 30-Yard Inner Circle with Painted Marker Discs on Outfield Turf
@@ -1568,25 +1645,40 @@ export default function CricketGame({
       engine.innerCircleRadiusY
     );
 
-    // 3. Pitch Strip Dimensions
+    // 3. Pitch Strip Dimensions & Authentic Surface Types
     const pw = engine.pitchWidth || 116;
     const pt = engine.pitchTop || (height * 0.26);
     const pb = engine.pitchBottom || (height * 0.78);
     const ph = pb - pt;
-
-    // 3. Pitch Strip: Sandy beige turf pitch
+    const pitchCol = currentStadium?.pitchColor || '#dfcaa4';
+    const pitchColDark = currentStadium?.pitchColorDark || '#d5be96';
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
     ctx.fillRect(cx - pw / 2 + 3, pt + 4, pw, ph);
 
-    ctx.fillStyle = '#dfcaa4';
+    ctx.fillStyle = pitchCol;
     ctx.fillRect(cx - pw / 2, pt, pw, ph);
 
     // Subtle pitch turf blocky texture & patches
-    ctx.fillStyle = '#d5be96';
+    ctx.fillStyle = pitchColDark;
     ctx.fillRect(cx - pw / 2 + pw * 0.15, pt + ph * 0.35, pw * 0.45, 18);
     ctx.fillRect(cx - pw / 2 + pw * 0.40, pt + ph * 0.52, pw * 0.40, 22);
     ctx.fillRect(cx - pw / 2 + pw * 0.20, pt + ph * 0.68, pw * 0.50, 16);
+
+    // Surface characteristics based on pitchType
+    if (currentStadium?.pitchType === 'grass_green') {
+      ctx.fillStyle = 'rgba(80, 122, 60, 0.45)';
+      for (let pi = 0; pi < 12; pi++) {
+        ctx.fillRect(cx - pw / 2 + ((pi * 17) % pw), pt + 30 + ((pi * 31) % (ph - 60)), 5, 2);
+      }
+    } else if (currentStadium?.pitchType === 'dusty_turner') {
+      ctx.fillStyle = 'rgba(160, 120, 70, 0.35)';
+      ctx.fillRect(cx - pw / 2 + pw * 0.2, pt + ph * 0.25, pw * 0.6, 8);
+      ctx.fillRect(cx - pw / 2 + pw * 0.3, pt + ph * 0.75, pw * 0.5, 7);
+    } else if (currentStadium?.pitchType === 'bouncy_clay') {
+      ctx.fillStyle = 'rgba(180, 80, 45, 0.25)';
+      ctx.fillRect(cx - pw / 2 + pw * 0.1, pt + ph * 0.4, pw * 0.8, 12);
+    }
 
     // Crease lines (White) - Increased width extending beyond pitch turf
     ctx.strokeStyle = '#ffffff';
@@ -1767,7 +1859,8 @@ export default function CricketGame({
         runDirection: engine.running.direction,
         isSliding: engine.running.isSliding,
         jerseyColor: battingJerseyColor,
-        kit: battingKit
+        kit: battingKit,
+        timeOfDay
       });
 
       // Non-Striker Runner
@@ -1777,7 +1870,8 @@ export default function CricketGame({
         runDirection: -engine.running.direction,
         isSliding: engine.running.isSliding,
         jerseyColor: battingJerseyColor,
-        kit: battingKit
+        kit: battingKit,
+        timeOfDay
       });
     } else {
       // 6. Realistic Humanoid Non-Striker (Top Crease with 1-handed grounded bat & backing-up stance)
@@ -1785,7 +1879,8 @@ export default function CricketGame({
         jerseyColor: battingJerseyColor,
         kit: battingKit,
         pitchCenterX: cx,
-        isLeftHanded: isPlayerLeftHanded(nonStriker.name)
+        isLeftHanded: isPlayerLeftHanded(nonStriker.name),
+        timeOfDay
       });
 
       // 8. Realistic Humanoid Striker Batsman (Bottom Crease with Side-On Stance & Backlift)
@@ -1804,7 +1899,8 @@ export default function CricketGame({
         jerseyColor: battingJerseyColor,
         kit: battingKit,
         faceStyle: 'beard',
-        skinTone: '#d49b70'
+        skinTone: '#d49b70',
+        timeOfDay
       });
     }
 
@@ -1820,18 +1916,20 @@ export default function CricketGame({
       jerseyColor: fieldingJerseyColor,
       kit: fieldingKit,
       isFielding: engine.bowler.isFielding,
-      hasBall: engine.bowler.hasBall
+      hasBall: engine.bowler.hasBall,
+      timeOfDay
     });
 
     // 8. Realistic Crouched Wicket-Keeper (Behind Stumps with Webbed Gloves & Stumping Action)
     CharacterRenderer.drawWicketKeeper(ctx, engine.keeper.x, engine.keeper.y, {
       isStumping: engine.keeper.isStumping,
       jerseyColor: fieldingJerseyColor,
-      kit: fieldingKit
+      kit: fieldingKit,
+      timeOfDay
     });
 
     // 9. Realistic Humanoid Fielders (with Diving Slides & Throw Tracers)
-    fielders.draw(ctx, fieldingKit);
+    fielders.draw(ctx, fieldingKit, timeOfDay);
 
     // 10. Cricket Ball (with 2.5D height, shadow scaling & rotating seam)
     if (engine.ball.inPlay) {
@@ -1959,6 +2057,31 @@ export default function CricketGame({
         ctx.fill();
         ctx.globalAlpha = 1.0;
       });
+
+      // 12. Atmospheric Weather & Time-of-Day Lighting Overlay
+      if (timeOfDay === 'night') {
+        const nightGrad = ctx.createRadialGradient(cx, cy, engine.boundaryRadius * 0.42, cx, cy, outfieldRadius);
+        nightGrad.addColorStop(0, 'rgba(8, 14, 30, 0.06)');
+        nightGrad.addColorStop(0.65, 'rgba(6, 11, 24, 0.25)');
+        nightGrad.addColorStop(1, 'rgba(3, 6, 15, 0.52)');
+        ctx.fillStyle = nightGrad;
+        ctx.fillRect(minGrassX, minGrassY, outfieldRadius * 2, outfieldRadius * 2);
+      } else if (timeOfDay === 'sunset') {
+        const sunsetGrad = ctx.createRadialGradient(cx - 200, cy - 300, 80, cx, cy, outfieldRadius);
+        sunsetGrad.addColorStop(0, 'rgba(245, 158, 11, 0.20)');
+        sunsetGrad.addColorStop(0.6, 'rgba(234, 88, 12, 0.10)');
+        sunsetGrad.addColorStop(1, 'rgba(124, 45, 18, 0.24)');
+        ctx.fillStyle = sunsetGrad;
+        ctx.fillRect(minGrassX, minGrassY, outfieldRadius * 2, outfieldRadius * 2);
+      } else if (timeOfDay === 'afternoon') {
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.05)';
+        ctx.fillRect(minGrassX, minGrassY, outfieldRadius * 2, outfieldRadius * 2);
+      }
+
+      if (weather === 'overcast') {
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.14)';
+        ctx.fillRect(minGrassX, minGrassY, outfieldRadius * 2, outfieldRadius * 2);
+      }
     } catch (e) {
       console.error("Error drawing scene:", e);
     } finally {
@@ -2093,8 +2216,26 @@ export default function CricketGame({
               </div>
             </div>
 
-            {/* Right: Compact Icon Controls (Camera, Field, Role, Controls, Pause) */}
+            {/* Right: Compact Icon Controls (Stadium, Camera, Field, Role, Controls, Pause) */}
             <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Stadium & Atmosphere Switcher */}
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setShowStadiumModal(true);
+                }}
+                className="p-1 sm:px-1.5 sm:py-0.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 font-bold border border-emerald-500/40 flex items-center gap-0.5 cursor-pointer active:scale-95 shadow-sm"
+                title={`Venue: ${currentStadium?.name} • ${TIME_OF_DAY_CONFIGS[timeOfDay]?.name || timeOfDay} (Click to change, Key Y cycle, Key T lighting)`}
+              >
+                <span className="text-[11px]">{currentStadium?.flag || '🏟️'}</span>
+                <span className="text-[9px] font-bold hidden sm:inline max-w-[65px] truncate">
+                  {currentStadium?.shortName || currentStadium?.name}
+                </span>
+                <span className="text-[9px] text-emerald-400">
+                  {timeOfDay === 'night' ? '🌙' : timeOfDay === 'sunset' ? '🌅' : timeOfDay === 'afternoon' ? '🌤️' : '☀️'}
+                </span>
+              </button>
+
               {/* Camera Switcher */}
               <button
                 onClick={handleCameraToggle}
@@ -2631,6 +2772,193 @@ export default function CricketGame({
 
               <div className="text-[7.5px] font-bold text-emerald-400/90 mt-0.5 uppercase tracking-wider">
                 TAP RUN OR HOLD BELOW
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================== */}
+        {/* 6.5. STADIUM & ATMOSPHERE SELECTOR MODAL                           */}
+        {/* ================================================================== */}
+        {showStadiumModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+            <div className="relative w-full max-w-2xl bg-gradient-to-b from-[#0f172a] to-[#090d16] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">🏟️</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-white tracking-wide flex items-center gap-2">
+                      WORLD STADIUMS & ATMOSPHERE
+                    </h3>
+                    <p className="text-[10px] sm:text-xs text-slate-400">
+                      Iconic international venues • Pitch turf physics • Day / Afternoon / Sunset / Night
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowStadiumModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* 3D Pixel Engine Active Badge */}
+              <div className="px-5 py-2 bg-emerald-950/40 border-b border-emerald-500/20 flex items-center justify-between text-[10px] text-emerald-300 font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span>🧱</span>
+                  <span>3D PIXEL ART ENGINE ACTIVE</span>
+                  <span className="text-emerald-400 font-normal hidden sm:inline">• Voxel lighting, pitch shadows & player models</span>
+                </div>
+                <span className="text-slate-400 text-[9px] font-mono">[T] Light • [Y] Stadium</span>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
+                {/* 1. Time of Day / Atmosphere */}
+                <div>
+                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <span>🕒</span> Time of Day & Lighting
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {Object.entries(TIME_OF_DAY_CONFIGS).map(([key, cfg]) => {
+                      const isSelected = timeOfDay === key;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setTimeOfDay(key);
+                            sound.playClick();
+                          }}
+                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-500/10'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-sm mb-0.5">
+                            <span>{cfg.icon}</span>
+                            <span className="font-black text-xs">{cfg.name}</span>
+                          </div>
+                          <div className="text-[9px] text-slate-400 line-clamp-1">{cfg.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Weather Conditions */}
+                <div>
+                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <span>🌤️</span> Pitch Weather Conditions
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {Object.entries(WEATHER_CONFIGS).map(([key, cfg]) => {
+                      const isSelected = weather === key;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => {
+                            setWeather(key);
+                            sound.playClick();
+                          }}
+                          className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-sky-500/20 border-sky-400 text-sky-200 shadow-md shadow-sky-500/10'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-sm mb-0.5">
+                            <span>{cfg.icon}</span>
+                            <span className="font-black text-xs">{cfg.name}</span>
+                          </div>
+                          <div className="text-[9px] text-slate-400 line-clamp-1">{cfg.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Stadium Selection (12 Venues) */}
+                <div>
+                  <div className="text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span>🏟️</span> Select Match Venue ({ALL_STADIUMS.length} Arenas)
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-semibold">
+                      Current: {currentStadium?.name}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {ALL_STADIUMS.map((st) => {
+                      const isSelected = stadiumKey === st.id;
+                      const pitchBadge =
+                        st.pitchType === 'grass_green' ? '🟢 Green Seamer' :
+                        st.pitchType === 'dusty_turner' ? '🟡 Dusty Turner' :
+                        st.pitchType === 'bouncy_clay' ? '🔴 Bouncy Clay' :
+                        st.pitchType === 'red_soil' ? '🟠 Red Soil' :
+                        st.pitchType === 'compact_turf' ? '🟤 Compact Turf' : '⚪ Hard Surface';
+
+                      return (
+                        <button
+                          key={st.id}
+                          onClick={() => handleSelectStadium(st.id)}
+                          className={`p-3 rounded-2xl border text-left cursor-pointer transition-all flex flex-col justify-between gap-2 ${
+                            isSelected
+                              ? 'bg-gradient-to-br from-emerald-950/70 to-slate-900/90 border-emerald-400 shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400'
+                              : 'bg-slate-900/70 border-slate-800/90 hover:border-slate-700 hover:bg-slate-800/60 text-slate-300'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-1 mb-1">
+                              <div className="font-black text-white text-xs flex items-center gap-1.5">
+                                <span className="text-base">{st.flag}</span>
+                                <span className="line-clamp-1">{st.name}</span>
+                              </div>
+                              {isSelected && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-black font-black text-[8px] uppercase tracking-wider flex-shrink-0">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 mb-1.5">
+                              <span>📍</span>
+                              <span>{st.location}</span>
+                              <span className="text-slate-600">•</span>
+                              <span>👥 {st.capacity}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-800/60 text-[9px]">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-amber-300 font-semibold border border-amber-500/20">
+                              {pitchBadge}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800/80 text-cyan-300 font-semibold border border-cyan-500/20">
+                              {st.boundaryRadiusRatio >= 1.05 ? '🏟️ Big' : st.boundaryRadiusRatio <= 0.95 ? '⚡ Compact' : '🎯 Standard'}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/70 flex items-center justify-between">
+                <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: currentStadium?.pitchColor || '#dfcaa4' }} />
+                  <span>Pitch: <strong className="text-white">{currentStadium?.pitchType?.replace('_', ' ').toUpperCase()}</strong></span>
+                  <span className="text-slate-600">•</span>
+                  <span>Mow: <strong className="text-white">{currentStadium?.grassPattern?.toUpperCase()}</strong></span>
+                </div>
+                <button
+                  onClick={() => setShowStadiumModal(false)}
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs tracking-wide shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  CONFIRM & RESUME
+                </button>
               </div>
             </div>
           </div>

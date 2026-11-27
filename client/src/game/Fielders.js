@@ -509,7 +509,7 @@ export class FielderManager {
     };
   }
 
-  draw(ctx, jerseyColor = '#ef4444') {
+  draw(ctx, jerseyColor = '#ef4444', timeOfDay = 'day') {
     // Laser throw tracer with 2.5D flight arc from fielder to keeper/bowler/stumps
     if (this.throwTracer) {
       const { fromX, fromY, toX, toY, progress } = this.throwTracer;
@@ -551,7 +551,7 @@ export class FielderManager {
         f.catchTimer--;
         if (f.catchTimer <= 0) f.isCatching = false;
       }
-      CharacterRenderer.drawFielder(ctx, f.x, f.y, f.role, jerseyColor, f.isDiving, f.isCatching, f.vx, f.vy, f.isFielding, typeof jerseyColor === 'object' ? jerseyColor : null);
+      CharacterRenderer.drawFielder(ctx, f.x, f.y, f.role, jerseyColor, f.isDiving, f.isCatching, f.vx, f.vy, f.isFielding, typeof jerseyColor === 'object' ? jerseyColor : null, timeOfDay);
     });
   }
 
